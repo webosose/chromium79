@@ -1909,6 +1909,14 @@ jumbo_component("base") {
     }
   }
 
+  if (use_pmlog && current_toolchain == default_toolchain) {
+    configs += [ "//build/config/linux/pmlog:pmloglib" ]
+    sources += [
+      "logging_pmlog.cc",
+      "logging_pmlog.h"
+    ]
+  }
+
   # iOS
   if (is_ios) {
     set_sources_assignment_filter([])
