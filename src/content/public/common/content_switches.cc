@@ -451,6 +451,9 @@ const char kEnableViewport[]                = "enable-viewport";
 // Enable the Vtune profiler support.
 const char kEnableVtune[]                   = "enable-vtune-support";
 
+// Enable watchdog for detecting stuck processes
+const char kEnableWatchdog[] = "enable-watchdog";
+
 // Enable the Web Authentication Testing API.
 // https://w3c.github.io/webauthn
 const char kEnableWebAuthTestingAPI[] = "enable-web-authentication-testing-api";
@@ -862,6 +865,12 @@ const char kWaitForDebuggerChildren[]       = "wait-for-debugger-children";
 
 // Flag used by WebUI test runners to wait for debugger to be attached.
 const char kWaitForDebuggerWebUI[] = "wait-for-debugger-webui";
+
+// Knobs for configuring browser/renderer watchdog period and timeout
+const char kWatchdogBrowserPeriod[] = "watchdog-browser-period";
+const char kWatchdogBrowserTimeout[] = "watchdog-browser-timeout";
+const char kWatchdogRendererPeriod[] = "watchdog-renderer-period";
+const char kWatchdogRendererTimeout[] = "watchdog-renderer-timeout";
 
 // Set the antialiasing method used for webgl. (none, explicit, implicit, or
 // screenspace)

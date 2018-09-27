@@ -66,6 +66,8 @@ namespace debug {
 bool BeingDebugged() {
   return false;
 }
+
+void VerifyDebugger() {}
 #elif defined(OS_MACOSX) || defined(OS_BSD)
 
 // Based on Apple's recommended method as described in

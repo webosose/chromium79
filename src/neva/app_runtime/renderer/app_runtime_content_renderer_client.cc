@@ -16,6 +16,9 @@
 
 #include "neva/app_runtime/renderer/app_runtime_content_renderer_client.h"
 
+#include "base/command_line.h"
+#include "base/strings/string_number_conversions.h"
+#include "content/public/common/content_switches.h"
 #include "content/public/renderer/render_thread.h"
 #include "neva/app_runtime/grit/app_runtime_network_error_resources.h"
 #include "neva/app_runtime/renderer/app_runtime_localized_error.h"
@@ -137,13 +140,11 @@ void AppRuntimeContentRendererClient::AddSupportedKeySystems(
 #endif
 }
 
-#if defined(USE_NEVA_EXTENSIONS)
-using namespace extensions;
-
 void AppRuntimeContentRendererClient::RenderThreadStarted() {
   LOG(ERROR) << __PRETTY_FUNCTION__;
   content::RenderThread* thread = content::RenderThread::Get();
 
+#if defined(USE_NEVA_EXTENSIONS)
   extensions_client_.reset(CreateExtensionsClient());
   extensions::ExtensionsClient::Set(extensions_client_.get());
 
@@ -154,7 +155,59 @@ void AppRuntimeContentRendererClient::RenderThreadStarted() {
   guest_view_container_dispatcher_.reset(
       new extensions::ExtensionsGuestViewContainerDispatcher());
   thread->AddObserver(guest_view_container_dispatcher_.get());
+#endif  // defined(USE_NEVA_EXTENSIONS)
+
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
+  if (command_line.HasSwitch(switches::kEnableWatchdog)) {
+    watchdog_.reset(new watchdog::Watchdog());
+
+    std::string env_timeout =
+        command_line.GetSwitchValueASCII(switches::kWatchdogRendererTimeout);
+    if (!env_timeout.empty()) {
+      int timeout;
+      if (base::StringToInt(env_timeout, &timeout))
+        watchdog_->SetTimeout(timeout);
+    }
+
+    std::string env_period =
+        command_line.GetSwitchValueASCII(switches::kWatchdogRendererPeriod);
+    if (!env_period.empty()) {
+      int period;
+      if (base::StringToInt(env_period, &period))
+        watchdog_->SetPeriod(period);
+    }
+
+    watchdog_->StartWatchdog();
+
+    // Check it's currently running on RenderThread
+    CHECK(thread);
+    scoped_refptr<base::SingleThreadTaskRunner> task_runner =
+        base::ThreadTaskRunnerHandle::Get();
+    task_runner->PostTask(
+        FROM_HERE, base::Bind(&AppRuntimeContentRendererClient::ArmWatchdog,
+                              base::Unretained(this)));
+  }
 }
+
+void AppRuntimeContentRendererClient::ArmWatchdog() {
+  watchdog_->Arm();
+  if (!watchdog_->GetWatchingThreadTid())
+    watchdog_->SetWatchingThreadTid((pid_t)syscall(SYS_gettid));
+
+  // Check it's currently running on RenderThread
+  CHECK(content::RenderThread::Get());
+  scoped_refptr<base::SingleThreadTaskRunner> task_runner =
+      base::ThreadTaskRunnerHandle::Get();
+  task_runner->PostDelayedTask(
+      FROM_HERE,
+      base::Bind(&AppRuntimeContentRendererClient::ArmWatchdog,
+                 base::Unretained(this)),
+      base::TimeDelta::FromSeconds(watchdog_->GetPeriod()));
+}
+
+#if defined(USE_NEVA_EXTENSIONS)
+using namespace extensions;
 
 void AppRuntimeExtensionsRendererClient::OnExtensionLoaded(
     const extensions::Extension& extension) {
