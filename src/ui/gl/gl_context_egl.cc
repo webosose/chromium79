@@ -288,8 +288,8 @@ void GLContextEGL::ReleaseYUVToRGBConvertersAndBackpressureFences() {
     if (context_ != current_egl_context) {
       if (!eglMakeCurrent(display_, current_draw_surface, current_read_surface,
                           current_egl_context)) {
-        DVLOG(1) << "eglMakeCurrent failed with error "
-                 << GetLastEGLErrorString();
+        LOG(ERROR) << "eglMakeCurrent failed with error "
+                   << GetLastEGLErrorString();
       }
     }
   }
@@ -335,7 +335,7 @@ bool GLContextEGL::MakeCurrent(GLSurface* surface) {
   InitializeDynamicBindings();
 
   if (!surface->OnMakeCurrent(this)) {
-    LOG(ERROR) << "Could not make current.";
+    LOG(ERROR) << "Could not make current with error: " << GetLastEGLErrorString();
     return false;
   }
 
