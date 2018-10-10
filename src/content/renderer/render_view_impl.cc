@@ -831,6 +831,10 @@ void RenderView::ApplyWebPreferences(const WebPreferences& prefs,
       prefs.dont_send_key_events_to_javascript);
   settings->SetWebAppScope(WebString::FromASCII(prefs.web_app_scope.spec()));
 
+  settings->SetAccessibilityExploreByMouseEnabled(
+      settings->GetAccessibilityExploreByMouseEnabled() &&
+      prefs.accessibility_explore_by_mouse_enabled);
+
 #if defined(OS_ANDROID)
   settings->SetAllowCustomScrollbarInMainFrame(false);
   settings->SetAccessibilityFontScaleFactor(prefs.font_scale_factor);

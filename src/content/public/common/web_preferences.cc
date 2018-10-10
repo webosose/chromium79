@@ -180,6 +180,7 @@ WebPreferences::WebPreferences()
       user_gesture_required_for_presentation(true),
       text_track_margin_percentage(0.0f),
       immersive_mode_enabled(false),
+      accessibility_explore_by_mouse_enabled(false),
 #if defined(OS_ANDROID) || defined(OS_MACOSX)
       double_tap_to_zoom_enabled(true),
 #else
