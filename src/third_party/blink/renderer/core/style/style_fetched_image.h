@@ -87,6 +87,9 @@ class StyleFetchedImage final : public StyleImage,
   Member<const Document> document_;
   const KURL url_;
   const bool origin_clean_;
+#if defined(OS_WEBOS)
+  bool commit_deferred_ = false;
+#endif
 };
 
 template <>

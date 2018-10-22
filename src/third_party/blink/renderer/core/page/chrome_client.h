@@ -158,6 +158,7 @@ class CORE_EXPORT ChromeClient : public GarbageCollected<ChromeClient> {
   // main frame is present and the values does not persist between instances of
   // local main frames.
   virtual void BeginLifecycleUpdates(LocalFrame& main_frame) = 0;
+  virtual void PauseLifecycleUpdates(LocalFrame& main_frame) = 0;
 
   // Start or stop compositor commits from occurring, with a timeout before they
   // are allowed again. Document lifecycle updates are still allowed during this

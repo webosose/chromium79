@@ -6693,6 +6693,9 @@ void Document::BeginLifecycleUpdatesIfRenderingReady() {
     return;
   if (!HaveRenderBlockingResourcesLoaded())
     return;
+  // Considers it's not ready during background images are loading
+  if (deferred_background_image_count_ > 0)
+    return;
   View()->BeginLifecycleUpdates();
 }
 
@@ -8725,6 +8728,29 @@ bool Document::IsAnimatedPropertyCounted(CSSPropertyID property) const {
 void Document::ClearUseCounterForTesting(mojom::WebFeature feature) {
   if (DocumentLoader* loader = Loader())
     loader->GetUseCounterHelper().ClearMeasurementForTesting(feature);
+}
+
+bool Document::AddDeferredBackgroundImage() {
+  if (!IsMainThread() || !frame_ || !frame_->IsMainFrame())
+    return false;
+
+  // pause update when the first background image was deferred
+  if (deferred_background_image_count_ == 0)
+    frame_->GetPage()->GetChromeClient().PauseLifecycleUpdates(*frame_);
+
+  ++deferred_background_image_count_;
+  return true;
+}
+
+void Document::RemoveDeferredBackgroundImage() {
+  if (!IsMainThread() || !frame_ || !frame_->IsMainFrame())
+    return;
+
+  --deferred_background_image_count_;
+
+  // resume update when all background images were undeferred
+  if (deferred_background_image_count_ == 0)
+    frame_->GetPage()->GetChromeClient().BeginLifecycleUpdates(*frame_);
 }
 
 template class CORE_TEMPLATE_EXPORT Supplement<Document>;

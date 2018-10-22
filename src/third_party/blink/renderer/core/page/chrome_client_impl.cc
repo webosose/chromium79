@@ -1066,6 +1066,13 @@ cc::EventListenerProperties ChromeClientImpl::EventListenerProperties(
 void ChromeClientImpl::BeginLifecycleUpdates(LocalFrame& main_frame) {
   DCHECK(main_frame.IsMainFrame());
   web_view_->StopDeferringMainFrameUpdate();
+  scoped_defer_main_frame_update_.reset();
+}
+
+void ChromeClientImpl::PauseLifecycleUpdates(LocalFrame& main_frame) {
+  WebWidgetClient* client =
+      WebLocalFrameImpl::FromFrame(main_frame)->FrameWidgetImpl()->Client();
+  scoped_defer_main_frame_update_ = client->DeferMainFrameUpdate();
 }
 
 void ChromeClientImpl::StartDeferringCommits(LocalFrame& main_frame,
