@@ -218,6 +218,13 @@ int SystemHostResolverCall(const std::string& host,
       should_retry = true;
     }
   }
+  if (err) {
+    LOG(WARNING) << " getaddrinfo (host:" << host.c_str()
+                 << ") error(code:" << err << ", str:" << gai_strerror(err)
+                 << "), system error(code:" << ((err == EAI_SYSTEM) ? errno : 0)
+                 << " str:" << ((err == EAI_SYSTEM) ? strerror(errno) : "");
+    should_retry = true;
+  }
   if (should_retry) {
     if (ai != nullptr) {
       freeaddrinfo(ai);
@@ -227,6 +234,10 @@ int SystemHostResolverCall(const std::string& host,
   }
 
   if (err) {
+    LOG(WARNING) << " retry getaddrinfo (host:" << host.c_str()
+                 << ") error(code:" << err << ", str:" << gai_strerror(err)
+                 << "), system error(code:" << ((err == EAI_SYSTEM) ? errno : 0)
+                 << " str:" << ((err == EAI_SYSTEM) ? strerror(errno) : "");
 #if defined(OS_WIN)
     err = WSAGetLastError();
 #endif
