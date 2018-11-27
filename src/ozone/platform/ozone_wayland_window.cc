@@ -290,6 +290,7 @@ void OzoneWaylandWindow::ToggleFullscreen() {
   if (!screen)
     NOTREACHED() << "Unable to retrieve valid display::Screen";
 
+  VLOG(1) << __PRETTY_FUNCTION__;
   SetBounds(screen->GetPrimaryDisplay().bounds());
   state_ = WidgetState::FULLSCREEN;
   SendWidgetState();
@@ -299,18 +300,21 @@ void OzoneWaylandWindow::Maximize() {
   display::Screen *screen = display::Screen::GetScreen();
   if (!screen)
     NOTREACHED() << "Unable to retrieve valid display::Screen";
+  VLOG(1) << __PRETTY_FUNCTION__;
   SetBounds(screen->GetPrimaryDisplay().bounds());
   state_ = WidgetState::MAXIMIZED;
   SendWidgetState();
 }
 
 void OzoneWaylandWindow::Minimize() {
+  VLOG(1) << __PRETTY_FUNCTION__;
   SetBounds(gfx::Rect());
   state_ = WidgetState::MINIMIZED;
   SendWidgetState();
 }
 
 void OzoneWaylandWindow::Restore() {
+  VLOG(1) << __PRETTY_FUNCTION__;
   window_manager_->Restore(this);
   state_ = WidgetState::RESTORE;
   SendWidgetState();

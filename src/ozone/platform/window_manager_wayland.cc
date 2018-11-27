@@ -21,6 +21,7 @@
 #include <string>
 
 #include "base/bind.h"
+#include "base/logging.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "ozone/platform/desktop_platform_screen_delegate.h"
 #include "ozone/platform/messages.h"
@@ -829,6 +830,7 @@ void WindowManagerWayland::NotifyNativeWindowStateChanged(unsigned handle,
                << " from GPU process";
     return;
   }
+  VLOG(1) << __PRETTY_FUNCTION__;
   window->GetDelegate()->OnWindowHostStateChanged(new_state);
 }
 
@@ -840,6 +842,7 @@ void WindowManagerWayland::NotifyNativeWindowStateAboutToChange(unsigned handle,
                << " from GPU process";
     return;
   }
+  VLOG(1) << __PRETTY_FUNCTION__;
   window->GetDelegate()->OnWindowHostStateAboutToChange(state);
 }
 

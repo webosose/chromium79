@@ -177,8 +177,15 @@ void WebosShellSurface::HandleStateChanged(
         window->Handle(), ToWidgetState(state));
 
     WebosShellSurface* shell_surface = static_cast<WebosShellSurface* >(window->ShellSurface());
-    if (shell_surface)
-        shell_surface->OnStateChanged(ToWidgetState(state));
+    if (shell_surface) {
+      VLOG(1) << __PRETTY_FUNCTION__ << ": state=" << state;
+      shell_surface->OnStateChanged(ToWidgetState(state));
+    } else {
+      LOG(INFO) << __PRETTY_FUNCTION__ << ": state=" << state <<
+          ", but no shell surface";
+    }
+  } else {
+    LOG(INFO) << __PRETTY_FUNCTION__ << ": window is 0";
   }
 }
 
