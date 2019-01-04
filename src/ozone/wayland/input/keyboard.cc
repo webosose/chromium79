@@ -56,6 +56,9 @@ void WaylandKeyboard::OnKeyNotify(void* data,
                                   uint32_t time,
                                   uint32_t key,
                                   uint32_t state) {
+  VLOG(1) << __func__ << " key:" << key
+          << " type:" << (state == WL_KEYBOARD_KEY_STATE_RELEASED ? "KeyRelease"
+                                                                  : "KeyPress");
   WaylandKeyboard* device = static_cast<WaylandKeyboard*>(data);
   ui::EventType type = ui::ET_KEY_PRESSED;
   WaylandDisplay::GetInstance()->SetSerial(serial);
