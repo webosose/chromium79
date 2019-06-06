@@ -38,7 +38,8 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
  public:
   explicit MediaPlayerCamera(
       MediaPlayerNevaClient*,
-      const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner);
+      const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+      const std::string& app_id);
   ~MediaPlayerCamera() override;
 
   // media::MediaPlayerNeva implementation

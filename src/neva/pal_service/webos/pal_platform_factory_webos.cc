@@ -29,11 +29,10 @@ std::unique_ptr<MemoryManagerDelegate>
 
 std::unique_ptr<SystemServiceBridgeDelegate>
     PlatformFactory::CreateSystemServiceBridgeDelegate(
-        std::string name,
         std::string appid,
         SystemServiceBridgeDelegate::Response callback) {
   return std::make_unique<webos::SystemServiceBridgeDelegateWebOS>(
-      std::move(name), std::move(appid), std::move(callback));
+      std::move(appid), std::move(callback));
 }
 
 }  // namespace pal

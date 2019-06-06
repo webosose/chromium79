@@ -31,8 +31,7 @@ SystemServiceBridgeImpl::SystemServiceBridgeImpl()
 SystemServiceBridgeImpl::~SystemServiceBridgeImpl() {
 }
 
-void SystemServiceBridgeImpl::Connect(const std::string& name,
-                                      const std::string& appid,
+void SystemServiceBridgeImpl::Connect(const std::string& appid,
                                       ConnectCallback callback) {
   if (delegate_) {
     std::move(callback).Run(
@@ -41,7 +40,6 @@ void SystemServiceBridgeImpl::Connect(const std::string& name,
   }
 
   delegate_ = PlatformFactory::Get()->CreateSystemServiceBridgeDelegate(
-      name,
       appid,
       base::BindRepeating(&SystemServiceBridgeImpl::OnResponse,
                           weak_factory_.GetWeakPtr()));

@@ -35,14 +35,15 @@ namespace media {
 
 MediaPlayerCamera::MediaPlayerCamera(
     MediaPlayerNevaClient* client,
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner)
-    : client_(client),
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id)
+   : client_(client),
       playback_rate_(1.0f),
       is_video_offscreen_(false),
       fullscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(INFO) << __func__;
-  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_));
+  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_, app_id));
 }
 
 MediaPlayerCamera::~MediaPlayerCamera() {

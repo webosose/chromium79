@@ -221,7 +221,7 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
       params->audio_renderer_sink(), media_log_.get());
 
   player_api_.reset(MediaPlayerNevaFactory::CreateMediaPlayerNeva(
-      this, media_player_type, main_task_runner_));
+      this, media_player_type, main_task_runner_, app_id_));
 
 #if defined(NEVA_VIDEO_HOLE)
   geometry_update_helper_.reset(new VideoHoleGeometryUpdateHelper(
@@ -1164,7 +1164,7 @@ void WebMediaPlayerNeva::OnResume() {
     player_api_.reset(MediaPlayerNevaFactory::CreateMediaPlayerNeva(
         this, MediaPlayerNevaFactory::GetMediaPlayerType(
                   client_->ContentMIMEType().Latin1()),
-        main_task_runner_));
+        main_task_runner_, app_id_));
     player_api_->SetVolume(volume_);
     LoadMedia();
 #if defined(NEVA_VIDEO_HOLE)

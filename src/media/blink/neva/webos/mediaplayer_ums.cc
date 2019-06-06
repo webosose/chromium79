@@ -85,7 +85,8 @@ static MediaPlayerNeva::MediaError convertToMediaError(PipelineStatus status) {
 
 MediaPlayerUMS::MediaPlayerUMS(
     MediaPlayerNevaClient* client,
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner)
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id)
     : client_(client),
       paused_(true),
       playback_rate_(1.0f),
@@ -95,7 +96,7 @@ MediaPlayerUMS::MediaPlayerUMS(
       is_video_offscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(ERROR) << __func__;
-  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_));
+  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_, app_id));
 }
 
 MediaPlayerUMS::~MediaPlayerUMS() {

@@ -42,13 +42,16 @@ namespace media {
 
 // static
 WebOSMediaClient* WebOSMediaClient::Create(
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner) {
-  return new UMediaClientImpl(main_task_runner);
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id) {
+  return new UMediaClientImpl(main_task_runner, app_id);
 }
 
 UMediaClientImpl::UMediaClientImpl(
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner)
-    : duration_(0.0f),
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id)
+    : uMediaClient(app_id),
+      duration_(0.0f),
       current_time_(0.0f),
       buffer_end_(0.0f),
       buffer_end_at_last_didLoadingProgress_(0.0f),
@@ -79,7 +82,7 @@ UMediaClientImpl::UMediaClientImpl(
       playback_rate_on_paused_(1.0f),
       volume_(1.0),
       main_task_runner_(main_task_runner),
-      luna_service_client_(base::LunaServiceClient::PrivateBus),
+      luna_service_client_(app_id),
       system_media_manager_(
           SystemMediaManager::Create(AsWeakPtr(), main_task_runner)),
       preload_(PreloadNone),

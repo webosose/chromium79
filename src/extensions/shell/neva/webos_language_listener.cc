@@ -27,7 +27,6 @@
 
 namespace {
 
-const char kIdentifier[] = "com.webos.app.neva.browser";
 const char kGetLanguageMethod[] =
     "palm://com.webos.settingsservice/getSystemSettings";
 const char kGetLanguageRequest[] =

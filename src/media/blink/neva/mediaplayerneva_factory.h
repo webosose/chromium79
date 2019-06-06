@@ -34,7 +34,8 @@ class MediaPlayerNevaFactory {
   static MediaPlayerNeva* CreateMediaPlayerNeva(
       MediaPlayerNevaClient*,
       const pal_media::mojom::MediaPlayerType,
-      const scoped_refptr<base::SingleThreadTaskRunner>&);
+      const scoped_refptr<base::SingleThreadTaskRunner>&,
+      const std::string&);
 };
 
 }  // namespace media
