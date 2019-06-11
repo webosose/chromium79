@@ -663,8 +663,11 @@ bool LocalFrameClientImpl::NavigateBackForward(int offset) const {
   DCHECK(offset);
   if (offset > webview->Client()->HistoryForwardListCount())
     return false;
-  if (offset < -webview->Client()->HistoryBackListCount())
+  if (offset < -webview->Client()->HistoryBackListCount()) {
+    if (web_frame_->Client())
+      web_frame_->Client()->DidHistoryBackOnTopPage(web_frame_);
     return false;
+  }
 
   bool has_user_gesture =
       LocalFrame::HasTransientUserActivation(web_frame_->GetFrame());

@@ -641,6 +641,7 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
       RenderFrameHost* render_frame_host,
       const GlobalRequestID& request_id,
       mojom::ResourceLoadInfoPtr resource_load_information) override;
+  void DidHistoryBackOnTopPage() override;
 
   // Called when WebAudio starts or stops playing audible audio in an
   // AudioContext.

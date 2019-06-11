@@ -787,6 +787,7 @@ class CONTENT_EXPORT RenderFrameImpl
   base::UnguessableToken GetDevToolsFrameToken() override;
   void RenderFallbackContentInParentProcess() override;
   void AbortClientNavigation() override;
+  void DidHistoryBackOnTopPage(const blink::WebFrame*) override;
   void DidChangeSelection(bool is_empty_selection) override;
   bool HandleCurrentKeyboardEvent() override;
   void RunModalAlertDialog(const blink::WebString& message) override;

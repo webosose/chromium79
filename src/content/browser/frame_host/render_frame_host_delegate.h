@@ -457,6 +457,10 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
                                    const base::Optional<SkColor>& theme_color) {
   }
 
+  // Notifies the delegate that history.back() is called but there is
+  // nowhere to go back
+  virtual void DidHistoryBackOnTopPage() {}
+
  protected:
   virtual ~RenderFrameHostDelegate() {}
 };

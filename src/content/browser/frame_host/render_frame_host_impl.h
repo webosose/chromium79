@@ -1406,6 +1406,7 @@ class CONTENT_EXPORT RenderFrameHostImpl
                             blink::NavigationBlockedReason reason);
   // Only used with PerNavigationMojoInterface disabled.
   void OnAbortNavigation();
+  void OnDidHistoryBackOnTopPage();
   void OnForwardResourceTimingToParent(
       const ResourceTimingInfo& resource_timing);
   void OnDispatchLoad();

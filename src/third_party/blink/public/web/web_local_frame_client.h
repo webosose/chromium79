@@ -526,6 +526,10 @@ class BLINK_EXPORT WebLocalFrameClient {
   // Called to abort a navigation that is being handled by the browser process.
   virtual void AbortClientNavigation() {}
 
+  // history.back() is called when there is nowhere to go
+  // Platform should do platform back action
+  virtual void DidHistoryBackOnTopPage(const WebFrame*) {}
+
   // InstalledApp API ----------------------------------------------------
 
   // Used to access the embedder for the InstalledApp API.

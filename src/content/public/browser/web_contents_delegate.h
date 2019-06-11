@@ -680,6 +680,9 @@ class CONTENT_EXPORT WebContentsDelegate {
   // eviction and displayed until a new frame is generated. If false, a white
   // solid color is displayed instead.
   virtual bool ShouldShowStaleContentOnEviction(WebContents* source);
+  // Notifies the delegate that history.back() is called but there is
+  // nowhere to go back
+  virtual void DidHistoryBackOnTopPage() {}
 
  protected:
   virtual ~WebContentsDelegate();
