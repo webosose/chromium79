@@ -685,9 +685,18 @@ void SoftwareImageDecodeCache::OnMemoryPressure(
   base::AutoLock lock(lock_);
   switch (level) {
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_NONE:
+#if !defined(OS_WEBOS)
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_MODERATE:
       break;
+#else   // defined(OS_WEBOS)
+      max_items_in_cache_ = kNormalMaxItemsInCacheForSoftware;
+      break;
+    case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_MODERATE:
+#endif  // !defined(OS_WEBOS)
     case base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_CRITICAL:
+#if defined(OS_WEBOS)
+      max_items_in_cache_ = 0;
+#endif
       ReduceCacheUsageUntilWithinLimit(0);
       break;
   }
