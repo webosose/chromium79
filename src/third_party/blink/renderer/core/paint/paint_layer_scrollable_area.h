@@ -556,6 +556,8 @@ class CORE_EXPORT PaintLayerScrollableArea final
 
   void DisposeImpl() override;
 
+  bool IsWebOSNativeScrollEnabled();
+
  private:
   bool NeedsScrollbarReconstruction() const;
 

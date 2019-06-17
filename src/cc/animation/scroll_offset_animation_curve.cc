@@ -7,10 +7,12 @@
 #include <algorithm>
 #include <cmath>
 
+#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/numerics/ranges.h"
 #include "cc/animation/timing_function.h"
+#include "cc/base/switches_neva.h"
 #include "cc/base/time_util.h"
 #include "ui/gfx/animation/tween.h"
 
@@ -21,6 +23,7 @@ const double kDurationDivisor = 60.0;
 
 // 3 seconds limit for long-distance programmatic scrolls
 const double kDeltaBasedMaxDuration = 180.0;
+const int64_t kDurationOnNativeScroll = 500000;
 
 const double kInverseDeltaRampStartPx = 120.0;
 const double kInverseDeltaRampEndPx = 480.0;
@@ -85,6 +88,11 @@ base::TimeDelta ScrollOffsetAnimationCurve::SegmentDuration(
     DurationBehavior behavior,
     base::TimeDelta delayed_by,
     float velocity) {
+  // This is for meet UX requirement on native scroll.
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          cc::switches::kEnableWebOSNativeScroll))
+    return base::TimeDelta::FromMicroseconds(kDurationOnNativeScroll);
+
   double duration = kConstantDuration;
   if (!animation_duration_for_testing_) {
     switch (behavior) {

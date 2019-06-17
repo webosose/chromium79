@@ -1247,4 +1247,10 @@ void WebView::DeactivateRendererCompositor() {
   if (rwhi)
     rwhi->DeactivateRendererCompositor();
 }
+
+void WebView::SetUseNativeScroll(bool use_native_scroll) {
+  GetAppRuntimeContentBrowserClient()->SetUseNativeScroll(
+      web_contents_->GetMainFrame()->GetProcess()->GetID(), use_native_scroll);
+}
+
 }  // namespace neva_app_runtime

@@ -122,6 +122,11 @@ callback ScrollStateCallback = void (ScrollState scrollState);
     // https://drafts.css-houdini.org/css-typed-om/#inline-stylepropertymap-objects
     [SameObject, MeasureAs=CSSTypedOMStylePropertyMap] readonly attribute StylePropertyMap attributeStyleMap;
 
+    // Non-standard attribute
+    // Prevents forced scroll when a focusable element has focus.
+    // This attribute has no effect for editable element.
+    [Reflect=data_preventscrollonfocus] attribute boolean dataPreventScrollOnFocus;
+
     // Non-standard API
     [MeasureAs=ElementScrollIntoViewIfNeeded] void scrollIntoViewIfNeeded(optional boolean centerIfNeeded);
     [RuntimeEnabled=ShadowDOMV0, RaisesException, DeprecateAs=ElementCreateShadowRoot] ShadowRoot createShadowRoot();

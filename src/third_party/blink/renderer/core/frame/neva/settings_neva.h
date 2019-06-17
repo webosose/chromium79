@@ -24,13 +24,20 @@ namespace blink {
 class SettingsNeva {
  public:
   SettingsNeva()
-      : keep_alive_web_app_(false) {}
+      : keep_alive_web_app_(false),
+        webos_native_scroll_enabled_(false) {}
 
   void SetKeepAliveWebApp(bool keep_alive) { keep_alive_web_app_ = keep_alive; }
   bool KeepAliveWebApp() const { return keep_alive_web_app_; }
 
+  void SetWebOSNativeScrollEnabled(bool enable) {
+    webos_native_scroll_enabled_ = enable;
+  }
+  bool WebOSNativeScrollEnabled() { return webos_native_scroll_enabled_; }
+
  private:
   bool keep_alive_web_app_ : 1;
+  bool webos_native_scroll_enabled_ : 1;
 };
 
 }  // namespace blink

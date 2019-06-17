@@ -28,6 +28,11 @@ class PLATFORM_EXPORT CompositorScrollOffsetAnimationCurve
     kScrollDurationInverseDelta
   };
 
+  enum ScrollEaseType { EASE_IN_OUT = 0, EASE_OUT };
+
+  CompositorScrollOffsetAnimationCurve(FloatPoint,
+                                       ScrollDurationBehavior,
+                                       ScrollEaseType);
   CompositorScrollOffsetAnimationCurve(FloatPoint, ScrollDurationBehavior);
   explicit CompositorScrollOffsetAnimationCurve(
       cc::ScrollOffsetAnimationCurve*);

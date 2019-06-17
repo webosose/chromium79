@@ -155,6 +155,13 @@ class CC_ANIMATION_EXPORT ElementAnimations
                                         int target_property_id,
                                         KeyframeModel* keyframe_model) override;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void NotifyClientScrollOffsetAnimated(const gfx::ScrollOffset& scroll_offset,
+                                        int target_property_id,
+                                        KeyframeModel* keyframe_model,
+                                        bool is_last_tick) override;
+#endif
+
   gfx::ScrollOffset ScrollOffsetForAnimation() const;
 
   // Returns a map of target property to the ElementId for that property, for

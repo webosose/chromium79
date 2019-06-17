@@ -78,6 +78,11 @@ class MutatorHostClient {
       ElementId element_id,
       const std::string& custom_property_name,
       PaintWorkletInput::PropertyValue custom_property_value) = 0;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void ClearCurrentlyScrollingLayerWebOS() {}
+  virtual void SetCurrentlyScrollingElementWebOS(ElementId element_id) {}
+#endif
 };
 
 }  // namespace cc

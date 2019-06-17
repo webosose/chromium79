@@ -185,6 +185,10 @@ class CC_ANIMATION_EXPORT KeyframeModel {
   KeyframeModel::Phase CalculatePhaseForTesting(
       base::TimeDelta local_time) const;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void SetStartTimeToCurrentIfNeed();
+#endif
+
  private:
   KeyframeModel(std::unique_ptr<AnimationCurve> curve,
                 int keyframe_model_id,

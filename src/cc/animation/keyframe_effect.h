@@ -86,6 +86,12 @@ class CC_ANIMATION_EXPORT KeyframeEffect {
   static void TickKeyframeModel(base::TimeTicks monotonic_time,
                                 KeyframeModel* keyframe_model,
                                 AnimationTarget* target);
+#if defined(USE_NEVA_APPRUNTIME)
+  static void TickKeyframeModel(base::TimeTicks monotonic_time,
+                                base::TimeTicks last_tick_time,
+                                KeyframeModel* keyframe_model,
+                                AnimationTarget* target);
+#endif
   void RemoveFromTicking();
   bool is_ticking() const { return is_ticking_; }
 

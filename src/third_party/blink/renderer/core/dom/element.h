@@ -1209,6 +1209,8 @@ class CORE_EXPORT Element : public ContainerNode, public Animatable {
   void SynchronizeContentAttributeAndElementReference(
       const QualifiedName& name);
 
+  bool IsPreventScrollOnFocus();
+
   Member<ElementData> element_data_;
 };
 

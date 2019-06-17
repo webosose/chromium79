@@ -45,6 +45,13 @@ class CC_ANIMATION_EXPORT AnimationTarget {
       const gfx::ScrollOffset& scroll_offset,
       int target_property_id,
       KeyframeModel* keyframe_model) = 0;
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void NotifyClientScrollOffsetAnimated(
+      const gfx::ScrollOffset& scroll_offset,
+      int target_property_id,
+      KeyframeModel* keyframe_model,
+      bool is_last_tick) {}
+#endif
 };
 
 }  // namespace cc

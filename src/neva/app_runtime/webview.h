@@ -170,6 +170,7 @@ class WebView : public content::WebContentsDelegate,
       neva_app_runtime::DropPeerConnectionReason reason);
   void SetV8SnapshotPath(const std::string& v8_snapshot_path);
   void SetV8ExtraFlags(const std::string& v8_extra_flags);
+  void SetUseNativeScroll(bool use_native_scroll);
 
   // WebContentsDelegate
   void LoadProgressChanged(content::WebContents* source,
