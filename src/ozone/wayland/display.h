@@ -43,6 +43,7 @@
 #include "base/single_thread_task_runner.h"
 #include "ozone/platform/input_content_type.h"
 #include "ozone/wayland/egl/gl_surface_wayland.h"
+#include "ui/base/ime/neva/input_method_common.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gl/gl_surface.h"
@@ -288,7 +289,7 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   void ResetIme();
   void ImeCaretBoundsChanged(gfx::Rect rect);
   void ShowInputPanel(unsigned handle);
-  void HideInputPanel();
+  void HideInputPanel(ui::ImeHiddenType);
   void SetInputContentType(ui::InputContentType content_type,
                            int text_input_flags,
                            unsigned handle);
