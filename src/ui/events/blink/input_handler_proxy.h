@@ -157,6 +157,11 @@ class InputHandlerProxy : public cc::InputHandlerClient,
   EventDisposition HandleTouchMove(const blink::WebTouchEvent& event);
   EventDisposition HandleTouchEnd(const blink::WebTouchEvent& event);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  blink::WebGestureEvent MaybeAdjustGestureScrollUpdate(
+      const blink::WebGestureEvent& event);
+#endif
+
   // Request a frame of animation from the InputHandler or
   // SynchronousInputHandler. They can provide that by calling Animate().
   void RequestAnimation();
