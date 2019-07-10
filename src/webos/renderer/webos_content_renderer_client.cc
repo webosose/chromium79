@@ -35,6 +35,7 @@
 #include "ui/base/webui/jstemplate_builder.h"
 #include "webos/grit/webos_network_error_resources.h"
 #include "webos/grit/webos_network_error_strings.h"
+#include "webos/renderer/webos_network_error_helper.h"
 #include "webos/renderer/webos_network_error_template_builder.h"
 
 namespace {
@@ -99,6 +100,12 @@ void GetWebOSLocalizedErrorStrings(int error_code, const GURL& failed_url,
 }  // namespace
 
 namespace webos {
+
+void WebOSContentRendererClient::RenderFrameCreated(
+    content::RenderFrame* render_frame) {
+  AppRuntimeContentRendererClient::RenderFrameCreated(render_frame);
+  new WebOSNetworkErrorHelper(render_frame);
+}
 
 void WebOSContentRendererClient::PrepareErrorPage(
     content::RenderFrame* render_frame,

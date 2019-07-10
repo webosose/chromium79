@@ -24,6 +24,7 @@ namespace webos {
 class WebOSContentRendererClient
     : public neva_app_runtime::AppRuntimeContentRendererClient {
  public:
+  void RenderFrameCreated(content::RenderFrame* render_frame) override;
   void PrepareErrorPage(content::RenderFrame* render_frame,
                         const blink::WebURLError& error,
                         const std::string& http_method,

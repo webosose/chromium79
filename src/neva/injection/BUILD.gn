@@ -66,6 +66,12 @@ source_set("injection") {
     sources += browser_control_sources
   }
 
+  if (enable_network_error_page_controller_webapi) {
+    deps += [
+      "//neva/injection/network:network_error_page_controller_injection",
+    ]
+  }
+
   if (is_webos) {
     deps += [
       "//neva/injection/webosservicebridge:webosservicebridge_injection",

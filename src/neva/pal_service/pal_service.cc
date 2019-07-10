@@ -17,6 +17,7 @@
 #include "neva/pal_service/pal_service.h"
 
 #include "neva/pal_service/memorymanager.h"
+#include "neva/pal_service/network_error_page_controller.h"
 #include "neva/pal_service/sample.h"
 #include "neva/pal_service/system_servicebridge.h"
 
@@ -44,6 +45,10 @@ void PalService::OnStart() {
       base::BindRepeating(
           &PalService::BindSystemServiceBridgeProviderRequest,
           base::Unretained(this)));
+
+  registry_.AddInterface<mojom::NetworkErrorPageController>(
+      base::BindRepeating(&PalService::BindNetworkErrorPageControllerRequest,
+                          base::Unretained(this)));
 }
 
 void PalService::OnBindInterface(
@@ -72,6 +77,15 @@ void PalService::BindSystemServiceBridgeProviderRequest(
         std::make_unique<SystemServiceBridgeProviderImpl>();
   }
   system_servicebridge_provider_impl_->AddBinding(std::move(request));
+}
+
+void PalService::BindNetworkErrorPageControllerRequest(
+    mojom::NetworkErrorPageControllerRequest request) {
+  if (!network_error_page_controller_impl_) {
+    network_error_page_controller_impl_ =
+        std::make_unique<NetworkErrorPageControllerImpl>();
+  }
+  network_error_page_controller_impl_->AddBinding(std::move(request));
 }
 
 }  // namespace pal

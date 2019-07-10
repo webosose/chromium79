@@ -28,6 +28,7 @@ extern const char kAudio[];
 extern const char kSettings[];
 extern const char kMemoryManager[];
 extern const char kPalmBus[];
+extern const char kApplicationManager[];
 
 }  // namespace service_uri
 

@@ -69,6 +69,8 @@ source_set("webos_impl") {
     "public/runtime_delegates.h",
     "renderer/webos_content_renderer_client.cc",
     "renderer/webos_content_renderer_client.h",
+    "renderer/webos_network_error_helper.cc",
+    "renderer/webos_network_error_helper.h",
     "renderer/webos_network_error_template_builder.cc",
     "renderer/webos_network_error_template_builder.h",
     "webapp_window.cc",

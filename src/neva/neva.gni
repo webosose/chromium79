@@ -96,4 +96,7 @@ declare_args() {
 
   # Enable local storage limit per second level domain
   enable_local_storage_limit_for_second_level_domain = is_webos
+
+  # Enable network error page controller WEBAPI
+  enable_network_error_page_controller_webapi = is_webos
 }

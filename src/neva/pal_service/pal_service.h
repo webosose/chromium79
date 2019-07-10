@@ -22,6 +22,7 @@
 #include "mojo/public/cpp/bindings/binding_set.h"
 #include "neva/pal_service/pal_service_export.h"
 #include "neva/pal_service/public/mojom/memorymanager.mojom.h"
+#include "neva/pal_service/public/mojom/network_error_page_controller.mojom.h"
 #include "neva/pal_service/public/mojom/sample.mojom.h"
 #include "neva/pal_service/public/mojom/system_servicebridge.mojom.h"
 #include "services/service_manager/public/cpp/binder_registry.h"
@@ -33,6 +34,7 @@
 namespace pal {
 
 class MemoryManagerImpl;
+class NetworkErrorPageControllerImpl;
 class SampleImpl;
 class SystemServiceBridgeProviderImpl;
 
@@ -52,11 +54,15 @@ class PAL_SERVICE_EXPORT PalService : public service_manager::Service {
   void BindSampleRequest(mojom::SampleRequest request);
   void BindSystemServiceBridgeProviderRequest(
       mojom::SystemServiceBridgeProviderRequest request);
+  void BindNetworkErrorPageControllerRequest(
+      mojom::NetworkErrorPageControllerRequest request);
 
   std::unique_ptr<pal::MemoryManagerImpl> memorymanager_impl_;
   std::unique_ptr<pal::SampleImpl> sample_impl_;
   std::unique_ptr<pal::SystemServiceBridgeProviderImpl>
       system_servicebridge_provider_impl_;
+  std::unique_ptr<pal::NetworkErrorPageControllerImpl>
+      network_error_page_controller_impl_;
 
   service_manager::ServiceBinding service_binding_;
   service_manager::BinderRegistry registry_;

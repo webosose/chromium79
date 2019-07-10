@@ -39,6 +39,10 @@ const service_manager::Manifest& GetNevaPalManifest() {
                             std::set<const char*>{
                                 "pal.mojom.SystemServiceBridgeProvider",
                             })
+          .ExposeCapability("neva:networkerrorpagecontroller",
+                            std::set<const char*>{
+                                "pal.mojom.NetworkErrorPageController",
+                            })
           .Build()};
   return *manifest;
 }

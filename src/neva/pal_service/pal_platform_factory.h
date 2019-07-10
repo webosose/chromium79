@@ -23,6 +23,7 @@
 namespace pal {
 
 class MemoryManagerDelegate;
+class NetworkErrorPageControllerDelegate;
 
 class PlatformFactory {
  public:
@@ -34,6 +35,9 @@ class PlatformFactory {
       CreateSystemServiceBridgeDelegate(
           std::string appid,
           SystemServiceBridgeDelegate::Response callback);
+
+  std::unique_ptr<NetworkErrorPageControllerDelegate>
+  CreateNetworkErrorPageControllerDelegate();
 
  private:
   PlatformFactory();

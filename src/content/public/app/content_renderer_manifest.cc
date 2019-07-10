@@ -60,6 +60,7 @@ const service_manager::Manifest& GetContentRendererManifest() {
           .RequireCapability("neva_pal", "neva:memorymanager")
           .RequireCapability("neva_pal", "neva:sample")
           .RequireCapability("neva_pal", "neva:systemservicebridge")
+          .RequireCapability("neva_pal", "neva:networkerrorpagecontroller")
 #endif
 #if defined(USE_NEVA_MEDIA)
           .RequireCapability("neva_pal_media", "neva:media_player")

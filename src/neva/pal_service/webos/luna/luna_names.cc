@@ -38,6 +38,7 @@ const char kAudio[] = "com.webos.audio";
 const char kSetting[] = "com.webos.settingsservice";
 const char kMemoryManager[] = "com.webos.memorymanager";
 const char kPalmBus[] = "com.palm.bus";
+const char kApplicationManager[] = "com.webos.applicationManager";
 
 }  // namespace service_uri
 

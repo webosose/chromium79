@@ -30,6 +30,8 @@ source_set("pal_service_webos") {
     "luna/luna_names.h",
     "memorymanager_delegate_webos.cc",
     "memorymanager_delegate_webos.h",
+    "network_error_page_controller_delegate_webos.cc",
+    "network_error_page_controller_delegate_webos.h",
     "pal_platform_factory_webos.cc",
     "system_servicebridge_delegate_webos.cc",
     "system_servicebridge_delegate_webos.h",

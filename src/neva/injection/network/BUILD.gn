@@ -14,14 +14,26 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import("//mojo/public/tools/bindings/mojom.gni")
+import("//neva/neva.gni")
 
-mojom("mojom") {
+config("network_error_page_controller") {
+  defines = [ "NETWORK_ERROR_PAGE_CONTROLLER_IMPLEMENTATION" ]
+}
+
+source_set("network_error_page_controller_injection") {
   sources = [
-    "constants.mojom",
-    "memorymanager.mojom",
-    "network_error_page_controller.mojom",
-    "sample.mojom",
-    "system_servicebridge.mojom",
+    "network_error_page_controller_export.h",
+    "network_error_page_controller_injection.cc",
+    "network_error_page_controller_injection.h",
+  ]
+
+  deps = [
+    "//gin",
+    "//v8",
+    "//third_party/blink/public:blink",
+  ]
+
+  configs += [
+    ":network_error_page_controller",
   ]
 }

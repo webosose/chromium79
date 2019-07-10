@@ -139,4 +139,8 @@ config("config") {
   if (enable_local_storage_limit_for_second_level_domain) {
     defines += [ "ENABLE_LOCAL_STORAGE_LIMIT_FOR_SECOND_LEVEL_DOMAIN=1" ]
   }
+
+  if (enable_network_error_page_controller_webapi) {
+    defines += [ "ENABLE_NETWORK_ERROR_PAGE_CONTROLLER_WEBAPI=1" ]
+  }
 }

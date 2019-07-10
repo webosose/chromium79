@@ -17,6 +17,7 @@
 #include "neva/pal_service/pal_platform_factory.h"
 
 #include "neva/pal_service/webos/memorymanager_delegate_webos.h"
+#include "neva/pal_service/webos/network_error_page_controller_delegate_webos.h"
 #include "neva/pal_service/webos/system_servicebridge_delegate_webos.h"
 #include <memory>
 
@@ -33,6 +34,11 @@ std::unique_ptr<SystemServiceBridgeDelegate>
         SystemServiceBridgeDelegate::Response callback) {
   return std::make_unique<webos::SystemServiceBridgeDelegateWebOS>(
       std::move(appid), std::move(callback));
+}
+
+std::unique_ptr<NetworkErrorPageControllerDelegate>
+PlatformFactory::CreateNetworkErrorPageControllerDelegate() {
+  return std::make_unique<webos::NetworkErrorPageControllerDelegateWebOS>();
 }
 
 }  // namespace pal

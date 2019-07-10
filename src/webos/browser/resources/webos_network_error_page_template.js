@@ -1,4 +1,4 @@
-// Copyright 2018 LG Electronics, Inc.
+// Copyright (c) 2018 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ err_info = JSON.parse(JSON.stringify(error_info));
 
 var isRTL = (err_info.textdirection === "rtl") ? true : false ;
 
-//Default reference font sizes wrt full HD (1920 x 1080)
+// Default reference font sizes wrt full HD (1920 x 1080)
 var errortitle_fontSize = 126; // Error title
 var errordetails_fontSize = 30; // Error details
 var errorinfo_fontSize = 30; // Error info
@@ -35,6 +35,8 @@ var ButtonEnum = {
   SETTINGS_BUTTON : 1
 };
 
+var TargetEnum = {NETWORK: 1, GENERAL: 2};
+
 /* Key code list for key event */
 var leftkey = 37;
 var rightkey = 39;
@@ -46,7 +48,6 @@ var lastfocus = -1;   // Button focus position
 var cursor_x = 0; // X-position of cursor
 
 /* Handle webOSRelaunch event */
-
 function relaunchHandler(e) {
   function onclosecallback() {
     var param = {};
@@ -120,8 +121,7 @@ function cursorStateHandler(e) {
         near_btn_pos = button_pos;
         continue;
       }
-      if ( Math.abs(button_pos - cursor_x) <
-           Math.abs(near_btn_pos - cursor_x) ) {
+      if (Math.abs(button_pos - cursor_x) < Math.abs(near_btn_pos - cursor_x)) {
         near_btn = b;
         near_btn_pos = button_pos;
       }
@@ -147,7 +147,8 @@ window.onkeydown = function checkMoveFocus(e) {
   var key = e.which || e.keyCode || 0;
 
   // Detect left or right keys only
-  if(key != leftkey && key != rightkey) return;
+  if(key != leftkey && key != rightkey)
+    return;
 
   // If there is no focused button, focus on first button
   if(lastfocus == -1) {
@@ -188,29 +189,24 @@ var onExitApp = function() {
   window.close();
 }
 
-var bridge = new WebOSServiceBridge();
-
 var onLaunchSetting = function(button_type, target) {
-  var param = {};
-  var q_param = {};
-  var serviceCall_url = "luna://com.webos.applicationManager/launch";
-  param["id"] = "com.palm.app.settings";
-  q_param["target"] = target;
-  param["params"] = q_param;
-  bridge.call(serviceCall_url, JSON.stringify(param));
+  if (window.errorPageController) {
+    errorPageController.settingsButtonClick(target);
+  }
 }
 
 var onLaunchNetworkSetting = function() {
-  onLaunchSetting(ButtonEnum.SETTINGS_BUTTON, "network");
+  onLaunchSetting(ButtonEnum.SETTINGS_BUTTON, TargetEnum.NETWORK);
 }
 
 var onLaunchGeneralSetting = function() {
-  onLaunchSetting(ButtonEnum.SETTINGS_BUTTON, "general");
+  onLaunchSetting(ButtonEnum.SETTINGS_BUTTON, TargetEnum.GENERAL);
 }
 
 function setOnFocus(no) {
   // Ignore invalid button index and already focused button
-  if(no < 0 || no > g_numButtons-1) return;
+  if(no < 0 || no > g_numButtons-1)
+    return;
   if(g_buttons[no][0].classList.contains("spotlight"))
     return;
 
@@ -230,7 +226,8 @@ function setOnFocus(no) {
 
 function setOutFocus(no) {
   // Ignore invalid button index and already not focused button
-  if(no < 0 || no > g_numButtons-1) return;
+  if(no < 0 || no > g_numButtons-1)
+    return;
   if(!g_buttons[no][0].classList.contains("spotlight"))
     return;
   // Remove spotlight and focus from the button
@@ -253,7 +250,7 @@ function getCurrentTime() {
     return result;
   }
 
-  currentTime = now.getFullYear() + "-" + setDateFormat(now.getMonth()+1) +
+  currentTime = now.getFullYear() + "-" + setDateFormat(now.getMonth() + 1) +
       "-" + setDateFormat(now.getDate());
   currentTime = currentTime + "\u0009" + now.toTimeString();
 
@@ -269,7 +266,7 @@ function getLayoutCase(error) {
     case -137:    // NAME_RESOLUTION_FAILED
       return 2;   // : Exit App, Retry, Network settings
     case -201:    // CERT_DATE_INVALID
-      return 3;     // EXIT APP, RETRY, SETTINGS
+      return 3;   // EXIT APP, RETRY, SETTINGS
     default:
       return 1;   // : Exit App, Retry
   }
@@ -283,8 +280,8 @@ function createButtonOnPage(str_name, str_id, b_dir, func) {
   // Set button properties
   btn.appendChild(btnString);
   btn.id = str_id;
-  btn.className = "enyo-tool-decorator moon-large-button-text moon-button \
-      moon-composite min-width";
+  btn.className =
+      "enyo-tool-decorator moon-large-button-text moon-button moon-composite min-width";
   if(need_small_btn) {
     // Need small button for low resolution
     btn.classList.add("small");
@@ -298,8 +295,7 @@ function createButtonOnPage(str_name, str_id, b_dir, func) {
   btn.setAttribute("role", "button");
 
   // Set button position and append to parent element
-  var btnContainer = (b_dir === "Button_Left") ?
-      "Button_Left" : "Button_Right";
+  var btnContainer = (b_dir === "Button_Left") ? "Button_Left" : "Button_Right";
   document.getElementById(btnContainer).appendChild(btn);
 
   // Add button on list
@@ -310,7 +306,7 @@ function createButtonOnPage(str_name, str_id, b_dir, func) {
 
 }
 
-var onRetryApp = function () {
+var onRetryApp = function() {
   if (errorCode == -106) // No point retrying if network not connected
     return;
   window.location = err_info.url_to_reload;
@@ -322,60 +318,70 @@ function setButtonsOnPage(layoutCase, isRTL) {
 
   switch(layoutCase) {
     case 0: // Exit
-      createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-          dir_head, onExitApp);
+      createButtonOnPage(
+          err_info.exit_app_button_text, "ExitApp_Button", dir_head, onExitApp);
       break;
     case 1: // Exit, Retry
       if(isRTL) {
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
       } else {
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
       }
       break;
     case 2: // Exit, Network setting, Retry buttons
       if(isRTL) {
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
-        createButtonOnPage(err_info.network_settings_button_text,
-            "NetworkSetting_Button", dir_tail, onLaunchNetworkSetting);
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.network_settings_button_text, "NetworkSetting_Button",
+            dir_tail, onLaunchNetworkSetting);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
       } else {
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
-        createButtonOnPage(err_info.network_settings_button_text,
-            "NetworkSetting_Button", dir_tail, onLaunchNetworkSetting);
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
+        createButtonOnPage(
+            err_info.network_settings_button_text, "NetworkSetting_Button",
+            dir_tail, onLaunchNetworkSetting);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
       }
       break;
     case 3: // Exit, Settings, Retry buttons
       if(isRTL) {
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
-        createButtonOnPage(err_info.settings_button_text, "Setting_Button",
-            dir_tail, onLaunchGeneralSetting);
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.settings_button_text, "Setting_Button", dir_tail,
+            onLaunchGeneralSetting);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
       } else {
-        createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-            dir_head, onExitApp);
-        createButtonOnPage(err_info.settings_button_text, "Setting_Button",
-            dir_tail, onLaunchGeneralSetting);
-        createButtonOnPage(err_info.retry_button_text, "Retry_Button",
-            dir_tail, onRetryApp);
+        createButtonOnPage(
+            err_info.exit_app_button_text, "ExitApp_Button", dir_head,
+            onExitApp);
+        createButtonOnPage(
+            err_info.settings_button_text, "Setting_Button", dir_tail,
+            onLaunchGeneralSetting);
+        createButtonOnPage(
+            err_info.retry_button_text, "Retry_Button", dir_tail, onRetryApp);
       }
       break;
 
     default: // Exit
-      createButtonOnPage(err_info.exit_app_button_text, "ExitApp_Button",
-          dir_head, onExitApp);
+      createButtonOnPage(
+          err_info.exit_app_button_text, "ExitApp_Button", dir_head, onExitApp);
       break;
   }
 }
@@ -438,8 +444,7 @@ function setPageStyle() {
 
   // Error title
   errortitle.style.fontSize =
-      ((appResolutionWidth * errortitle_fontSize) / (screen.width)) +
-      size_unit;
+      ((appResolutionWidth * errortitle_fontSize) / (screen.width)) + size_unit;
 
   // Error details
   errordetails.style.fontSize =
@@ -457,7 +462,7 @@ function setPageStyle() {
 
 function setErrorPageMessages(error_title, error_details, error_guide,
     error_info) {
-  //Set Error Information to error Page
+  // Set error information to error Page
   setPageStyle();
   document.getElementById("errortitle").innerHTML = error_title;
   document.getElementById("errordetails").innerHTML = error_details;
@@ -465,7 +470,7 @@ function setErrorPageMessages(error_title, error_details, error_guide,
   document.getElementById("errorinfo").innerHTML = error_info;
 }
 
-function onload(){
+function onload() {
   if (isRTL) {
     document.getElementById("errortitle").style.direction = "rtl";
     document.getElementById("errordetails").style.direction = "rtl";
@@ -474,8 +479,8 @@ function onload(){
     document.getElementById("errorinfo").style.cssFloat = "right";
   }
 
-  //Set Error Information to error Page
-  //TBD: Check this again after localization changes
+  // Set Error Information to error Page
+  // TODO: Check this again after localization changes
   setErrorPageMessages(err_info.error_title, err_info.error_details,
                        err_info.error_guide, err_info.error_info);
 
@@ -488,26 +493,25 @@ function onload(){
   else {
     // checking webengine is ready to handle focus event
     if (document.accessibilityReady)
-       initFocus();
+      initFocus();
     else
       document.addEventListener('webOSAccessibilityReady', initFocus, false);
   }
 
   if (errorCode == -201) {
-  // If it's certificate date error(-201),
-  // check it's ATSC 3.0 STB first so that show different message
-      checkATSC30LegacyBoxSupport().then( function(v) {
-        isATSC30LegacyBoxSupport = v;
-        if(isATSC30LegacyBoxSupport) {
-          setErrorPageMessages(
-              err_info.error_title_atsc_legacy_box + "\u200e(\u200e" +
-                  errorCode + "\u200e)\u200e",
-              err_info.error_details_atsc_legacy_box,
-              err_info.error_guide_atsc_legacy_box,
-              err_info.error_info_atsc_legacy_box + " : " + getCurrentTime());
-        }
-      });
-      document.getElementById("errorinfo").innerHTML += " : " +
-          getCurrentTime();
+    // If it's certificate date error(-201),
+    // check it's ATSC 3.0 STB first so that show different message
+    checkATSC30LegacyBoxSupport().then(function(v) {
+      isATSC30LegacyBoxSupport = v;
+      if (isATSC30LegacyBoxSupport) {
+        setErrorPageMessages(
+            err_info.error_title_atsc_legacy_box + "\u200e(\u200e" + errorCode +
+                "\u200e)\u200e",
+            err_info.error_details_atsc_legacy_box,
+            err_info.error_guide_atsc_legacy_box,
+            err_info.error_info_atsc_legacy_box + " : " + getCurrentTime());
+      }
+    });
+    document.getElementById("errorinfo").innerHTML += " : " + getCurrentTime();
   }
 }
