@@ -1470,6 +1470,7 @@ RenderFrameImpl* RenderFrameImpl::CreateMainFrame(
 
   RenderWidget* render_widget = render_view->GetWidget();
   render_widget->set_delegate(render_view);
+  render_widget->SetUpIdleUserDetector();
 
   // Non-owning pointer that is self-referencing and destroyed by calling
   // Close(). The RenderViewImpl has a RenderWidget already, but not a

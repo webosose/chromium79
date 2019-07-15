@@ -61,6 +61,7 @@
 #include "content/renderer/drop_data_builder.h"
 #include "content/renderer/external_popup_menu.h"
 #include "content/renderer/frame_swap_message_queue.h"
+#include "content/renderer/idle_user_detector.h"
 #include "content/renderer/ime_event_guard.h"
 #include "content/renderer/input/main_thread_event_queue.h"
 #include "content/renderer/input/widget_input_handler_manager.h"
@@ -1108,12 +1109,18 @@ bool RenderWidget::HasPendingPageScaleAnimation() const {
   return layer_tree_host_->HasPendingPageScaleAnimation();
 }
 
+void RenderWidget::SetUpIdleUserDetector() {
+  idle_user_detector_ = std::make_unique<IdleUserDetector>();
+}
+
 bool RenderWidget::HandleInputEvent(
     const blink::WebCoalescedInputEvent& input_event,
     const ui::LatencyInfo& latency_info,
     HandledEventCallback callback) {
   if (IsUndeadOrProvisional())
     return false;
+  if (idle_user_detector_)
+    idle_user_detector_->ActivityDetected();
   input_handler_->HandleInputEvent(input_event, latency_info,
                                    std::move(callback));
   return true;

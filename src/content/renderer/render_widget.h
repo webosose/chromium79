@@ -112,6 +112,7 @@ namespace content {
 class BrowserPlugin;
 class CompositorDependencies;
 class FrameSwapMessageQueue;
+class IdleUserDetector;
 class ImeEventGuard;
 class LayerTreeView;
 class MainThreadEventQueue;
@@ -255,6 +256,12 @@ class CONTENT_EXPORT RenderWidget
   // frame.
   void InitForChildLocalRoot(blink::WebFrameWidget* web_frame_widget,
                              const ScreenInfo& screen_info);
+
+  // Initialization methods used by the RenderViewImpl subclass.
+  //
+  // Idle user detector is optionally set up and destroyed during
+  // initialization/teardown.
+  void SetUpIdleUserDetector();
 
   // Sets a delegate to handle certain RenderWidget operations that need an
   // escape to the RenderView.
@@ -1167,6 +1174,10 @@ class CONTENT_EXPORT RenderWidget
   scoped_refptr<MainThreadEventQueue> input_event_queue_;
 
   mojo::Receiver<mojom::Widget> widget_receiver_;
+
+  // IdleUserDetector is setup optionally on RenderWidget by its creator, so may
+  // be null.
+  std::unique_ptr<IdleUserDetector> idle_user_detector_;
 
   gfx::Rect compositor_visible_rect_;
 

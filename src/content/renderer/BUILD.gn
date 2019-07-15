@@ -85,6 +85,8 @@ target(link_target_type, "renderer") {
     "history_entry.h",
     "history_serialization.cc",
     "history_serialization.h",
+    "idle_user_detector.cc",
+    "idle_user_detector.h",
     "ime_event_guard.cc",
     "ime_event_guard.h",
     "in_process_renderer_thread.cc",

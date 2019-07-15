@@ -205,6 +205,9 @@ namespace content {
 
 namespace {
 
+const int64_t kInitialIdleHandlerDelayMs = 1000;
+const int64_t kLongIdleHandlerDelayMs = 30 * 1000;
+
 #if defined(OS_ANDROID)
 // Unique identifier for each output surface created.
 uint32_t g_next_layer_tree_frame_sink_id = 1;
@@ -748,6 +751,10 @@ void RenderThreadImpl::Init() {
   auto registry = std::make_unique<service_manager::BinderRegistry>();
   InitializeWebKit(registry.get());
 
+  webkit_shared_timer_suspended_ = false;
+  idle_notification_delay_in_ms_ = kInitialIdleHandlerDelayMs;
+  idle_notifications_to_skip_ = 0;
+
   vc_manager_.reset(new blink::WebVideoCaptureImplManager());
 
   browser_plugin_manager_.reset(new BrowserPluginManager());
@@ -1216,7 +1223,11 @@ void RenderThreadImpl::InitializeWebKit(
 
   RenderMediaClient::Initialize();
 
-  if (!GetContentClient()->renderer()->RunIdleHandlerWhenWidgetsHidden()) {
+  idle_timer_.SetTaskRunner(GetWebMainThreadScheduler()->DefaultTaskRunner());
+
+  if (GetContentClient()->renderer()->RunIdleHandlerWhenWidgetsHidden()) {
+    ScheduleIdleHandler(kLongIdleHandlerDelayMs);
+  } else {
     // If we do not track widget visibility, then assume conservatively that
     // the isolate is in background. This reduces memory usage.
     isolate->IsolateInBackgroundNotification();
@@ -1278,6 +1289,67 @@ void RenderThreadImpl::RegisterExtension(
   WebScriptController::RegisterExtension(std::move(extension));
 }
 
+void RenderThreadImpl::ScheduleIdleHandler(int64_t initial_delay_ms) {
+  idle_notification_delay_in_ms_ = initial_delay_ms;
+  idle_timer_.Stop();
+  idle_timer_.Start(FROM_HERE,
+      base::TimeDelta::FromMilliseconds(initial_delay_ms),
+      this, &RenderThreadImpl::IdleHandler);
+}
+
+void RenderThreadImpl::IdleHandler() {
+  bool run_in_foreground_tab =
+      process_state_ == mojom::RenderProcessState::kVisible &&
+      GetContentClient()->renderer()->RunIdleHandlerWhenWidgetsHidden();
+  if (run_in_foreground_tab) {
+    if (idle_notifications_to_skip_ > 0) {
+      --idle_notifications_to_skip_;
+    } else {
+      ReleaseFreeMemory();
+    }
+    ScheduleIdleHandler(kLongIdleHandlerDelayMs);
+    return;
+  }
+
+  ReleaseFreeMemory();
+
+  // Continue the idle timer if the webkit shared timer is not suspended or
+  // something is left to do.
+  bool continue_timer = !webkit_shared_timer_suspended_;
+
+  // Schedule next invocation. When the tab is originally hidden, an invocation
+  // is scheduled for kInitialIdleHandlerDelayMs in
+  // RenderThreadImpl::WidgetHidden in order to race to a minimal heap.
+  // After that, idle calls can be much less frequent, so run at a maximum of
+  // once every kLongIdleHandlerDelayMs.
+  // Dampen the delay using the algorithm (if delay is in seconds):
+  //    delay = delay + 1 / (delay + 2)
+  // Using floor(delay) has a dampening effect such as:
+  //    30s, 30, 30, 31, 31, 31, 31, 32, 32, ...
+  // If the delay is in milliseconds, the above formula is equivalent to:
+  //    delay_ms / 1000 = delay_ms / 1000 + 1 / (delay_ms / 1000 + 2)
+  // which is equivalent to
+  //    delay_ms = delay_ms + 1000*1000 / (delay_ms + 2000).
+  if (continue_timer) {
+    ScheduleIdleHandler(
+        std::max(kLongIdleHandlerDelayMs,
+                 idle_notification_delay_in_ms_ +
+                 1000000 / (idle_notification_delay_in_ms_ + 2000)));
+
+  } else {
+    idle_timer_.Stop();
+  }
+}
+
+int64_t RenderThreadImpl::GetIdleNotificationDelayInMs() const {
+  return idle_notification_delay_in_ms_;
+}
+
+void RenderThreadImpl::SetIdleNotificationDelayInMs(
+    int64_t idle_notification_delay_in_ms) {
+  idle_notification_delay_in_ms_ = idle_notification_delay_in_ms;
+}
+
 int RenderThreadImpl::PostTaskToAllWebWorkers(
     const base::RepeatingClosure& closure) {
   return WorkerThreadRegistry::Instance()->PostTaskToAllThreads(closure);
@@ -1287,6 +1359,10 @@ bool RenderThreadImpl::ResolveProxy(const GURL& url, std::string* proxy_list) {
   bool result = false;
   Send(new ViewHostMsg_ResolveProxy(url, &result, proxy_list));
   return result;
+}
+
+void RenderThreadImpl::PostponeIdleNotification() {
+  idle_notifications_to_skip_ = 2;
 }
 
 media::GpuVideoAcceleratorFactories* RenderThreadImpl::GetGpuFactories() {
@@ -2147,6 +2223,7 @@ void RenderThreadImpl::SetWebKitSharedTimersSuspended(bool suspend) {
   } else {
     main_thread_scheduler_->ResumeTimersForAndroidWebView();
   }
+  webkit_shared_timer_suspended_ = suspend;
 #else
   NOTREACHED();
 #endif
@@ -2350,6 +2427,7 @@ void RenderThreadImpl::OnRendererHidden() {
   if (!GetContentClient()->renderer()->RunIdleHandlerWhenWidgetsHidden())
     return;
   main_thread_scheduler_->SetRendererHidden(true);
+  ScheduleIdleHandler(kInitialIdleHandlerDelayMs);
 }
 
 void RenderThreadImpl::OnRendererVisible() {
@@ -2357,6 +2435,7 @@ void RenderThreadImpl::OnRendererVisible() {
   if (!GetContentClient()->renderer()->RunIdleHandlerWhenWidgetsHidden())
     return;
   main_thread_scheduler_->SetRendererHidden(false);
+  ScheduleIdleHandler(kLongIdleHandlerDelayMs);
 }
 
 bool RenderThreadImpl::RendererIsBackgrounded() const {

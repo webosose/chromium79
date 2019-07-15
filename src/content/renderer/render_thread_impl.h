@@ -191,6 +191,11 @@ class CONTENT_EXPORT RenderThreadImpl
   std::unique_ptr<base::SharedMemory> HostAllocateSharedMemoryBuffer(
       size_t buffer_size) override;
   void RegisterExtension(std::unique_ptr<v8::Extension> extension) override;
+  void ScheduleIdleHandler(int64_t initial_delay_ms) override;
+  void IdleHandler() override;
+  int64_t GetIdleNotificationDelayInMs() const override;
+  void SetIdleNotificationDelayInMs(
+      int64_t idle_notification_delay_in_ms) override;
   int PostTaskToAllWebWorkers(const base::RepeatingClosure& closure) override;
   bool ResolveProxy(const GURL& url, std::string* proxy_list) override;
   base::WaitableEvent* GetShutdownEvent() override;
@@ -342,6 +347,11 @@ class CONTENT_EXPORT RenderThreadImpl
   // thread.
   scoped_refptr<viz::RasterContextProvider>
   SharedCompositorWorkerContextProvider(bool try_gpu_rasterization);
+
+  // Causes the idle handler to skip sending idle notifications
+  // on the two next scheduled calls, so idle notifications are
+  // not sent for at least one notification delay.
+  void PostponeIdleNotification();
 
   media::GpuVideoAcceleratorFactories* GetGpuFactories();
 
@@ -592,11 +602,22 @@ class CONTENT_EXPORT RenderThreadImpl
   // process has yet to send an update and the state is unknown.
   base::Optional<mojom::RenderProcessState> process_state_;
 
+  // The current value of the idle notification timer delay.
+  int64_t idle_notification_delay_in_ms_;
+
+  // The number of idle handler calls that skip sending idle notifications.
+  int idle_notifications_to_skip_;
+
+  bool webkit_shared_timer_suspended_;
+
   blink::WebString user_agent_;
   blink::UserAgentMetadata user_agent_metadata_;
 
   // Used to control web test specific behavior.
   bool web_test_mode_ = false;
+
+  // Timer that periodically calls IdleHandler.
+  base::RepeatingTimer idle_timer_;
 
   // Sticky once true, indicates that compositing is done without Gpu, so
   // resources given to the compositor or to the viz service should be
