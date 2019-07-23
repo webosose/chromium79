@@ -143,6 +143,16 @@ declare_args() {
   # This allows to make behavior of uninitialized memory bugs consistent, easier to
   # recognize when debugging and often just to crash immediately.
   init_stack_vars = false
+
+  # Compress resulting debug symbols section, reducing the size of the
+  # non-stripped binary sizes. It is required at least in ARM32 with
+  # symbol_level 2 as otherwise the binary will be too big and toolchain
+  # tools will fail to handle the resulting binary, breaking debuggability.
+  #
+  # Though, this could potentially make breakpad fail, as it does not
+  # support compressed debug sections. See https://crbug.com/google-breakpad/615
+  compress_debug_info =
+      current_cpu == "arm" && !is_component_build && symbol_level == 2
 }
 
 declare_args() {
@@ -403,6 +413,16 @@ config("compiler") {
         "-Wl,-z,defs",
         "-Wl,--as-needed",
       ]
+    }
+
+    # Use long PLT header in ARM32. In some cases, the resulting binary is too
+    # much big, and that makes debugging fail to resolve symbols.
+    if (current_cpu == "arm") {
+      ldflags += [ "-Wl,--long-plt" ]
+    }
+
+    if (compress_debug_info) {
+      ldflags += [ "-Wl,--compress-debug-sections=zlib" ]
     }
   }
 
