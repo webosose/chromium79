@@ -821,6 +821,11 @@ class CONTENT_EXPORT RenderWidget
   void OnOrientationChange();
   void OnWaitNextFrameForTests(int routing_id);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void OnActivateCompositor();
+  void OnDeactivateCompositor();
+#endif
+
   // Sets the "hidden" state of this widget.  All modification of is_hidden_
   // should use this method so that we can properly inform the RenderThread of
   // our state.

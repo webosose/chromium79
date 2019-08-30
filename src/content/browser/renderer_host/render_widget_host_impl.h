@@ -783,6 +783,11 @@ class CONTENT_EXPORT RenderWidgetHostImpl
   // this function returns true.  Otherwise, this function returns false.
   bool ConsumePendingUserActivationIfAllowed();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void ActivateRendererCompositor();
+  void DeactivateRendererCompositor();
+#endif
+
  protected:
   // ---------------------------------------------------------------------------
   // The following method is overridden by RenderViewHost to send upwards to

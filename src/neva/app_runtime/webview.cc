@@ -1228,4 +1228,23 @@ void WebView::SetV8ExtraFlags(const std::string& v8_extra_flags) {
       web_contents_->GetMainFrame()->GetProcess()->GetID(), v8_extra_flags);
 }
 
+void WebView::ActivateRendererCompositor() {
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh)
+    return;
+  content::RenderWidgetHostImpl* rwhi =
+      static_cast<content::RenderViewHostImpl*>(rvh)->GetWidget();
+  if (rwhi)
+    rwhi->ActivateRendererCompositor();
+}
+
+void WebView::DeactivateRendererCompositor() {
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh)
+    return;
+  content::RenderWidgetHostImpl* rwhi =
+      static_cast<content::RenderViewHostImpl*>(rvh)->GetWidget();
+  if (rwhi)
+    rwhi->DeactivateRendererCompositor();
+}
 }  // namespace neva_app_runtime
