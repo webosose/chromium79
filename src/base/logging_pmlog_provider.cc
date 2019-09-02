@@ -21,6 +21,7 @@
 #include "base/json/string_escape.h"
 #include "base/memory/singleton.h"
 #include "base/strings/string_piece.h"
+#include "base/threading/platform_thread.h"
 
 namespace logging {
 
@@ -95,10 +96,11 @@ bool PmLogProvider::LogMessage(logging::LogSeverity severity,
 
   const size_t kMaxLogLength = 896;
 
-#define PMLOG_CALL(level_suffix, msgid)                                      \
-  PmLogMsg(provider->GetContext(), level_suffix, msgid, 0, "%d[%s:%d] %.*s", \
-           severity, file_tail.data(), line,                                 \
-           std::min(escaped_string.length() - offset, kMaxLogLength),        \
+#define PMLOG_CALL(level_suffix, msgid)                                     \
+  PmLogMsg(provider->GetContext(), level_suffix, msgid, 0,                  \
+           "%d:%d %d[%s:%d] %.*s", getpid(),                                \
+           base::PlatformThread::CurrentId(), severity, file_tail.data(),   \
+           line, std::min(escaped_string.length() - offset, kMaxLogLength), \
            escaped_string.c_str() + offset)
 
   for (size_t offset = 0; offset < escaped_string.length();

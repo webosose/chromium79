@@ -19,6 +19,8 @@
 #include <PmLogLib.h>
 #include <glib.h>
 
+#include "base/threading/platform_thread.h"
+
 namespace logging {
 
 #define DECLARE_PMLOG_FOR_CONTEXT_IMPL(Context, string)                        \
@@ -34,11 +36,17 @@ namespace logging {
     return PmLogIsEnabled(Context##PmLogContext(), level);                     \
   }                                                                            \
   void Context##PmLog(int level, const char* msgid, const char* format, ...) { \
-    char buffer[4096] = {0};                                                   \
+    static const int buffer_size = 1024;                                       \
+    char buffer[buffer_size] = {0};                                            \
+                                                                               \
+    int header_len = 0;                                                        \
+    header_len = snprintf(buffer, buffer_size - 1, "[%d:%d]", getpid(),        \
+                          base::PlatformThread::CurrentId());                  \
                                                                                \
     va_list args;                                                              \
     va_start(args, format);                                                    \
-    vsnprintf(buffer, sizeof(buffer), format, args);                           \
+    vsnprintf(buffer + header_len, buffer_size - header_len - 1, format,       \
+              args);                                                           \
     va_end(args);                                                              \
                                                                                \
     char* escaped_string = g_strescape(buffer, NULL);                          \
