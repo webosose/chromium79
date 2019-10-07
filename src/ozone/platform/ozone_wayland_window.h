@@ -54,6 +54,7 @@ class OzoneWaylandWindow : public PlatformWindow,
 
   unsigned GetHandle() const { return handle_; }
   PlatformWindowDelegate* GetDelegate() const { return delegate_; }
+  std::string GetDisplayId() const { return display_id_; }
 
   // PlatformWindow:
   void InitPlatformWindow(PlatformWindowType type,
@@ -166,6 +167,7 @@ class OzoneWaylandWindow : public PlatformWindow,
   ui::WidgetState state_;
   SkRegion* region_;
   base::string16 title_;
+  std::string display_id_;
   // The current cursor bitmap (immutable).
   scoped_refptr<BitmapCursorOzone> bitmap_;
   bool init_window_;

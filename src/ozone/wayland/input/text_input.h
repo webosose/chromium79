@@ -33,8 +33,12 @@ class WaylandTextInput {
   ~WaylandTextInput();
   void ResetIme();
   void ShowInputPanel(wl_seat* input_seat, unsigned handle);
-  void HideInputPanel(wl_seat* input_seat);
-  void SetActiveWindow(WaylandWindow* window);
+  void HideInputPanel(wl_seat* input_seat,
+                      const std::string& display_id,
+                      ui::ImeHiddenType);
+  void SetActiveWindow(const std::string& display_id, WaylandWindow* window);
+  WaylandWindow* GetActiveWindow(const std::string& display_id) const {
+      return active_window_};
   WaylandSeat* getSeat() { return seat_; }
 
  private:

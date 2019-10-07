@@ -66,9 +66,12 @@ void WaylandPointer::OnMotionNotify(void* data,
   float sx = wl_fixed_to_double(sx_w);
   float sy = wl_fixed_to_double(sy_w);
 
+  const uint32_t device_id = wl_proxy_get_id(
+      reinterpret_cast<wl_proxy*>(input_pointer));
+
   device->pointer_position_.SetPoint(sx, sy);
-  if (seat->GetGrabWindowHandle() &&
-        seat->GetGrabWindowHandle() != seat->GetFocusWindowHandle()) {
+  if (seat->GetGrabWindowHandle(device_id) &&
+        seat->GetGrabWindowHandle(device_id) != seat->GetEnteredWindowHandle(device_id)) {
       return;
   }
 
@@ -89,11 +92,16 @@ void WaylandPointer::OnButtonNotify(void* data,
   WaylandPointer* device = static_cast<WaylandPointer*>(data);
   WaylandDisplay::GetInstance()->SetSerial(serial);
   WaylandSeat* seat = WaylandDisplay::GetInstance()->PrimarySeat();
-  if (seat->GetFocusWindowHandle() && seat->GetGrabButton() == 0 &&
-        state == WL_POINTER_BUTTON_STATE_PRESSED)
-    seat->SetGrabWindowHandle(seat->GetFocusWindowHandle(), button);
+  const uint32_t device_id =
+      wl_proxy_get_id(reinterpret_cast<wl_proxy*>(input_pointer));
+  if (seat->GetEnteredWindowHandle(device_id) &&
+      seat->GetGrabButton(device_id) == 0 &&
+      state == WL_POINTER_BUTTON_STATE_PRESSED)
+    seat->SetGrabWindow(
+        device_id,
+        GrabWindowInfo(seat->GetEnteredWindowHandle(device_id), button));
 
-  if (seat->GetGrabWindowHandle()) {
+  if (seat->GetGrabWindowHandle(device_id)) {
     ui::EventType type = ui::ET_MOUSE_PRESSED;
     if (state == WL_POINTER_BUTTON_STATE_RELEASED)
       type = ui::ET_MOUSE_RELEASED;
@@ -107,14 +115,15 @@ void WaylandPointer::OnButtonNotify(void* data,
     else if (button == BTN_MIDDLE)
       flags = ui::EF_MIDDLE_MOUSE_BUTTON;
 
-    device->GetDispatcher()->ButtonNotify(seat->GetFocusWindowHandle(), type,
-                                          flags, device->pointer_position_.x(),
-                                          device->pointer_position_.y());
+    device->GetDispatcher()->ButtonNotify(
+        seat->GetEnteredWindowHandle(device_id), type, flags,
+        device->pointer_position_.x(), device->pointer_position_.y());
   }
 
-  if (seat->GetGrabWindowHandle() && seat->GetGrabButton() == button &&
-        state == WL_POINTER_BUTTON_STATE_RELEASED)
-    seat->SetGrabWindowHandle(0, 0);
+  if (seat->GetGrabWindowHandle(device_id) &&
+      seat->GetGrabButton(device_id) == button &&
+      state == WL_POINTER_BUTTON_STATE_RELEASED)
+    seat->SetGrabWindow(device_id, GrabWindowInfo(0, 0));
 }
 
 void WaylandPointer::OnAxisNotify(void* data,
@@ -149,38 +158,62 @@ void WaylandPointer::OnPointerEnter(void* data,
                                     wl_fixed_t sx_w,
                                     wl_fixed_t sy_w) {
   WaylandSeat* seat = WaylandDisplay::GetInstance()->PrimarySeat();
+  const uint32_t device_id = wl_proxy_get_id(
+      reinterpret_cast<wl_proxy*>(input_pointer));
 
   if (!surface) {
-    seat->SetFocusWindowHandle(0);
+    seat->SetEnteredWindowHandle(device_id, 0);
     return;
   }
 
   WaylandPointer* device = static_cast<WaylandPointer*>(data);
-  WaylandWindow* window =
-      static_cast<WaylandWindow*>(wl_surface_get_user_data(surface));
-  unsigned handle = window->Handle();
-  float sx = wl_fixed_to_double(sx_w);
-  float sy = wl_fixed_to_double(sy_w);
 
-  WaylandDisplay::GetInstance()->SetSerial(serial);
-  device->pointer_position_.SetPoint(sx, sy);
-  seat->SetFocusWindowHandle(handle);
-  device->GetDispatcher()->PointerEnter(handle, device->pointer_position_.x(),
+  if (seat && device) {
+    float sx = wl_fixed_to_double(sx_w);
+    float sy = wl_fixed_to_double(sy_w);
+
+    WaylandDisplay::GetInstance()->SetSerial(serial);
+    device->pointer_position_.SetPoint(sx, sy);
+
+    WaylandWindow* window =
+        static_cast<WaylandWindow*>(wl_surface_get_user_data(surface));
+
+    if (window) {
+      seat->SetEnteredWindowHandle(device_id, window->Handle());
+      seat->SetActiveInputWindow(window->GetDisplayId(),
+                                 window->Handle());
+      device->GetDispatcher()->PointerEnter(device_id,
+                                        window->Handle(),
+                                        device->pointer_position_.x(),
                                         device->pointer_position_.y());
+    }
+  }
 }
 
 void WaylandPointer::OnPointerLeave(void* data,
                                     wl_pointer* input_pointer,
                                     uint32_t serial,
                                     wl_surface* surface) {
-  WaylandPointer* device = static_cast<WaylandPointer*>(data);
-  WaylandDisplay::GetInstance()->SetSerial(serial);
-
   WaylandSeat* seat = WaylandDisplay::GetInstance()->PrimarySeat();
-  device->GetDispatcher()->PointerLeave(seat->GetFocusWindowHandle(),
+  WaylandPointer* device = static_cast<WaylandPointer*>(data);
+
+  const uint32_t device_id = wl_proxy_get_id(
+      reinterpret_cast<wl_proxy*>(input_pointer));
+
+  if (seat && device) {
+    WaylandDisplay::GetInstance()->SetSerial(serial);
+
+    WaylandWindow* window =
+        static_cast<WaylandWindow*>(wl_surface_get_user_data(surface));
+
+    if (window) {
+      device->GetDispatcher()->PointerLeave(device_id,
+                                        window->Handle(),
                                         device->pointer_position_.x(),
                                         device->pointer_position_.y());
-  seat->SetFocusWindowHandle(0);
+      seat->SetEnteredWindowHandle(device_id, 0);
+    }
+  }
 }
 
 }  // namespace ozonewayland
