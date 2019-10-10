@@ -22,9 +22,8 @@
 
 namespace ozonewayland {
 
-WaylandKeyboard::WaylandKeyboard() : input_keyboard_(NULL),
-    dispatcher_(NULL) {
-}
+WaylandKeyboard::WaylandKeyboard(WaylandDisplay* dispatcher)
+    : HotplugDevice(dispatcher), input_keyboard_(nullptr) {}
 
 WaylandKeyboard::~WaylandKeyboard() {
   if (input_keyboard_)
@@ -39,9 +38,6 @@ void WaylandKeyboard::OnSeatCapabilities(wl_seat *seat, uint32_t caps) {
     WaylandKeyboard::OnKeyNotify,
     WaylandKeyboard::OnKeyModifiers,
   };
-
-  dispatcher_ =
-      WaylandDisplay::GetInstance();
 
   if ((caps & WL_SEAT_CAPABILITY_KEYBOARD) && !input_keyboard_) {
     input_keyboard_ = wl_seat_get_keyboard(seat);
@@ -66,7 +62,7 @@ void WaylandKeyboard::OnKeyNotify(void* data,
     type = ui::ET_KEY_RELEASED;
   const uint32_t device_id = wl_proxy_get_id(
       reinterpret_cast<wl_proxy*>(input_keyboard));
-  device->dispatcher_->KeyNotify(type, key, device_id);
+  device->GetDispatcher()->KeyNotify(type, key, device_id);
 }
 
 void WaylandKeyboard::OnKeyboardKeymap(void *data,
@@ -87,7 +83,7 @@ void WaylandKeyboard::OnKeyboardKeymap(void *data,
   }
 
   base::SharedMemoryHandle section = base::SharedMemoryHandle::ImportHandle(fd, size);
-  device->dispatcher_->InitializeXKB(section, size);
+  device->GetDispatcher()->InitializeXKB(section, size);
 }
 
 void WaylandKeyboard::OnKeyboardEnter(void* data,
@@ -111,7 +107,7 @@ void WaylandKeyboard::OnKeyboardEnter(void* data,
   WaylandWindow* window =
     static_cast<WaylandWindow*>(wl_surface_get_user_data(surface));
   seat->SetFocusWindowHandle(window->Handle());
-  device->dispatcher_->KeyboardEnter(window->Handle());
+  device->GetDispatcher()->KeyboardEnter(window->Handle());
 }
 
 void WaylandKeyboard::OnKeyboardLeave(void* data,
@@ -127,7 +123,7 @@ void WaylandKeyboard::OnKeyboardLeave(void* data,
   WaylandKeyboard* device = static_cast<WaylandKeyboard*>(data);
   WaylandWindow* window =
     static_cast<WaylandWindow*>(wl_surface_get_user_data(surface));
-  device->dispatcher_->KeyboardLeave(window->Handle());
+  device->GetDispatcher()->KeyboardLeave(window->Handle());
   seat->SetFocusWindowHandle(0);
 }
 
