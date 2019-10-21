@@ -41,6 +41,7 @@
 #include "base/memory/shared_memory.h"
 #include "base/memory/weak_ptr.h"
 #include "base/single_thread_task_runner.h"
+#include "ozone/platform/event_param_traits.h"
 #include "ozone/platform/input_content_type.h"
 #include "ozone/wayland/egl/gl_surface_wayland.h"
 #include "ui/base/ime/neva/input_method_common.h"
@@ -205,12 +206,10 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   void InputPanelLeave(uint32_t device_id);
   void KeyNotify(ui::EventType type, unsigned code, int device_id);
   void VirtualKeyNotify(ui::EventType type, uint32_t key, int device_id);
-  void TouchNotify(ui::EventType type,
-                   float x,
-                   float y,
-                   int32_t touch_id,
-                   uint32_t time_stamp);
-
+  void TouchNotify(uint32_t device_id,
+                   unsigned handle,
+                   ui::EventType type,
+                   const ui::TouchEventInfo& event_info);
   void OutputScreenChanged(unsigned width, unsigned height, int rotation);
   void WindowResized(unsigned handle, unsigned width, unsigned height);
   void WindowUnminimized(unsigned windowhandle);
