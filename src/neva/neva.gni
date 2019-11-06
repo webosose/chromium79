@@ -89,4 +89,7 @@ declare_args() {
 
   # Suspend capturing audio/video when tab or app is suspended
   use_neva_suspend_media_capture = is_webos
+
+  # Enable local storage limit per second level domain
+  enable_local_storage_limit_for_second_level_domain = is_webos
 }

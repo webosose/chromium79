@@ -128,4 +128,8 @@ config("config") {
   if (use_filescheme_codecache) {
     defines += [ "USE_FILESCHEME_CODECACHE=1" ]
   }
+
+  if (enable_local_storage_limit_for_second_level_domain) {
+    defines += [ "ENABLE_LOCAL_STORAGE_LIMIT_FOR_SECOND_LEVEL_DOMAIN=1" ]
+  }
 }

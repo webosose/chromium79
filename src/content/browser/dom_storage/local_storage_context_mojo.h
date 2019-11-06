@@ -15,6 +15,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/sequenced_task_runner.h"
+#include "base/strings/string_piece.h"
 #include "base/threading/sequence_bound.h"
 #include "base/trace_event/memory_allocator_dump.h"
 #include "base/trace_event/memory_dump_provider.h"
@@ -160,6 +161,11 @@ class CONTENT_EXPORT LocalStorageContextMojo
 
   void GetStatistics(size_t* total_cache_size, size_t* unused_area_count);
   void OnCommitResult(leveldb::Status status);
+
+#if defined(ENABLE_LOCAL_STORAGE_LIMIT_FOR_SECOND_LEVEL_DOMAIN)
+  void RetrieveStorageUsageForOrigin(GetStorageUsageCallback callback,
+                                     url::Origin origin);
+#endif
 
   // These values are written to logs.  New enum values can be added, but
   // existing enums must never be renumbered or deleted and reused.
