@@ -885,10 +885,7 @@ void WebMediaPlayerNeva::OnTimeUpdate(base::TimeDelta current_timestamp,
   if (is_playing_) {
     upper_bound += base::TimeDelta::FromMilliseconds(kTimeUpdateInterval);
   }
-  // if the lower_bound is smaller than the current time, just use the current
-  // time so that the timer is always progressing.
-  lower_bound =
-      std::max(lower_bound, base::TimeDelta::FromSecondsD(CurrentTime()));
+
   if (lower_bound > upper_bound)
     upper_bound = lower_bound;
   interpolator_.SetBounds(
