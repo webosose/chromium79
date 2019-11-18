@@ -439,6 +439,13 @@ URLLoader::URLLoader(
       request.corb_excluded && request.mode == mojom::RequestMode::kNoCors &&
       CrossOriginReadBlocking::ShouldAllowForPlugin(
           factory_params_->process_id);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  if (network::CrossOriginReadBlocking::ShouldAllowForProcess(GetProcessId())) {
+    is_nocors_corb_excluded_request_ = true;
+  }
+#endif
+
   request_mode_ = request.mode;
 
   throttling_token_ = network::ScopedThrottlingToken::MaybeCreate(

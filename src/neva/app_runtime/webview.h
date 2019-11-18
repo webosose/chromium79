@@ -246,6 +246,7 @@ class WebView : public content::WebContentsDelegate,
   void UpdateViewportScaleFactor();
   void SetDisallowScrollbarsInMainFrame(bool disallow);
   void GrantLoadLocalResources();
+  void PushCORBDisabledToIOThread(bool disabled);
 
   WebViewDelegate* webview_delegate_ = nullptr;
 

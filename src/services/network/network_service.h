@@ -151,6 +151,10 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkService
 #endif
   void AddCorbExceptionForPlugin(uint32_t process_id) override;
   void RemoveCorbExceptionForPlugin(uint32_t process_id) override;
+#if defined(OS_WEBOS)
+  void AddCorbExceptionForProcess(uint32_t process_id) override;
+  void RemoveCorbExceptionForProcess(uint32_t process_id) override;
+#endif
   void AddExtraMimeTypesForCorb(
       const std::vector<std::string>& mime_types) override;
   void OnMemoryPressure(base::MemoryPressureListener::MemoryPressureLevel

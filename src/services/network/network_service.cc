@@ -599,6 +599,18 @@ void NetworkService::AddCorbExceptionForPlugin(uint32_t process_id) {
   CrossOriginReadBlocking::AddExceptionForPlugin(process_id);
 }
 
+#if defined(OS_WEBOS)
+void NetworkService::AddCorbExceptionForProcess(uint32_t process_id) {
+  DCHECK_NE(mojom::kBrowserProcessId, process_id);
+  CrossOriginReadBlocking::AddExceptionForProcess(process_id);
+}
+
+void NetworkService::RemoveCorbExceptionForProcess(uint32_t process_id) {
+  DCHECK_NE(mojom::kBrowserProcessId, process_id);
+  CrossOriginReadBlocking::RemoveExceptionForProcess(process_id);
+}
+#endif
+
 void NetworkService::RemoveCorbExceptionForPlugin(uint32_t process_id) {
   DCHECK_NE(mojom::kBrowserProcessId, process_id);
   CrossOriginReadBlocking::RemoveExceptionForPlugin(process_id);

@@ -255,6 +255,12 @@ base::flat_set<std::string>& GetNeverSniffedMimeTypes() {
 
   return *s_types;
 }
+#if defined(USE_NEVA_APPRUNTIME)
+std::set<int>& GetExceptionProcesses() {
+  static base::NoDestructor<std::set<int>> set;
+  return *set;
+}
+#endif  // USE_NEVA_APPRUNTIME
 
 }  // namespace
 
@@ -1256,5 +1262,26 @@ void CrossOriginReadBlocking::AddExtraMimeTypesForCorb(
   never_sniffed_types.insert(mime_types.begin(), mime_types.end());
   never_sniffed_types.shrink_to_fit();
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+// static
+void CrossOriginReadBlocking::AddExceptionForProcess(int process_id) {
+  std::set<int>& processes = GetExceptionProcesses();
+  processes.insert(process_id);
+}
+
+// static
+bool CrossOriginReadBlocking::ShouldAllowForProcess(int process_id) {
+  std::set<int>& processes = GetExceptionProcesses();
+  return base::Contains(processes, process_id);
+}
+
+// static
+void CrossOriginReadBlocking::RemoveExceptionForProcess(int process_id) {
+  std::set<int>& processes = GetExceptionProcesses();
+  size_t number_of_elements_removed = processes.erase(process_id);
+  DCHECK_EQ(1u, number_of_elements_removed);
+}
+#endif  // USE_NEVA_APPRUNTIME
 
 }  // namespace network

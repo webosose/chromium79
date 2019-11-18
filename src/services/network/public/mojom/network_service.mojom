@@ -306,6 +306,12 @@ interface NetworkService {
   // Reverts AddCorbExceptionForPlugin.
   RemoveCorbExceptionForPlugin(uint32 process_id);
 
+  [EnableIf=is_webos]
+  AddCorbExceptionForProcess(uint32 process_id);
+
+  [EnableIf=is_webos]
+  RemoveCorbExceptionForProcess(uint32 process_id);
+
   // Registers additional MIME types that can be protected by CORB (without any
   // confirmation sniffing).
   //

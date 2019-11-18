@@ -44,6 +44,7 @@
 #include "neva/app_runtime/webview.h"
 #include "neva/pal_service/pal_service_factory.h"
 #include "neva/pal_service/public/mojom/constants.mojom.h"
+#include "services/network/cross_origin_read_blocking.h"
 #include "services/network/public/mojom/network_service.mojom.h"
 #include "services/service_manager/sandbox/switches.h"
 #include "ui/base/ui_base_neva_switches.h"
@@ -515,4 +516,24 @@ void AppRuntimeContentBrowserClient::LoadExtensions(
   LoadAppsFromCommandLine(extension_system, browser_context);
 }
 #endif
+void AppRuntimeContentBrowserClient::PushCORBDisabledToIOThread(int process_id,
+                                                                bool disabled) {
+  base::PostTask(
+      FROM_HERE, {content::BrowserThread::IO},
+      base::BindOnce(&AppRuntimeContentBrowserClient::SetCORBDisabledOnIOThread,
+                     base::Unretained(this), process_id, disabled));
+}
+
+void AppRuntimeContentBrowserClient::SetCORBDisabledOnIOThread(int process_id,
+                                                               bool disabled) {
+  if (!GetNetworkService())
+    return;
+
+  if (disabled) {
+    GetNetworkService()->AddCorbExceptionForProcess(process_id);
+  } else {
+    GetNetworkService()->RemoveCorbExceptionForProcess(process_id);
+  }
+}
+
 }  // namespace neva_app_runtime
