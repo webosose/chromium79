@@ -770,6 +770,16 @@ void RenderThreadImpl::Init() {
                                              weak_factory_.GetWeakPtr()),
                          base::ThreadTaskRunnerHandle::Get());
 
+#if defined(USE_NEVA_APPRUNTIME)
+  registry->AddInterface(
+      // Unretained here is safe, since PeerConnectionTracker instance
+      // is a leaky singleton.
+      base::BindRepeating(
+          &PeerConnectionTracker::Bind,
+          base::Unretained(peer_connection_tracker_.get())),
+      base::ThreadTaskRunnerHandle::Get());
+#endif
+
   if (base::FeatureList::IsEnabled(
           blink::features::kOffMainThreadServiceWorkerStartup)) {
     auto task_runner = base::CreateSingleThreadTaskRunner(

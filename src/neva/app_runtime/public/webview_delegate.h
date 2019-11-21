@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include "neva/app_runtime/public/app_runtime_constants.h"
+
 namespace neva_app_runtime {
 
 class WebViewDelegate {
@@ -58,6 +60,8 @@ class WebViewDelegate {
   virtual void DidFirstImagePaint() {}
   virtual void DidFirstMeaningfulPaint() {}
   virtual void DidNonFirstMeaningfulPaint() {}
+  virtual void DidDropAllPeerConnections(
+      neva_app_runtime::DropPeerConnectionReason reason) {}
 
   // Pluggable delegate
   virtual void SendCookiesForHostname(const std::string& cookies) {}

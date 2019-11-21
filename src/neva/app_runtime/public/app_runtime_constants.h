@@ -120,6 +120,13 @@ enum class StorageUseMode {
   kApplicationAssets,
 };
 
+enum class DropPeerConnectionReason {
+  // Dropped because page got hidden
+  kDropPeerConnectionReasonPageHidden = 0,
+  kDropPeerConnectionReasonUnknown,
+  kDropPeerConnectionReasonLast = kDropPeerConnectionReasonUnknown
+};
+
 }  // namespace neva_app_runtime
 
 #endif  // NEVA_APP_RUNTIME_PUBLIC_APP_RUNTIME_CONSTANTS_H_

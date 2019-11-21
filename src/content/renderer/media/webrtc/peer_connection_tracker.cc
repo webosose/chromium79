@@ -34,6 +34,11 @@
 #include "third_party/blink/public/web/web_local_frame.h"
 #include "third_party/blink/public/web/web_user_media_request.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
+#include "third_party/blink/public/platform/platform.h"
+#endif
+
 using webrtc::StatsReport;
 using webrtc::StatsReports;
 using blink::WebRTCPeerConnectionHandlerClient;
@@ -608,7 +613,12 @@ PeerConnectionTracker::PeerConnectionTracker(
     scoped_refptr<base::SingleThreadTaskRunner> main_thread_task_runner)
     : next_local_id_(1),
       send_target_for_test_(nullptr),
-      main_thread_task_runner_(std::move(main_thread_task_runner)) {}
+      main_thread_task_runner_(std::move(main_thread_task_runner)) {
+#if defined(USE_NEVA_APPRUNTIME)
+  blink::Platform::Current()->GetBrowserInterfaceBrokerProxy()->GetInterface(
+      peer_connection_tracker_host_.BindNewPipeAndPassReceiver());
+#endif
+}
 
 PeerConnectionTracker::PeerConnectionTracker(
     mojom::PeerConnectionTrackerHostAssociatedPtr host,
@@ -698,6 +708,28 @@ void PeerConnectionTracker::OnStopEventLog(int peer_connection_local_id) {
     }
   }
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void PeerConnectionTracker::DropAllConnections(DropAllConnectionsCallback cb) {
+  DCHECK_CALLED_ON_VALID_THREAD(main_thread_);
+  if (!HasOpenConnections())
+    return;
+
+  for (auto& it : peer_connection_local_id_map_)
+    it.first->CloseClientPeerConnection();
+
+  std::move(cb).Run();
+}
+
+bool PeerConnectionTracker::HasOpenConnections() const {
+  DCHECK_CALLED_ON_VALID_THREAD(main_thread_);
+  for (auto& it : peer_connection_local_id_map_) {
+    if (it.first->IsOpened())
+      return true;
+  }
+  return false;
+}
+#endif
 
 void PeerConnectionTracker::RegisterPeerConnection(
     RTCPeerConnectionHandler* pc_handler,
@@ -1105,5 +1137,13 @@ PeerConnectionTracker::GetPeerConnectionTrackerHost() {
   }
   return peer_connection_tracker_host_ptr_;
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void PeerConnectionTracker::Bind(
+    mojo::PendingReceiver<mojom::PeerConnectionManager> receiver) {
+  DCHECK(!receiver_.is_bound());
+  receiver_.Bind(std::move(receiver));
+}
+#endif
 
 }  // namespace content

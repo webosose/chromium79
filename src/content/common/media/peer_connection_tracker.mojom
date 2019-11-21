@@ -4,6 +4,12 @@
 
 module content.mojom;
 
+enum DropPeerConnectionReason {
+  kPageHidden = 0,
+  kUnknown,
+  kMax = kUnknown,
+};
+
 struct PeerConnectionInfo {
   // ID of the peer connection. Unique only within the renderer process.
   int32 lid;
@@ -17,6 +23,14 @@ struct PeerConnectionInfo {
   // The URL of the blink::WebLocalFrame within which this peer connection
   // lives. Used for debugging purposes (displayed by WebRTC-Internals).
   string url;
+};
+
+// This interface collects data about each peer connection and sends it to the
+// browser process.
+
+interface PeerConnectionManager {
+  [EnabledIf=neva_appruntime]
+  DropAllConnections() => ();
 };
 
 // This interface allows forwarding PeerConnection events to WebRTCInternals in

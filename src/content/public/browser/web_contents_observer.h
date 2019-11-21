@@ -26,6 +26,10 @@
 #include "ui/base/page_transition_types.h"
 #include "ui/base/window_open_disposition.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/common/media/peer_connection_tracker.mojom-shared.h"
+#endif
+
 namespace blink {
 namespace mojom {
 enum class ViewportFit;
@@ -82,6 +86,13 @@ class CONTENT_EXPORT WebContentsObserver : public IPC::Listener {
   // renderer process in which it runs it has died. Use |RenderFrameCreated| to
   // listen for when RenderFrame objects are created.
   virtual void RenderFrameDeleted(RenderFrameHost* render_frame_host) {}
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // A request to drop all peer connection, with specified |reason| has been
+  // processed successfully.
+  virtual void DidDropAllPeerConnections(
+      content::mojom::DropPeerConnectionReason reason) {}
+#endif
 
   // This method is invoked whenever one of the current frames of a WebContents
   // swaps its RenderFrameHost with another one; for example because that frame

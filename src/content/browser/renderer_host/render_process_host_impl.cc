@@ -1852,9 +1852,9 @@ void RenderProcessHostImpl::CreateMessageFilters() {
 #endif
       GetBrowserContext(), storage_partition_impl_, widget_helper_.get());
   AddFilter(render_frame_message_filter_.get());
-
-  peer_connection_tracker_host_ = new PeerConnectionTrackerHost(GetID());
-  AddFilter(peer_connection_tracker_host_.get());
+  // TODO: remove the below line after upatream migration of
+  // https://chromium-review.googlesource.com/c/chromium/src/+/1831197/31/content/browser/renderer_host/render_process_host_impl.cc#b1852
+  AddFilter(GetPeerConnectionTrackerHost());
 #if BUILDFLAG(ENABLE_PLUGINS)
   AddFilter(new PepperRendererConnection(GetID()));
 #endif
@@ -1983,10 +1983,27 @@ void RenderProcessHostImpl::AddCorbExceptionForPlugin(int process_id) {
   AddCorbExceptionForPluginOnIOThread(process_id);
 }
 
+// TODO : Use upstream's implementation of
+// RenderProcessHostImpl::GetPeerConnectionTrackerHost()
+// after https://chromium-review.googlesource.com/c/chromium/src/+/1831197
+PeerConnectionTrackerHost*
+RenderProcessHostImpl::GetPeerConnectionTrackerHost() {
+  if (!peer_connection_tracker_host_) {
+    peer_connection_tracker_host_ = new PeerConnectionTrackerHost(this);
+  }
+  return peer_connection_tracker_host_.get();
+}
+
 void RenderProcessHostImpl::CleanupCorbExceptionForPluginUponDestruction() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   cleanup_corb_exception_for_plugin_upon_destruction_ = true;
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderProcessHostImpl::DropAllPeerConnections(base::OnceCallback<void()> cb) {
+  GetPeerConnectionTrackerHost()->DropAllConnections(cb);
+}
+#endif // BUILDFLAG(USE_NEVA_APPRUNTIME)
 
 void RenderProcessHostImpl::RegisterMojoInterfaces() {
   auto registry = std::make_unique<service_manager::BinderRegistry>();
@@ -2162,6 +2179,13 @@ void RenderProcessHostImpl::RegisterMojoInterfaces() {
 
   registry->AddInterface(
       base::BindRepeating(&metrics::CreateSingleSampleMetricsProvider));
+
+#if defined(USE_NEVA_APPRUNTIME)
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(&RenderProcessHostImpl::BindPeerConnectionTrackerHost,
+                          base::Unretained(this)));
+#endif // BUILDFLAG(USE_NEVA_APPRUNTIME)
 
   AddUIThreadInterface(
       registry.get(),
@@ -3692,6 +3716,11 @@ void RenderProcessHostImpl::DisableWebRtcEventLogOutput(int lid) {
 
 IPC::ChannelProxy* RenderProcessHostImpl::GetChannel() {
   return channel_.get();
+}
+
+void RenderProcessHostImpl::BindPeerConnectionTrackerHost(
+    mojo::PendingReceiver<mojom::PeerConnectionTrackerHost> receiver) {
+  GetPeerConnectionTrackerHost()->BindReceiver(std::move(receiver));
 }
 
 void RenderProcessHostImpl::AddFilter(BrowserMessageFilter* filter) {

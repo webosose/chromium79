@@ -930,6 +930,23 @@ void WebView::ResetStateToMarkNextPaint() {
   }
 }
 
+void WebView::DropAllPeerConnections(
+    neva_app_runtime::DropPeerConnectionReason reason) {
+  content::mojom::DropPeerConnectionReason content_mojom_reason;
+  switch (reason) {
+    case neva_app_runtime::DropPeerConnectionReason::
+        kDropPeerConnectionReasonPageHidden:
+      content_mojom_reason =
+          content::mojom::DropPeerConnectionReason::kPageHidden;
+      break;
+    case neva_app_runtime::DropPeerConnectionReason::
+        kDropPeerConnectionReasonUnknown:
+    default:
+      content_mojom_reason = content::mojom::DropPeerConnectionReason::kUnknown;
+  }
+  web_contents_->DropAllPeerConnections(content_mojom_reason);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // WebView, content::WebContentsObserver implementation:
 
@@ -1046,6 +1063,24 @@ void WebView::DOMContentLoaded(content::RenderFrameHost* render_frame_host) {
 
   for (const auto& css : injected_css_) {
     AddUserStyleSheetForFrame(css, render_frame_host);
+  }
+}
+
+void WebView::DidDropAllPeerConnections(
+    content::mojom::DropPeerConnectionReason reason) {
+  if (webview_delegate_) {
+    neva_app_runtime::DropPeerConnectionReason app_runtime_reason;
+    switch (reason) {
+      case content::mojom::DropPeerConnectionReason::kPageHidden:
+        app_runtime_reason = neva_app_runtime::DropPeerConnectionReason::
+            kDropPeerConnectionReasonPageHidden;
+        break;
+      case content::mojom::DropPeerConnectionReason::kUnknown:
+      default:
+        app_runtime_reason = neva_app_runtime::DropPeerConnectionReason::
+            kDropPeerConnectionReasonUnknown;
+    }
+    webview_delegate_->DidDropAllPeerConnections(app_runtime_reason);
   }
 }
 

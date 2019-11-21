@@ -20,6 +20,7 @@
 #include <set>
 
 #include "base/memory/memory_pressure_listener.h"
+#include "content/common/media/peer_connection_tracker.mojom-shared.h"
 #include "content/public/browser/web_contents_binding_set.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -165,6 +166,8 @@ class WebView : public content::WebContentsDelegate,
   void RequestClearInjections();
   bool IsKeyboardVisible() const;
   void ResetStateToMarkNextPaint();
+  void DropAllPeerConnections(
+      neva_app_runtime::DropPeerConnectionReason reason);
   void SetV8SnapshotPath(const std::string& v8_snapshot_path);
   void SetV8ExtraFlags(const std::string& v8_extra_flags);
 
@@ -223,6 +226,8 @@ class WebView : public content::WebContentsDelegate,
   void RenderProcessCreated(base::ProcessHandle handle) override;
   void RenderProcessGone(base::TerminationStatus status) override;
   void DOMContentLoaded(content::RenderFrameHost* frame_host) override;
+  void DidDropAllPeerConnections(
+      content::mojom::DropPeerConnectionReason reason) override;
 
   void SetSSLCertErrorPolicy(SSLCertErrorPolicy policy) {
     ssl_cert_error_policy_ = policy;

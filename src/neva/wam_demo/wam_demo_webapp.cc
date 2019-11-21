@@ -225,6 +225,10 @@ void BlinkView::DidErrorPageLoadedFromNetErrorHelper() {
             << "(): Did error page loaded from net error helper";
 
 }
+
+void BlinkView::DidDropAllPeerConnections(
+    neva_app_runtime::DropPeerConnectionReason reason) {}
+
 void BlinkView::RunCommand(const std::string& name,
                            const std::vector<std::string>& arguments) {
   if (observer_)

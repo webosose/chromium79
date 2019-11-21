@@ -13,12 +13,22 @@
 #include "content/public/browser/browser_associated_interface.h"
 #include "content/public/browser/browser_message_filter.h"
 #include "content/public/browser/browser_thread.h"
+// TODO(neva) : remove the following include statments wrapped by
+// #if defined(USE_NEVA_APPRUNTIME) after
+// https://chromium-review.googlesource.com/c/chromium/src/+/1831197
+#if defined(USE_NEVA_APPRUNTIME)
+#include "mojo/public/cpp/bindings/pending_receiver.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
+#endif
 
 namespace base {
 class ListValue;
 }  // namespace base
 
 namespace content {
+
+class RenderProcessHost;
 
 // This class is the host for PeerConnectionTracker in the browser process
 // managed by RenderProcessHostImpl. It receives PeerConnection events from
@@ -30,7 +40,7 @@ class PeerConnectionTrackerHost
       public BrowserAssociatedInterface<mojom::PeerConnectionTrackerHost>,
       public mojom::PeerConnectionTrackerHost {
  public:
-  explicit PeerConnectionTrackerHost(int render_process_id);
+  explicit PeerConnectionTrackerHost(RenderProcessHost* rph);
 
   // content::BrowserMessageFilter override.
   bool OnMessageReceived(const IPC::Message& message) override;
@@ -42,7 +52,16 @@ class PeerConnectionTrackerHost
   // base::PowerObserver override.
   void OnSuspend() override;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Called when the browser requests all connections to be dropped.
+  void DropAllConnections(base::OnceCallback<void()>& cb);
+
+  void BindReceiver(
+      mojo::PendingReceiver<mojom::PeerConnectionTrackerHost>
+          pending_receiver);
+
  protected:
+#endif
   ~PeerConnectionTrackerHost() override;
 
  private:
@@ -67,6 +86,11 @@ class PeerConnectionTrackerHost
   void WebRtcEventLogWrite(int lid, const std::string& output) override;
 
   int render_process_id_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  mojo::Receiver<mojom::PeerConnectionTrackerHost> receiver_{this};
+  mojo::Remote<mojom::PeerConnectionManager> tracker_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(PeerConnectionTrackerHost);
 };

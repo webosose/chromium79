@@ -21,6 +21,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "neva/app_runtime/common/app_runtime_user_agent.h"
+#include "neva/app_runtime/public/app_runtime_constants.h"
 #include "neva/app_runtime/public/app_runtime_event.h"
 #include "neva/app_runtime/webview.h"
 #include "neva/app_runtime/webview_profile.h"
@@ -330,6 +331,10 @@ void WebViewBase::RequestInjectionLoading(const std::string& injection_name) {
 
 void WebViewBase::RequestClearInjections() {
   webview_->RequestClearInjections();
+}
+
+void WebViewBase::DropAllPeerConnections(DropPeerConnectionReason reason) {
+  webview_->DropAllPeerConnections(reason);
 }
 
 // WebPreferences

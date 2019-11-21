@@ -511,6 +511,9 @@ mojom("mojo_bindings") {
   if (use_clang_coverage) {
     enabled_features += [ "clang_coverage" ]
   }
+  if (use_neva_appruntime) {
+    enabled_features += [ "neva_appruntime" ]
+  }
 
   import_dirs = [ "//mojo/services" ]
 

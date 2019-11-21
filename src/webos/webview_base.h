@@ -150,7 +150,7 @@ class WEBOS_EXPORT WebViewBase
   void SetHardwareResolution(int width, int height);
   void SetEnableHtmlSystemKeyboardAttr(bool enabled);
   void RequestInjectionLoading(const std::string& injection_name);
-  void DropAllPeerConnections(DropPeerConnectionReason reason);
+  void DropAllPeerConnections(webos::DropPeerConnectionReason reason);
   void ActivateRendererCompositor();
   void DeactivateRendererCompositor();
 
@@ -235,6 +235,13 @@ class WEBOS_EXPORT WebViewBase
   void DidLoadingEnd() override;
   void DidFirstMeaningfulPaint() override;
   void DidNonFirstMeaningfulPaint() override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void DidDropAllPeerConnections(
+      neva_app_runtime::DropPeerConnectionReason reason) final;
+  // WebViewDelegate compatibility
+  virtual void DidDropAllPeerConnections(
+      webos::DropPeerConnectionReason reason){};
+#endif
 
   // WebViewControllerDelegate
   void RunCommand(const std::string& command,

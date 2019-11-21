@@ -19,6 +19,7 @@
 
 #include "base/time/time.h"
 #include "content/public/common/main_function_params.h"
+#include "neva/app_runtime/public/app_runtime_constants.h"
 #include "neva/app_runtime/public/webapp_window_base.h"
 #include "neva/app_runtime/public/webview_base.h"
 #include "neva/app_runtime/webview_profile.h"
@@ -97,6 +98,8 @@ class BlinkView : public neva_app_runtime::WebViewBase {
   void DidSwapCompositorFrame() override;
   void DidErrorPageLoadedFromNetErrorHelper() override;
   void DidResumeDOM() override;
+  void DidDropAllPeerConnections(
+      neva_app_runtime::DropPeerConnectionReason reason) override;
 
   // from WebViewControllerDelegate
   void RunCommand(

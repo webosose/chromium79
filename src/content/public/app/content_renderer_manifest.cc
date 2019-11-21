@@ -32,6 +32,9 @@ const service_manager::Manifest& GetContentRendererManifest() {
                   "content.mojom.ChildProcess",
                   "content.mojom.FrameFactory",
                   "content.mojom.MhtmlFileWriter",
+#if defined(USE_NEVA_APPRUNTIME)
+                  "content.mojom.PeerConnectionManager",
+#endif // BUILDFLAG(USE_NEVA_APPRUNTIME)
                   "content.mojom.RenderWidgetWindowTreeClientFactory",
                   "content.mojom.ResourceUsageReporter",
                   "IPC.mojom.ChannelBootstrap",

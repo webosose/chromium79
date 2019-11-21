@@ -47,6 +47,10 @@
 #include "base/android/scoped_java_ref.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/common/media/peer_connection_tracker.mojom-shared.h"
+#endif
+
 namespace blink {
 namespace mojom {
 class RendererPreferences;
@@ -313,6 +317,8 @@ class WebContents : public PageNavigator,
 
   virtual bool IsInspectablePage() const = 0;
   virtual void SetInspectablePage(bool inspectable) = 0;
+  virtual void DropAllPeerConnections(
+      mojom::DropPeerConnectionReason reason) = 0;
 #endif
 
   // Returns the main frame for the currently active view.

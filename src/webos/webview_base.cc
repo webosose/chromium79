@@ -438,9 +438,38 @@ void WebViewBase::SetEnableHtmlSystemKeyboardAttr(bool enable) {
   webview_->SetEnableHtmlSystemKeyboardAttr(enable);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
 void WebViewBase::DropAllPeerConnections(DropPeerConnectionReason reason) {
-  NOTIMPLEMENTED();
+  neva_app_runtime::DropPeerConnectionReason app_runtime_reason;
+  switch (reason) {
+    case DROP_PEER_CONNECTION_REASON_PAGE_HIDDEN:
+      app_runtime_reason = neva_app_runtime::DropPeerConnectionReason::
+          kDropPeerConnectionReasonPageHidden;
+      break;
+    case DROP_PEER_CONNECTION_REASON_UNKNOWN:
+    default:
+      app_runtime_reason = neva_app_runtime::DropPeerConnectionReason::
+          kDropPeerConnectionReasonUnknown;
+  }
+  webview_->DropAllPeerConnections(app_runtime_reason);
 }
+
+void WebViewBase::DidDropAllPeerConnections(
+    neva_app_runtime::DropPeerConnectionReason reason) {
+  DropPeerConnectionReason webos_reason;
+  switch (reason) {
+    case neva_app_runtime::DropPeerConnectionReason::
+        kDropPeerConnectionReasonPageHidden:
+      webos_reason = DROP_PEER_CONNECTION_REASON_PAGE_HIDDEN;
+      break;
+    case neva_app_runtime::DropPeerConnectionReason::
+        kDropPeerConnectionReasonUnknown:
+    default:
+      webos_reason = DROP_PEER_CONNECTION_REASON_UNKNOWN;
+  }
+  DidDropAllPeerConnections(webos_reason);
+}
+#endif
 
 void WebViewBase::ActivateRendererCompositor() {
   NOTIMPLEMENTED();

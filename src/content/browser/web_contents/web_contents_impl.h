@@ -81,6 +81,10 @@
 #include "content/public/browser/android/child_process_importance.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/common/media/peer_connection_tracker.mojom-shared.h"
+#endif
+
 namespace base {
 class FilePath;
 }
@@ -310,6 +314,7 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   // (added for the Neva AppRuntime API)
   bool IsInspectablePage() const override;
   void SetInspectablePage(bool inspectable) override;
+  void DropAllPeerConnections(mojom::DropPeerConnectionReason reason) override;
   void OverrideWebkitPrefs(WebPreferences* prefs) override;
 #endif
 
@@ -1330,6 +1335,9 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
                                    const std::string& protocol,
                                    const GURL& url,
                                    bool user_gesture);
+#if defined(USE_NEVA_APPRUNTIME)
+  void OnDidDropAllPeerConnections(mojom::DropPeerConnectionReason reason);
+#endif
   void OnDomOperationResponse(RenderFrameHostImpl* source,
                               const std::string& json_string);
   void OnUpdatePageImportanceSignals(RenderFrameHostImpl* source,

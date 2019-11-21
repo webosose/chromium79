@@ -209,6 +209,10 @@ class CONTENT_EXPORT RTCPeerConnectionHandler
   // WebRTC event log fragments sent back from PeerConnection land here.
   void OnWebRtcEventLogWrite(const std::string& output);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  bool IsOpened() const;
+#endif
+
  protected:
   webrtc::PeerConnectionInterface* native_peer_connection() {
     return native_peer_connection_.get();

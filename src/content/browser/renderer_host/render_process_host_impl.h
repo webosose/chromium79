@@ -83,6 +83,10 @@
 #include "content/public/browser/android/child_process_importance.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/common/media/peer_connection_tracker.mojom.h"
+#endif
+
 namespace base {
 class CommandLine;
 class PersistentMemoryAllocator;
@@ -259,6 +263,9 @@ class CONTENT_EXPORT RenderProcessHostImpl
   void ForceCrash() override;
   void CleanupCorbExceptionForPluginUponDestruction() override;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void DropAllPeerConnections(base::OnceCallback<void()> cb);
+#endif // BUILDFLAG(USE_NEVA_APPRUNTIME)
   mojom::RouteProvider* GetRemoteRouteProvider();
 
   // IPC::Sender via RenderProcessHost.
@@ -562,6 +569,8 @@ class CONTENT_EXPORT RenderProcessHostImpl
 
   size_t keep_alive_ref_count() const { return keep_alive_ref_count_; }
 
+  PeerConnectionTrackerHost* GetPeerConnectionTrackerHost();
+
  protected:
   // A proxy for our IPC::Channel that lives on the IO thread.
   std::unique_ptr<IPC::ChannelProxy> channel_;
@@ -729,6 +738,11 @@ class CONTENT_EXPORT RenderProcessHostImpl
   void CreateMediaStreamTrackMetricsHost(
       mojo::PendingReceiver<blink::mojom::MediaStreamTrackMetricsHost>
           receiver);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  void BindPeerConnectionTrackerHost(
+      mojo::PendingReceiver<mojom::PeerConnectionTrackerHost> receiver);
+#endif // BUILDFLAG(USE_NEVA_APPRUNTIME)
 
 #if BUILDFLAG(ENABLE_MDNS)
   void CreateMdnsResponder(
@@ -961,6 +975,10 @@ class CONTENT_EXPORT RenderProcessHostImpl
   // and PeerConnectionTracker in the renderer process.
   // It holds a raw pointer to webrtc_eventlog_host_, and therefore should be
   // defined below it so it is destructed first.
+
+  // TODO : Use upstream's implementation of
+  // unique_ptr<PeerConnectionTrackerHost> peer_connection_tracker_host_;
+  // after https://chromium-review.googlesource.com/c/chromium/src/+/1831197
   scoped_refptr<PeerConnectionTrackerHost> peer_connection_tracker_host_;
 
   // Records the time when the process starts surviving for workers for UMA.

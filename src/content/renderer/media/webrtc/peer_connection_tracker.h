@@ -20,6 +20,11 @@
 #include "third_party/blink/public/platform/web_rtc_session_description.h"
 #include "third_party/webrtc/api/peer_connection_interface.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
+#endif
+
 namespace blink {
 class WebLocalFrame;
 class WebMediaConstraints;
@@ -43,6 +48,9 @@ class RenderThread;
 // from the browser process.
 class CONTENT_EXPORT PeerConnectionTracker
     : public RenderThreadObserver,
+#if defined(USE_NEVA_APPRUNTIME)
+      public mojom::PeerConnectionManager,
+#endif
       public base::SupportsWeakPtr<PeerConnectionTracker> {
  public:
   explicit PeerConnectionTracker(
@@ -50,6 +58,13 @@ class CONTENT_EXPORT PeerConnectionTracker
   PeerConnectionTracker(
       mojom::PeerConnectionTrackerHostAssociatedPtr host,
       scoped_refptr<base::SingleThreadTaskRunner> main_thread_task_runner);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  PeerConnectionTracker(
+      mojo::Remote<mojom::PeerConnectionTrackerHost> host,
+      scoped_refptr<base::SingleThreadTaskRunner> main_thread_task_runner);
+#endif
+
   ~PeerConnectionTracker() override;
 
   enum Source {
@@ -73,6 +88,11 @@ class CONTENT_EXPORT PeerConnectionTracker
     kSetLocalDescription,
     kSetRemoteDescription,
   };
+
+#if defined(USE_NEVA_APPRUNTIME)
+  void Bind(mojo::PendingReceiver<mojom::PeerConnectionManager>
+                receiver);
+#endif
 
   // RenderThreadObserver implementation.
   bool OnControlMessageReceived(const IPC::Message& message) override;
@@ -245,6 +265,14 @@ class CONTENT_EXPORT PeerConnectionTracker
   // Called when the browser process reports a suspend event from the OS.
   void OnSuspend();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Called when the browser requests all connections to be dropped.
+  void DropAllConnections(DropAllConnectionsCallback cb) override;
+
+  // Check if there are open connections.
+  bool HasOpenConnections() const;
+#endif
+
   // IPC Message handler for starting event log.
   void OnStartEventLog(int peer_connection_local_id, int output_period_ms);
 
@@ -280,6 +308,11 @@ class CONTENT_EXPORT PeerConnectionTracker
   RenderThread* send_target_for_test_;
   mojom::PeerConnectionTrackerHostAssociatedPtr
       peer_connection_tracker_host_ptr_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  mojo::Remote<mojom::PeerConnectionTrackerHost> peer_connection_tracker_host_;
+  mojo::Receiver<mojom::PeerConnectionManager> receiver_{this};
+#endif
 
   scoped_refptr<base::SingleThreadTaskRunner> main_thread_task_runner_;
 

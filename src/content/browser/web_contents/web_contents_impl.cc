@@ -5054,6 +5054,15 @@ void WebContentsImpl::OnUpdatePageImportanceSignals(
   page_importance_signals_ = signals;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void WebContentsImpl::OnDidDropAllPeerConnections(
+    mojom::DropPeerConnectionReason reason) {
+  LOG(INFO) << "WebContentsImpl::OnDidDropAllPeerConnections()";
+  for (auto& observer : observers_)
+    observer.DidDropAllPeerConnections(reason);
+}
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
 void WebContentsImpl::OnDomOperationResponse(RenderFrameHostImpl* source,
                                              const std::string& json_string) {
   // TODO(nick, lukasza): The notification below should probably be updated to
@@ -7447,6 +7456,16 @@ void WebContentsImpl::RenderProcessCreated(
     RenderProcessHost* render_process_host) {
   for (auto& observer : observers_)
     observer.RenderProcessCreated(render_process_host->GetProcess().Handle());
+}
+
+void WebContentsImpl::DropAllPeerConnections(
+    mojom::DropPeerConnectionReason reason) {
+  LOG(INFO) << "WebContentsImpl::DropAllPeerConnections()";
+  RenderProcessHostImpl* render_process_host =
+      static_cast<RenderProcessHostImpl*>(GetRenderViewHost()->GetProcess());
+  render_process_host->DropAllPeerConnections(
+      base::BindOnce(&WebContentsImpl::OnDidDropAllPeerConnections,
+                     base::Unretained(this), reason));
 }
 
 void WebContentsImpl::OverrideWebkitPrefs(WebPreferences* prefs) {

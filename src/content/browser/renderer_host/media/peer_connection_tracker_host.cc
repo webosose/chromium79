@@ -15,10 +15,16 @@
 
 namespace content {
 
-PeerConnectionTrackerHost::PeerConnectionTrackerHost(int render_process_id)
+PeerConnectionTrackerHost::PeerConnectionTrackerHost(RenderProcessHost* rph)
     : BrowserMessageFilter(PeerConnectionTrackerMsgStart),
       BrowserAssociatedInterface<mojom::PeerConnectionTrackerHost>(this, this),
-      render_process_id_(render_process_id) {}
+      render_process_id_(rph->GetID()) {
+#if defined(USE_NEVA_APPRUNTIME)
+  mojo::PendingRemote<mojom::PeerConnectionManager> pending_tracker;
+  content::BindInterface(rph, &pending_tracker);
+  tracker_.Bind(std::move(pending_tracker));
+#endif
+}
 
 bool PeerConnectionTrackerHost::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
@@ -216,5 +222,19 @@ void PeerConnectionTrackerHost::SendOnSuspendOnUIThread() {
   if (host)
     host->Send(new PeerConnectionTracker_OnSuspend());
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void PeerConnectionTrackerHost::DropAllConnections(base::OnceCallback<void()>& cb) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  tracker_->DropAllConnections(std::move(cb));
+}
+
+void PeerConnectionTrackerHost::BindReceiver(
+    mojo::PendingReceiver<mojom::PeerConnectionTrackerHost> pending_receiver) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  receiver_.reset();
+  receiver_.Bind(std::move(pending_receiver));
+}
+#endif
 
 }  // namespace content
