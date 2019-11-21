@@ -140,8 +140,11 @@ void WebOSServiceBridgeInjection::DoCall(std::string uri, std::string payload) {
     return;
 
   system_bridge_->Call(std::move(uri), std::move(payload));
-  if (WebOSServiceBridgeInjection::is_closing_)
+  if (WebOSServiceBridgeInjection::is_closing_) {
+    VLOG(1) << "WebOSServiceBridge [Call][" << identifier_ << "]"
+            << " uri: " << uri << ", payload:" << payload << " during closing";
     waiting_responses_.insert(this);
+  }
 }
 
 void WebOSServiceBridgeInjection::Cancel() {
@@ -193,6 +196,8 @@ void WebOSServiceBridgeInjection::Response(pal::mojom::ResponseStatus status,
   if (!WebOSServiceBridgeInjection::is_closing_)
     return;
 
+  VLOG(1) << "WebOSServiceBridge [Response][" << identifier_ << "]"
+          << " body:" << body;
   waiting_responses_.erase(this);
 
   if (waiting_responses_.empty())
