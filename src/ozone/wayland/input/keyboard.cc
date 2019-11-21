@@ -112,8 +112,7 @@ void WaylandKeyboard::OnKeyboardEnter(void* data,
 
   if (window) {
     seat->SetEnteredWindowHandle(device_id, window->Handle());
-    seat->SetActiveInputWindow(window->GetDisplayId(),
-                               window->Handle());
+    seat->SetActiveInputWindow(window->Handle());
     device->GetDispatcher()->KeyboardEnter(window->Handle());
   }
 }

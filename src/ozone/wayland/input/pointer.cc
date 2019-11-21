@@ -180,12 +180,10 @@ void WaylandPointer::OnPointerEnter(void* data,
 
     if (window) {
       seat->SetEnteredWindowHandle(device_id, window->Handle());
-      seat->SetActiveInputWindow(window->GetDisplayId(),
-                                 window->Handle());
-      device->GetDispatcher()->PointerEnter(device_id,
-                                        window->Handle(),
-                                        device->pointer_position_.x(),
-                                        device->pointer_position_.y());
+      seat->SetActiveInputWindow(window->Handle());
+      device->GetDispatcher()->PointerEnter(device_id, window->Handle(),
+                                            device->pointer_position_.x(),
+                                            device->pointer_position_.y());
     }
   }
 }
