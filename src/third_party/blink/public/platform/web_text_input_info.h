@@ -66,6 +66,9 @@ struct WebTextInputInfo {
 
   WebRect bounds;
 
+  // The maxLength attribute value of the currently focused input field.
+  int max_length;
+
   WebTextInputInfo()
       : type(kWebTextInputTypeNone),
         flags(kWebTextInputFlagNone),
@@ -74,7 +77,8 @@ struct WebTextInputInfo {
         composition_start(-1),
         composition_end(-1),
         input_mode(kWebTextInputModeDefault),
-        action(ui::TextInputAction::kDefault) {}
+        action(ui::TextInputAction::kDefault),
+        max_length(0) {}
 };
 
 inline bool operator==(const WebTextInputInfo& a, const WebTextInputInfo& b) {

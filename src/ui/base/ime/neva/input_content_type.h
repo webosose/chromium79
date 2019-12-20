@@ -1,4 +1,4 @@
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef OZONE_PLATFORM_INPUT_CONTENT_TYPE_H_
-#define OZONE_PLATFORM_INPUT_CONTENT_TYPE_H_
+#ifndef UI_BASE_IME_NEVA_INPUT_CONTENT_TYPE_H_
+#define UI_BASE_IME_NEVA_INPUT_CONTENT_TYPE_H_
 
 namespace ui {
 
-enum InputContentType {
+enum class InputContentType {
   INPUT_CONTENT_TYPE_NONE,
   INPUT_CONTENT_TYPE_TEXT,
   INPUT_CONTENT_TYPE_PASSWORD,
@@ -37,8 +37,9 @@ enum InputContentType {
   INPUT_CONTENT_TYPE_TEXT_AREA,
   INPUT_CONTENT_TYPE_CONTENT_EDITABLE,
   INPUT_CONTENT_TYPE_DATE_TIME_FIELD,
+  INPUT_CONTENT_TYPE_MAX,
 };
 
 }  // namespace ui
 
-#endif  // OZONE_PLATFORM_INPUT_CONTENT_TYPE_H_
+#endif  // UI_BASE_IME_NEVA_INPUT_CONTENT_TYPE_H_

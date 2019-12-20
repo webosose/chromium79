@@ -96,10 +96,8 @@ class AURA_EXPORT WindowTreeHostPlatform : public WindowTreeHost,
   // Overridden from ui::InputMethodNevaObserver:
   void OnShowIme() override;
   void OnHideIme(ui::ImeHiddenType) override;
-  void OnTextInputTypeChanged(ui::TextInputType text_input_type,
-                              int text_input_flags) override;
-  ///@name USE_NEVA_APPRUNTIME
-  ///@{
+  void OnTextInputInfoChanged(
+      const ui::TextInputInfo& text_input_info) override;
   void SetSurroundingText(const std::string& text,
                           size_t cursor_position,
                           size_t anchor_position) override;

@@ -23,8 +23,8 @@
 #include <map>
 #include <vector>
 
-#include "ozone/platform/input_content_type.h"
 #include "third_party/skia/include/core/SkBitmap.h"
+#include "ui/base/ime/neva/input_content_type.h"
 #include "ui/base/ime/neva/input_method_common.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -57,8 +57,6 @@ class WaylandSeat {
 #endif
   WaylandKeyboard* GetKeyBoard() const { return input_keyboard_; }
   WaylandPointer* GetPointer() const { return input_pointer_; }
-  WaylandTouchscreen* GetTouchscreen() const { return input_touch_; }
-  std::string GetName() const { return name_; }
   unsigned GetActiveInputWindow() const { return active_input_window_handle_; }
   unsigned GetEnteredWindowHandle(uint32_t device_id) const;
   void ResetEnteredWindowHandle(unsigned window_handle);
@@ -76,9 +74,8 @@ class WaylandSeat {
   void ImeCaretBoundsChanged(gfx::Rect rect);
   void ShowInputPanel(unsigned handle);
   void HideInputPanel(unsigned handle, ui::ImeHiddenType);
-  void SetInputContentType(ui::InputContentType content_type,
-                           int text_input_flags,
-                           unsigned handle);
+  void SetTextInputInfo(const ui::TextInputInfo& text_input_info,
+                        unsigned handle);
   void SetSurroundingText(unsigned handle,
                           const std::string& text,
                           size_t cursor_position,

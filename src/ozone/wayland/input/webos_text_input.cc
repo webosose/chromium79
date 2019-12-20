@@ -27,9 +27,10 @@
 #include "ozone/wayland/seat.h"
 #include "ozone/wayland/shell/shell_surface.h"
 #include "ozone/wayland/window.h"
+#include "ui/base/ime/neva/input_method_common.h"
+#include "ui/base/ime/text_input_flags.h"
 #include "ui/events/keycodes/keyboard_code_conversion.h"
 #include "ui/events/keycodes/xkb_keysym.h"
-#include "ui/base/ime/text_input_flags.h"
 
 namespace ozonewayland {
 
@@ -55,7 +56,7 @@ uint32_t ContentHintFromInputContentType(ui::InputContentType content_type,
                                          int input_flags) {
   uint32_t wl_hint = (TEXT_MODEL_CONTENT_HINT_AUTO_COMPLETION |
                       TEXT_MODEL_CONTENT_HINT_AUTO_CAPITALIZATION);
-  if (content_type == ui::INPUT_CONTENT_TYPE_PASSWORD)
+  if (content_type == ui::InputContentType::INPUT_CONTENT_TYPE_PASSWORD)
     wl_hint |= TEXT_MODEL_CONTENT_HINT_PASSWORD;
 
   // hint from flags
@@ -73,22 +74,22 @@ uint32_t ContentHintFromInputContentType(ui::InputContentType content_type,
 
 uint32_t ContentPurposeFromInputContentType(ui::InputContentType content_type) {
   switch (content_type) {
-    case ui::INPUT_CONTENT_TYPE_PASSWORD:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_PASSWORD:
       return TEXT_MODEL_CONTENT_PURPOSE_PASSWORD;
-    case ui::INPUT_CONTENT_TYPE_EMAIL:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_EMAIL:
       return TEXT_MODEL_CONTENT_PURPOSE_EMAIL;
-    case ui::INPUT_CONTENT_TYPE_NUMBER:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_NUMBER:
       return TEXT_MODEL_CONTENT_PURPOSE_NUMBER;
-    case ui::INPUT_CONTENT_TYPE_TELEPHONE:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_TELEPHONE:
       return TEXT_MODEL_CONTENT_PURPOSE_PHONE;
-    case ui::INPUT_CONTENT_TYPE_URL:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_URL:
       return TEXT_MODEL_CONTENT_PURPOSE_URL;
-    case ui::INPUT_CONTENT_TYPE_DATE:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_DATE:
       return TEXT_MODEL_CONTENT_PURPOSE_DATE;
-    case ui::INPUT_CONTENT_TYPE_DATE_TIME:
-    case ui::INPUT_CONTENT_TYPE_DATE_TIME_LOCAL:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_DATE_TIME:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_DATE_TIME_LOCAL:
       return TEXT_MODEL_CONTENT_PURPOSE_DATETIME;
-    case ui::INPUT_CONTENT_TYPE_TIME:
+    case ui::InputContentType::INPUT_CONTENT_TYPE_TIME:
       return TEXT_MODEL_CONTENT_PURPOSE_TIME;
     default:
       return TEXT_MODEL_CONTENT_PURPOSE_NORMAL;
@@ -155,6 +156,7 @@ void WaylandTextInput::ShowInputPanel(wl_seat* input_seat, unsigned handle) {
 
   if (panel && panel->model) {
     panel->activated ? panel->Show() : panel->Activate();
+    panel->UpdateInputState();
   }
 }
 
@@ -171,20 +173,16 @@ void WaylandTextInput::HideInputPanel(wl_seat* input_seat,
   panel->SetHiddenState();
 }
 
-void WaylandTextInput::SetInputContentType(ui::InputContentType content_type,
-                                           int text_input_flags,
-                                           unsigned handle) {
+void WaylandTextInput::SetTextInputInfo(
+    const ui::TextInputInfo& text_input_info,
+    unsigned handle) {
   WaylandTextInput::InputPanel* panel = GetInputPanel(handle);
 
   if (panel) {
-    panel->input_content_type = content_type;
-    panel->text_input_flags = text_input_flags;
-    if (panel->model)
-      text_model_set_content_type(
-          panel->model,
-          ContentHintFromInputContentType(panel->input_content_type,
-                                          panel->text_input_flags),
-          ContentPurposeFromInputContentType(panel->input_content_type));
+    panel->input_content_type = text_input_info.type;
+    panel->text_input_flags = text_input_info.flags;
+    panel->max_text_length = text_input_info.max_length;
+    panel->UpdateInputState();
   }
 }
 
@@ -266,6 +264,18 @@ void WaylandTextInput::InputPanel::Show() {
 void WaylandTextInput::InputPanel::Hide() {
   if (model)
     text_model_hide_input_panel(model);
+}
+
+void WaylandTextInput::InputPanel::UpdateInputState() {
+  if (model) {
+    // Set content type
+    text_model_set_content_type(
+        model,
+        ContentHintFromInputContentType(input_content_type, text_input_flags),
+        ContentPurposeFromInputContentType(input_content_type));
+    // Set max text length
+    text_model_set_max_text_length(model, max_text_length);
+  }
 }
 
 void WaylandTextInput::OnWindowAboutToDestroy(unsigned windowhandle) {

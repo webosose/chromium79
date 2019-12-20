@@ -17,7 +17,23 @@
 #ifndef UI_BASE_IME_NEVA_INPUT_METHOD_COMMON_H_
 #define UI_BASE_IME_NEVA_INPUT_METHOD_COMMON_H_
 
+#include "ui/base/ime/neva/input_content_type.h"
+
 namespace ui {
+
+// The text input information for handling IME on the UI side.
+struct TextInputInfo {
+  TextInputInfo() = default;
+  ~TextInputInfo() = default;
+  // Type of the input field.
+  ui::InputContentType type = ui::InputContentType::INPUT_CONTENT_TYPE_NONE;
+
+  // The flags of input field (autocorrect, autocomplete, etc.)
+  int flags = 0;
+
+  // Max input length for text input
+  int max_length = 0;
+};
 
 enum class ImeHiddenType {
   // Only hide ime without deactivating

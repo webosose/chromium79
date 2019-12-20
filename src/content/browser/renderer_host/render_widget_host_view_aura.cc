@@ -2560,6 +2560,12 @@ gfx::Rect RenderWidgetHostViewAura::GetTextInputBounds() const {
 
   return ConvertRectToScreen(state->bounds);
 }
+
+int RenderWidgetHostViewAura::GetTextInputMaxLength() const {
+  if (text_input_manager_ && text_input_manager_->GetTextInputState())
+    return text_input_manager_->GetTextInputState()->max_length;
+  return 0;
+}
 #endif
 
 #if defined(USE_NEVA_MEDIA)

@@ -66,6 +66,9 @@ struct CONTENT_EXPORT TextInputState {
 
   // Bounds for text input
   gfx::Rect bounds;
+
+  // Max input length for text input
+  int max_length = 0;
 };
 
 }  // namespace content

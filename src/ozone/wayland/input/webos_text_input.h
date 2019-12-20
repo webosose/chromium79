@@ -20,7 +20,6 @@
 #include <map>
 #include "wayland-text-client-protocol.h"
 
-#include "ozone/platform/input_content_type.h"
 #include "ozone/wayland/display.h"
 
 struct text_model;
@@ -28,6 +27,10 @@ struct text_model;
 namespace base {
 template <typename Type>
 struct DefaultSingletonTraits;
+}
+
+namespace ui {
+struct TextInputInfo;
 }
 
 namespace ozonewayland {
@@ -47,9 +50,8 @@ class WaylandTextInput {
   void HideInputPanel(wl_seat* input_seat,
                       unsigned handle,
                       ui::ImeHiddenType);
-  void SetInputContentType(ui::InputContentType content_type,
-                           int text_input_flags,
-                           unsigned handle);
+  void SetTextInputInfo(const ui::TextInputInfo& text_input_info,
+                        unsigned handle);
   void SetSurroundingText(unsigned handle,
                           const std::string& text,
                           size_t cursor_position,
@@ -143,6 +145,7 @@ class WaylandTextInput {
     void Deactivate();
     void Show();
     void Hide();
+    void UpdateInputState();
 
     text_model* model = nullptr;
     WaylandSeat* seat = nullptr;
@@ -150,8 +153,10 @@ class WaylandTextInput {
     gfx::Rect input_panel_rect = gfx::Rect(0, 0, 0, 0);
     bool activated = false;
     InputPanelState state = InputPanelUnknownState;
-    ui::InputContentType input_content_type = ui::INPUT_CONTENT_TYPE_NONE;
+    ui::InputContentType input_content_type =
+        ui::InputContentType::INPUT_CONTENT_TYPE_NONE;
     int text_input_flags = 0;
+    int max_text_length = 0;
   };
 
   struct InputPanelDeleter {

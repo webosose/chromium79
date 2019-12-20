@@ -97,7 +97,12 @@ void InputMethodNevaObserver::OnTextInputStateChanged(const TextInputClient* cli
 
   if (client) {
     if (client->GetTextInputType() != TEXT_INPUT_TYPE_NONE) {
-      OnTextInputTypeChanged(client->GetTextInputType(), client->GetTextInputFlags());
+      TextInputInfo input_info;
+      input_info.type =
+          GetInputContentTypeFromTextInputType(client->GetTextInputType());
+      input_info.flags = client->GetTextInputFlags();
+      input_info.max_length = client->GetTextInputMaxLength();
+      OnTextInputInfoChanged(input_info);
       if (!client->SystemKeyboardDisabled())
         OnShowIme();
     } else {
@@ -118,6 +123,48 @@ void InputMethodNevaObserver::OnShowVirtualKeyboardIfEnabled() {
     return;
 
   OnShowIme();
+}
+
+InputContentType InputMethodNevaObserver::GetInputContentTypeFromTextInputType(
+    TextInputType text_input_type) {
+  switch (text_input_type) {
+    case ui::TEXT_INPUT_TYPE_NONE:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_NONE;
+    case ui::TEXT_INPUT_TYPE_TEXT:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_TEXT;
+    case ui::TEXT_INPUT_TYPE_PASSWORD:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_PASSWORD;
+    case ui::TEXT_INPUT_TYPE_SEARCH:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_SEARCH;
+    case ui::TEXT_INPUT_TYPE_EMAIL:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_EMAIL;
+    case ui::TEXT_INPUT_TYPE_NUMBER:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_NUMBER;
+    case ui::TEXT_INPUT_TYPE_TELEPHONE:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_TELEPHONE;
+    case ui::TEXT_INPUT_TYPE_URL:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_URL;
+    case ui::TEXT_INPUT_TYPE_DATE:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_DATE;
+    case ui::TEXT_INPUT_TYPE_DATE_TIME:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_DATE_TIME;
+    case ui::TEXT_INPUT_TYPE_DATE_TIME_LOCAL:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_DATE_TIME_LOCAL;
+    case ui::TEXT_INPUT_TYPE_MONTH:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_MONTH;
+    case ui::TEXT_INPUT_TYPE_TIME:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_TIME;
+    case ui::TEXT_INPUT_TYPE_WEEK:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_WEEK;
+    case ui::TEXT_INPUT_TYPE_TEXT_AREA:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_TEXT_AREA;
+    case ui::TEXT_INPUT_TYPE_CONTENT_EDITABLE:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_CONTENT_EDITABLE;
+    case ui::TEXT_INPUT_TYPE_DATE_TIME_FIELD:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_DATE_TIME_FIELD;
+    default:
+      return ui::InputContentType::INPUT_CONTENT_TYPE_TEXT;
+  }
 }
 
 }  // namespace ui

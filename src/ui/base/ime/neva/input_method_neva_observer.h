@@ -21,6 +21,7 @@
 
 #include "base/component_export.h"
 #include "ui/base/ime/input_method_observer.h"
+#include "ui/base/ime/neva/input_content_type.h"
 #include "ui/base/ime/neva/input_method_common.h"
 #include "ui/base/ime/text_input_type.h"
 
@@ -42,13 +43,16 @@ class COMPONENT_EXPORT(UI_BASE_IME) InputMethodNevaObserver
 
   virtual void OnShowIme() = 0;
   virtual void OnHideIme(ImeHiddenType) = 0;
-  virtual void OnTextInputTypeChanged(ui::TextInputType text_input_type,
-                                      int text_input_flags) = 0;
+  virtual void OnTextInputInfoChanged(
+      const ui::TextInputInfo& text_input_info) = 0;
   virtual void SetSurroundingText(const std::string& text,
                                   size_t cursor_position,
                                   size_t anchor_position) = 0;
   void SetImeEnabled(bool enable);
-private:
+
+ private:
+  InputContentType GetInputContentTypeFromTextInputType(
+      TextInputType text_input_type);
   bool is_enabled_ = false;
 };
 
