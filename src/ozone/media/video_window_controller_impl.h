@@ -52,11 +52,10 @@ class VideoWindowControllerImpl : public VideoWindowController {
                                         const gfx::Rect& rect) override;
   void BeginOverlayProcessor(gpu::SurfaceHandle h) override;
   void EndOverlayProcessor(gpu::SurfaceHandle h) override;
+  void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w) override;
 
  private:
   struct VideoWindowInfo;
-  void InsertEmptyWindow(gfx::AcceleratedWidget w,
-                         const base::UnguessableToken& window_id);
   VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
   void RemoveVideoWindowInfo(const base::UnguessableToken& window_id);
   void SetVideoWindowVisibility(const base::UnguessableToken& window_id,

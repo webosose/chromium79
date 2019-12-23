@@ -79,6 +79,7 @@ class CONTENT_EXPORT MediaStateManagerImpl
 
   void RequestVideoWindow(MediaPlayerId player, bool from_activation);
   void RemoveVideoWindow(MediaPlayerId player);
+  void CleanupVideoWindow(RenderFrameHost* host);
 
   VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
 

@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "content/common/media/neva/media_layer_info.h"
 #include "media/base/media_log.h"
 #include "media/base/neva/media_platform_api.h"
 #include "media/blink/neva/video_frame_provider_impl.h"
@@ -99,6 +100,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
   void OnSuspend() override;
   void OnMediaActivationPermitted() override;
   void OnMediaLayerCreated(const content::MediaLayerInfo& info) override;
+  void OnMediaLayerWillDestroyed() override;
   void OnMediaLayerGeometryChanged(const gfx::Rect& rect) override;
   void OnMediaLayerVisibilityChanged(bool visibility) override;
 
@@ -129,6 +131,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
   void OnError(PipelineStatus status) override;
 
   void OnMetadata(const PipelineMetadata& metadata) override;
+  void SetMediaLayerId(const content::MediaLayerInfo& info);
 
   std::unique_ptr<VideoFrameProviderImpl> video_frame_provider_;
   const blink::WebFloatPoint additional_contents_scale_;
@@ -150,6 +153,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
       blink::WebMediaPlayer::RenderModeNone;
 
   bool has_activation_permit_ = false;
+  content::MediaLayerInfo media_layer_info_{base::UnguessableToken::Null()};
 
   std::unique_ptr<media::VideoHoleGeometryUpdateHelper> geometry_update_helper_;
 

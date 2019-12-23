@@ -21,6 +21,7 @@
 #include "base/callback.h"
 #include "base/unguessable_token.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/native_widget_types.h"
 
 namespace ui {
 

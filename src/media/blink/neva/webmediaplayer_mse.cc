@@ -260,8 +260,11 @@ void WebMediaPlayerMSE::OnMediaLayerCreated(
   VLOG(1) << __func__ << " player_id=" << delegate_id_
           << " layer_info_id=" << info.media_layer_id_
           << " layer_info_token=" << info.overlay_plane_token_;
-  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
-  media_platform_api_->SetMediaLayerId(info.media_layer_id_);
+  SetMediaLayerId(info);
+}
+
+void WebMediaPlayerMSE::OnMediaLayerWillDestroyed() {
+  SetMediaLayerId(content::MediaLayerInfo());
 }
 
 void WebMediaPlayerMSE::OnMediaLayerGeometryChanged(const gfx::Rect& rect) {
@@ -419,6 +422,12 @@ void WebMediaPlayerMSE::OnMetadata(const PipelineMetadata& metadata) {
   // needs to use the new ReadyState in its calculations.
   SetReadyState(WebMediaPlayer::kReadyStateHaveMetadata);
   UpdatePlayState();
+}
+
+void WebMediaPlayerMSE::SetMediaLayerId(const content::MediaLayerInfo& info) {
+  media_layer_info_ = info;
+  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
+  media_platform_api_->SetMediaLayerId(info.media_layer_id_);
 }
 
 scoped_refptr<VideoFrame> WebMediaPlayerMSE::GetCurrentFrameFromCompositor()

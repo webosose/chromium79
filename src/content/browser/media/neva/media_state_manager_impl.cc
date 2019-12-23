@@ -112,6 +112,7 @@ void MediaStateManagerImpl::OnMediaSuspended(RenderFrameHost* render_frame_host,
 void MediaStateManagerImpl::OnRenderFrameDeleted(
     RenderFrameHost* render_frame_host) {
   policy_->OnRenderFrameDeleted(render_frame_host);
+  CleanupVideoWindow(render_frame_host);
 }
 
 void MediaStateManagerImpl::OnWebContentsDestroyed(WebContents* web_contents) {
@@ -276,6 +277,12 @@ void MediaStateManagerImpl::RemoveVideoWindow(MediaPlayerId player) {
   VLOG(1) << __func__ << " id=" << it->second;
   info->state_ = VideoWindowInfo::State::kDestroying;
   vwch_.DestroyVideoWindow(it->second);
+}
+
+void MediaStateManagerImpl::CleanupVideoWindow(RenderFrameHost* host) {
+  for (auto& kv : player_to_id_map_)
+    if (kv.first.first == host)
+      RemoveVideoWindow(kv.first);
 }
 
 MediaStateManagerImpl::VideoWindowInfo*

@@ -23,16 +23,19 @@
 namespace ui {
 
 struct VideoWindowControllerHostImpl::VideoWindowInfo {
-  VideoWindowInfo(gfx::AcceleratedWidget w,
-                  const base::UnguessableToken& id,
-                  VideoWindowControllerHost::Client* client,
-                  const std::string& native_id)
+  enum class State { kNone, kCreating, kCreated, kDestroying, kDestroyed };
+
+  explicit VideoWindowInfo(gfx::AcceleratedWidget w,
+                           const base::UnguessableToken& id,
+                           VideoWindowControllerHost::Client* client,
+                           const std::string& native_id)
       : owner_(w), id_(id), client_(client), native_id_(native_id) {}
   ~VideoWindowInfo() = default;
   gfx::AcceleratedWidget owner_;
   base::UnguessableToken id_;
   VideoWindowControllerHost::Client* client_;
   std::string native_id_;
+  State state_ = State::kNone;
 };
 
 VideoWindowControllerHostImpl::VideoWindowControllerHostImpl(
@@ -73,6 +76,9 @@ base::UnguessableToken VideoWindowControllerHostImpl::CreateVideoWindow(
   video_windows_.emplace(window_id, std::make_unique<VideoWindowInfo>(
                                         owner, window_id, client, ""));
   proxy_->Send(new WaylandDisplay_CreateVideoWindow(owner, window_id));
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (info)
+    info->state_ = VideoWindowInfo::State::kCreating;
   return window_id;
 }
 
@@ -85,6 +91,14 @@ void VideoWindowControllerHostImpl::DestroyVideoWindow(
                << " failed to find window info for window_id=" << window_id;
     return;
   }
+
+  if (info->state_ == VideoWindowInfo::State::kDestroying) {
+    LOG(ERROR) << __func__ << " window id" << window_id
+               << " is already destroying";
+    return;
+  }
+
+  info->state_ = VideoWindowInfo::State::kDestroying;
   proxy_->Send(new WaylandDisplay_DestroyVideoWindow(info->owner_, window_id));
 }
 
@@ -120,6 +134,11 @@ void VideoWindowControllerHostImpl::OnVideoWindowCreated(
                << " failed to find client for window_id=" << window_id;
     return;
   }
+  if (info->state_ == VideoWindowInfo::State::kCreating)
+    info->state_ = VideoWindowInfo::State::kCreated;
+  else
+    LOG(ERROR) << __func__ << " window id" << window_id
+               << " recevied kCreated on state(" << (int)info->state_ << ")";
   info->native_id_ = native_id;
   info->client_->OnVideoWindowCreated(window_id);
 }
@@ -160,6 +179,7 @@ void VideoWindowControllerHostImpl::OnVideoWindowDestroyed(
                << " failed to find client for window_id=" << window_id;
     return;
   }
+  info->state_ = VideoWindowInfo::State::kDestroyed;
   info->client_->OnVideoWindowDestroyed(window_id);
 }
 

@@ -63,6 +63,15 @@ WaylandWindow::~WaylandWindow() {
     seat->GetTextInput()->OnWindowAboutToDestroy(handle_);
 #endif
 
+#if defined(USE_NEVA_MEDIA)
+  // Cleanup video window created with this accelerated widget handle.
+  ui::VideoWindowController* video_window_controller =
+      WaylandDisplay::GetInstance()->GetVideoWindowController();
+  if (video_window_controller) {
+    video_window_controller->AcceleratedWidgetDeleted(handle_);
+  }
+#endif
+
   delete window_;
   delete shell_surface_;
 }

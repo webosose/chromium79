@@ -1122,8 +1122,11 @@ void WebMediaPlayerNeva::OnMediaLayerCreated(
   VLOG(1) << __func__ << " player_id=" << delegate_id_
           << " layer_info_id=" << info.media_layer_id_
           << " layer_info_token=" << info.overlay_plane_token_;
-  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
-  player_api_->SetMediaLayerId(info.media_layer_id_);
+  SetMediaLayerId(info);
+}
+
+void WebMediaPlayerNeva::OnMediaLayerWillDestroyed() {
+  SetMediaLayerId(content::MediaLayerInfo());
 }
 
 void WebMediaPlayerNeva::OnMediaLayerGeometryChanged(const gfx::Rect& rect) {
@@ -1277,6 +1280,12 @@ void WebMediaPlayerNeva::OnMediaSourceOpened(
     blink::WebMediaSource* web_media_source) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->MediaSourceOpened(web_media_source);
+}
+
+void WebMediaPlayerNeva::SetMediaLayerId(const content::MediaLayerInfo& info) {
+  media_layer_info_ = info;
+  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
+  player_api_->SetMediaLayerId(info.media_layer_id_);
 }
 
 void WebMediaPlayerNeva::OnFrameHidden() {

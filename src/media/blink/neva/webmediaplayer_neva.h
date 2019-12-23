@@ -28,6 +28,7 @@
 #include "base/time/default_tick_clock.h"
 #include "base/timer/timer.h"
 #include "cc/layers/video_frame_provider.h"
+#include "content/common/media/neva/media_layer_info.h"
 #include "media/base/audio_renderer_sink.h"
 #include "media/base/pipeline.h"
 #include "media/base/time_delta_interpolator.h"
@@ -255,6 +256,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   void OnSuspend() override;
   void OnMediaActivationPermitted() override;
   void OnMediaLayerCreated(const content::MediaLayerInfo& info) override;
+  void OnMediaLayerWillDestroyed() override;
   void OnMediaLayerGeometryChanged(const gfx::Rect& rect) override;
   void OnMediaLayerVisibilityChanged(bool visibility) override;
 
@@ -332,6 +334,8 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   // void OnWaitingForDecryptionKey() override;
   // end of MSE implementation
   //-----------------------------------------------------
+
+  void SetMediaLayerId(const content::MediaLayerInfo& info);
 
   blink::WebLocalFrame* frame_;
 
@@ -464,6 +468,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   bool has_activation_permit_ = false;
 
   bool audio_disabled_ = false;
+  content::MediaLayerInfo media_layer_info_{base::UnguessableToken::Null()};
 
   bool has_first_frame_ = false;
 

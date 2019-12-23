@@ -26,9 +26,10 @@ namespace ui {
 struct VideoWindowControllerImpl::VideoWindowInfo {
   enum class State {
     kNone,
-    kCreating,   // create is requested
-    kCreated,    //
-    kDestroying  // destroy is requested
+    kCreating,    // create is requested
+    kCreated,     //
+    kDestroying,  // destroy is requested
+    kDestroyed
   };
 
   explicit VideoWindowInfo(gfx::AcceleratedWidget w,
@@ -52,19 +53,16 @@ VideoWindowControllerImpl::~VideoWindowControllerImpl() = default;
 void VideoWindowControllerImpl::CreateVideoWindow(
     unsigned w,
     const base::UnguessableToken& window_id) {
-  InsertEmptyWindow(w, window_id);
+  VLOG(1) << __func__ << " window_id=" << window_id;
+  VideoWindowInfo* info = new VideoWindowInfo(w, window_id, base::nullopt);
+  info->state_ = VideoWindowInfo::State::kCreating;
+  id_to_widget_map_[window_id] = w;
+  VideoWindowInfoList& list = video_windows_[w];
+  list.emplace_back(info);
   provider_->CreateNativeVideoWindow(
       w, window_id,
       base::BindRepeating(&VideoWindowControllerImpl::OnWindowEvent,
                           base::Unretained(this)));
-}
-
-void VideoWindowControllerImpl::InsertEmptyWindow(
-    gfx::AcceleratedWidget w,
-    const base::UnguessableToken& window_id) {
-  id_to_widget_map_[window_id] = w;
-  VideoWindowInfoList& list = video_windows_[w];
-  list.emplace_back(new VideoWindowInfo(w, window_id, base::nullopt));
 }
 
 VideoWindowControllerImpl::VideoWindowInfo*
@@ -85,31 +83,43 @@ VideoWindowControllerImpl::FindVideoWindowInfo(
 void VideoWindowControllerImpl::RemoveVideoWindowInfo(
     const base::UnguessableToken& window_id) {
   auto widget_it = id_to_widget_map_.find(window_id);
-  if (widget_it != id_to_widget_map_.end())
+  if (widget_it == id_to_widget_map_.end()) {
+    LOG(INFO) << __func__ << " failed to find widget";
     return;
+  }
   gfx::AcceleratedWidget w = widget_it->second;
   id_to_widget_map_.erase(window_id);
 
   auto wl_it = video_windows_.find(w);
-  if (wl_it == video_windows_.end())
+  if (wl_it == video_windows_.end()) {
+    LOG(INFO) << __func__ << " failed to find info for widget";
     return;
+  }
+
+  int count = wl_it->second.size();
 
   for (auto it = wl_it->second.cbegin(); it != wl_it->second.cend(); it++) {
     if ((*it)->id_ == window_id) {
       wl_it->second.erase(it);
+      count--;
       break;
     }
   }
+
+  LOG(INFO) << __func__ << " total # of windows:" << id_to_widget_map_.size()
+            << " / # of windows of widget(" << w << "):" << count;
 }
 
 void VideoWindowControllerImpl::DestroyVideoWindow(
     unsigned w,
     const base::UnguessableToken& window_id) {
+  VLOG(1) << __func__ << " window_id=" << window_id;
   VideoWindowInfo* info = FindVideoWindowInfo(window_id);
   if (!info) {
     LOG(ERROR) << __func__ << " failed to find info for " << window_id;
     return;
   }
+  info->state_ = VideoWindowInfo::State::kDestroying;
   provider_->DestroyNativeVideoWindow(window_id);
 }
 
@@ -169,6 +179,7 @@ void VideoWindowControllerImpl::OnWindowEvent(
 
 void VideoWindowControllerImpl::OnVideoWindowCreated(
     const base::UnguessableToken& window_id) {
+  VLOG(1) << __func__ << " window_id=" << window_id;
   VideoWindowInfo* w = FindVideoWindowInfo(window_id);
   if (!w) {
     LOG(WARNING) << __func__ << " failed to find video window for "
@@ -176,6 +187,7 @@ void VideoWindowControllerImpl::OnVideoWindowCreated(
     return;
   }
 
+  w->state_ = VideoWindowInfo::State::kCreated;
   std::string native_id = provider_->GetNativeVideoWindowName(window_id);
   support_->SendVideoWindowMessage(new WaylandDisplay_VideoWindowCreated(
       w->owner_widget_, window_id, native_id));
@@ -183,12 +195,15 @@ void VideoWindowControllerImpl::OnVideoWindowCreated(
 
 void VideoWindowControllerImpl::OnVideoWindowDestroyed(
     const base::UnguessableToken& window_id) {
+  VLOG(1) << __func__ << " window_id=" << window_id;
   VideoWindowInfo* w = FindVideoWindowInfo(window_id);
   if (!w) {
     LOG(WARNING) << __func__ << " failed to find video window for "
                  << window_id;
     return;
   }
+
+  w->state_ = VideoWindowInfo::State::kDestroyed;
   support_->SendVideoWindowMessage(
       new WaylandDisplay_VideoWindowDestroyed(w->owner_widget_, window_id));
   RemoveVideoWindowInfo(window_id);
@@ -219,6 +234,18 @@ void VideoWindowControllerImpl::EndOverlayProcessor(gpu::SurfaceHandle h) {
   std::set<base::UnguessableToken>& hidden = hidden_candidate_[w];
   for (auto id : hidden)
     SetVideoWindowVisibility(id, false);
+  hidden_candidate_.erase(w);
+}
+
+void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
+    gfx::AcceleratedWidget w) {
+  auto it = video_windows_.find(w);
+  if (it == video_windows_.end())
+    return;
+  for (auto const& w_info : it->second)
+    if (w_info->state_ == VideoWindowInfo::State::kCreating ||
+        w_info->state_ == VideoWindowInfo::State::kCreated)
+      DestroyVideoWindow(w_info->owner_widget_, w_info->id_);
 }
 
 }  // namespace ui
