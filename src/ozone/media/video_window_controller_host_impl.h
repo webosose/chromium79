@@ -68,21 +68,10 @@ class VideoWindowControllerHostImpl : public VideoWindowControllerHost,
   void DestroyVideoWindow(Client*,
                           const base::UnguessableToken& window_id) override;
   std::string GetNativeLayerId(
-      const base::UnguessableToken& window_id) const override;
+      const base::UnguessableToken& window_id) override;
 
  private:
-  struct VideoWindowInfo {
-    VideoWindowInfo(gfx::AcceleratedWidget w,
-                    const base::UnguessableToken& id,
-                    Client* client,
-                    const std::string& native_id);
-    ~VideoWindowInfo();
-    gfx::AcceleratedWidget owner_;
-    base::UnguessableToken id_;
-    Client* client_;
-    std::string native_id_;
-  };
-
+  struct VideoWindowInfo;
   void SetVideoWindowVisibility(const base::UnguessableToken& window_id,
                                 bool visibility);
   void OnVideoWindowCreated(unsigned w,
@@ -97,7 +86,8 @@ class VideoWindowControllerHostImpl : public VideoWindowControllerHost,
 
   OzoneGpuPlatformSupportHost* proxy_;
   std::set<Client*> clients_;
-  std::map<base::UnguessableToken, VideoWindowInfo> video_windows_;
+  std::map<base::UnguessableToken, std::unique_ptr<VideoWindowInfo>>
+      video_windows_;
 
   DISALLOW_COPY_AND_ASSIGN(VideoWindowControllerHostImpl);
 };

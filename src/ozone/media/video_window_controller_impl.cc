@@ -22,16 +22,26 @@
 #include "ozone/media/video_window_provider.h"
 
 namespace ui {
-VideoWindowControllerImpl::VideoWindowInfo::VideoWindowInfo(
-    gfx::AcceleratedWidget w,
-    const base::UnguessableToken& id,
-    base::Optional<bool> visibility)
-    : owner_widget_(w), id_(id), visibility_(visibility) {}
 
-VideoWindowControllerImpl::VideoWindowInfo::VideoWindowInfo(
-    const VideoWindowInfo&) = default;
+struct VideoWindowControllerImpl::VideoWindowInfo {
+  enum class State {
+    kNone,
+    kCreating,   // create is requested
+    kCreated,    //
+    kDestroying  // destroy is requested
+  };
 
-VideoWindowControllerImpl::VideoWindowInfo::~VideoWindowInfo() = default;
+  explicit VideoWindowInfo(gfx::AcceleratedWidget w,
+                           const base::UnguessableToken& id,
+                           base::Optional<bool> visibility)
+      : owner_widget_(w), id_(id), visibility_(visibility) {}
+  ~VideoWindowInfo() = default;
+
+  gfx::AcceleratedWidget owner_widget_;
+  base::UnguessableToken id_;
+  base::Optional<bool> visibility_;
+  State state_ = State::kNone;
+};
 
 VideoWindowControllerImpl::VideoWindowControllerImpl(
     VideoWindowSupport* support)
@@ -53,8 +63,8 @@ void VideoWindowControllerImpl::InsertEmptyWindow(
     gfx::AcceleratedWidget w,
     const base::UnguessableToken& window_id) {
   id_to_widget_map_[window_id] = w;
-  auto& wl = video_windows_[w];
-  wl.emplace_back(w, window_id, base::nullopt);
+  VideoWindowInfoList& list = video_windows_[w];
+  list.emplace_back(new VideoWindowInfo(w, window_id, base::nullopt));
 }
 
 VideoWindowControllerImpl::VideoWindowInfo*
@@ -67,8 +77,8 @@ VideoWindowControllerImpl::FindVideoWindowInfo(
   if (wl_it == video_windows_.end())
     return nullptr;
   for (auto& window : wl_it->second)
-    if (window.id_ == window_id)
-      return &window;
+    if (window->id_ == window_id)
+      return window.get();
   return nullptr;
 }
 
@@ -85,7 +95,7 @@ void VideoWindowControllerImpl::RemoveVideoWindowInfo(
     return;
 
   for (auto it = wl_it->second.cbegin(); it != wl_it->second.cend(); it++) {
-    if (it->id_ == window_id) {
+    if ((*it)->id_ == window_id) {
       wl_it->second.erase(it);
       break;
     }
@@ -194,9 +204,9 @@ void VideoWindowControllerImpl::BeginOverlayProcessor(gpu::SurfaceHandle h) {
   std::set<base::UnguessableToken>& hidden_candidate = hidden_candidate_[w];
   hidden_candidate.clear();
 
-  for (auto& window : wl_it->second)
-    if (window.visibility_.has_value() && window.visibility_.value())
-      hidden_candidate.insert(window.id_);
+  for (auto const& window : wl_it->second)
+    if (window->visibility_.has_value() && window->visibility_.value())
+      hidden_candidate.insert(window->id_);
 }
 
 void VideoWindowControllerImpl::EndOverlayProcessor(gpu::SurfaceHandle h) {

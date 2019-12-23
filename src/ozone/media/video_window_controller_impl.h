@@ -54,17 +54,7 @@ class VideoWindowControllerImpl : public VideoWindowController {
   void EndOverlayProcessor(gpu::SurfaceHandle h) override;
 
  private:
-  struct VideoWindowInfo {
-    VideoWindowInfo(gfx::AcceleratedWidget,
-                    const base::UnguessableToken&,
-                    base::Optional<bool>);
-    VideoWindowInfo(const VideoWindowInfo&);
-    ~VideoWindowInfo();
-    gfx::AcceleratedWidget owner_widget_;
-    base::UnguessableToken id_;
-    base::Optional<bool> visibility_;
-  };
-
+  struct VideoWindowInfo;
   void InsertEmptyWindow(gfx::AcceleratedWidget w,
                          const base::UnguessableToken& window_id);
   VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
@@ -76,10 +66,12 @@ class VideoWindowControllerImpl : public VideoWindowController {
   void OnVideoWindowCreated(const base::UnguessableToken& window_id);
   void OnVideoWindowDestroyed(const base::UnguessableToken& window_id);
 
+  using VideoWindowInfoList = std::vector<std::unique_ptr<VideoWindowInfo>>;
+
   VideoWindowSupport* support_ = nullptr;
   std::unique_ptr<VideoWindowProvider> provider_;
   std::map<base::UnguessableToken, gfx::AcceleratedWidget> id_to_widget_map_;
-  std::map<gfx::AcceleratedWidget, std::vector<VideoWindowInfo>> video_windows_;
+  std::map<gfx::AcceleratedWidget, VideoWindowInfoList> video_windows_;
   std::map<gfx::AcceleratedWidget, std::set<base::UnguessableToken>>
       hidden_candidate_;
 

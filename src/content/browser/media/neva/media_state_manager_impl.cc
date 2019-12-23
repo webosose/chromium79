@@ -23,10 +23,21 @@
 
 namespace content {
 
-MediaStateManagerImpl::VideoWindowInfo::VideoWindowInfo(const MediaPlayerId& id)
-    : id_(id) {}
-
-MediaStateManagerImpl::VideoWindowInfo::~VideoWindowInfo() = default;
+struct MediaStateManagerImpl::VideoWindowInfo {
+  enum class State {
+    kNone,
+    kCreating,   // create is requested
+    kCreated,    //
+    kDestroying  // destroy is requested
+  };
+  VideoWindowInfo(const MediaPlayerId& id) : id_(id) {}
+  ~VideoWindowInfo() = default;
+  MediaPlayerId id_;
+  base::UnguessableToken window_id_;
+  std::string native_window_name_;
+  bool activation_requested_ = false;
+  State state_ = State::kNone;
+};
 
 MediaStateManager* MediaStateManager::GetInstance() {
   return MediaStateManagerImpl::GetInstance();
@@ -60,19 +71,18 @@ void MediaStateManagerImpl::OnMediaActivationRequested(
     RequestVideoWindow(player, true);
     return;
   }
-  base::UnguessableToken window_id = it->second;
-  auto it2 = id_to_info_map_.find(window_id);
-  if (it2 == id_to_info_map_.end()) {
+  VideoWindowInfo* info = FindVideoWindowInfo(it->second);
+  if (!info || info->state_ == VideoWindowInfo::State::kNone ||
+      info->state_ == VideoWindowInfo::State::kDestroying) {
     LOG(ERROR) << __func__
                << " failed to find window info. request video window again";
     RequestVideoWindow(player, true);
     return;
   }
 
-  VideoWindowInfo& info = it2->second;
-  if (!info.is_valid_) {
+  if (info->state_ == VideoWindowInfo::State::kCreating) {
     // Video window is requested but not yet created.
-    info.activation_requested_ = true;
+    info->activation_requested_ = true;
     return;
   }
 
@@ -145,23 +155,22 @@ void MediaStateManagerImpl::SuspendMedia(RenderFrameHost* render_frame_host,
 
 void MediaStateManagerImpl::OnVideoWindowCreated(
     const base::UnguessableToken& window_id) {
-  auto it = id_to_info_map_.find(window_id);
-  if (it == id_to_info_map_.end()) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(ERROR) << __func__ << " unknown window_id=" << window_id;
     return;
   }
 
-  VideoWindowInfo& window_info = it->second;
-  window_info.window_id_ = window_id;
-  window_info.native_window_name_ = vwch_.GetNativeLayerId(window_id);
-  window_info.is_valid_ = true;
+  info->window_id_ = window_id;
+  info->native_window_name_ = vwch_.GetNativeLayerId(window_id);
+  info->state_ = VideoWindowInfo::State::kCreated;
 
-  RenderFrameHost* render_frame_host = window_info.id_.first;
-  int player_id = window_info.id_.second;
+  RenderFrameHost* render_frame_host = info->id_.first;
+  int player_id = info->id_.second;
 
   content::MediaLayerInfo layer_info;
-  layer_info.media_layer_id_ = window_info.native_window_name_;
-  layer_info.overlay_plane_token_ = window_info.window_id_;
+  layer_info.media_layer_id_ = info->native_window_name_;
+  layer_info.overlay_plane_token_ = info->window_id_;
 
   VLOG(1) << __func__ << " Send id(" << layer_info.media_layer_id_
           << ") with token(" << layer_info.overlay_plane_token_;
@@ -169,24 +178,23 @@ void MediaStateManagerImpl::OnVideoWindowCreated(
   render_frame_host->NotifyMediaLayerCreated(player_id, layer_info);
 
   // continue MediaActivation if requested
-  if (window_info.activation_requested_)
+  if (info->activation_requested_)
     policy_->OnMediaActivationRequested(render_frame_host, player_id);
 }
 
 void MediaStateManagerImpl::OnVideoWindowDestroyed(
     const base::UnguessableToken& window_id) {
   VLOG(1) << __func__ << " window_id=" << window_id;
-  auto it = id_to_info_map_.find(window_id);
-  if (it == id_to_info_map_.end()) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(ERROR) << __func__ << " unknown window_id=" << window_id;
     return;
   }
-  VideoWindowInfo& info = it->second;
-  info.id_.first->NotifyMediaLayerWillDestroyed(info.id_.second);
+  info->id_.first->NotifyMediaLayerWillDestroyed(info->id_.second);
   if (!id_to_info_map_.erase(window_id))
     LOG(ERROR) << __func__
                << " faild to erase id_to_info_map_ for window_id=" << window_id;
-  if (!player_to_id_map_.erase(info.id_))
+  if (!player_to_id_map_.erase(info->id_))
     LOG(ERROR) << __func__ << " faild to erase player_to_id_map_ for window_id="
                << window_id;
 }
@@ -194,15 +202,15 @@ void MediaStateManagerImpl::OnVideoWindowDestroyed(
 void MediaStateManagerImpl::OnVideoWindowGeometryChanged(
     const base::UnguessableToken& window_id,
     const gfx::Rect& rect) {
-  auto it = id_to_info_map_.find(window_id);
-  if (it == id_to_info_map_.end()) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(ERROR) << __func__
                << " failed to find player info for id=" << window_id;
     return;
   }
 
-  RenderFrameHost* host = it->second.id_.first;
-  int player_id = it->second.id_.second;
+  RenderFrameHost* host = info->id_.first;
+  int player_id = info->id_.second;
   RenderWidgetHostView* view = host->GetView();
   if (!view) {
     LOG(ERROR) << __func__
@@ -220,15 +228,15 @@ void MediaStateManagerImpl::OnVideoWindowGeometryChanged(
 void MediaStateManagerImpl::OnVideoWindowVisibilityChanged(
     const base::UnguessableToken& window_id,
     bool visibility) {
-  auto it = id_to_info_map_.find(window_id);
-  if (it == id_to_info_map_.end()) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(ERROR) << __func__
                << " failed to find player info for id=" << window_id;
     return;
   }
 
-  RenderFrameHost* host = it->second.id_.first;
-  int player_id = it->second.id_.second;
+  RenderFrameHost* host = info->id_.first;
+  int player_id = info->id_.second;
   host->NotifyMediaLayerVisibilityChanged(player_id, visibility);
 }
 
@@ -238,11 +246,11 @@ void MediaStateManagerImpl::RequestVideoWindow(MediaPlayerId player,
   base::UnguessableToken window_id = vwch_.CreateVideoWindow(owner);
   VLOG(1) << __func__ << " owner=" << owner << " id=" << window_id;
   player_to_id_map_[player] = window_id;
-  auto result = id_to_info_map_.emplace(std::piecewise_construct,
-                                        std::forward_as_tuple(window_id),
-                                        std::forward_as_tuple(player));
-  VideoWindowInfo& w = result.first->second;
-  w.activation_requested_ = from_activation;
+  auto result = id_to_info_map_.emplace(
+      window_id, std::make_unique<VideoWindowInfo>(player));
+  VideoWindowInfo* info = result.first->second.get();
+  info->state_ = VideoWindowInfo::State::kCreating;
+  info->activation_requested_ = from_activation;
 }
 
 void MediaStateManagerImpl::RemoveVideoWindow(MediaPlayerId player) {
@@ -253,8 +261,30 @@ void MediaStateManagerImpl::RemoveVideoWindow(MediaPlayerId player) {
     return;
   }
 
+  VideoWindowInfo* info = FindVideoWindowInfo(it->second);
+  if (!info) {
+    LOG(INFO) << __func__ << " window id" << it->second
+              << " is already destroyed";
+    return;
+  }
+
+  if (info->state_ == VideoWindowInfo::State::kDestroying) {
+    LOG(INFO) << __func__ << " window id" << it->second << " is destroying";
+    return;
+  }
+
   VLOG(1) << __func__ << " id=" << it->second;
+  info->state_ = VideoWindowInfo::State::kDestroying;
   vwch_.DestroyVideoWindow(it->second);
+}
+
+MediaStateManagerImpl::VideoWindowInfo*
+MediaStateManagerImpl::FindVideoWindowInfo(
+    const base::UnguessableToken& window_id) {
+  auto it = id_to_info_map_.find(window_id);
+  if (it == id_to_info_map_.end())
+    return nullptr;
+  return it->second.get();
 }
 
 }  // namespace content

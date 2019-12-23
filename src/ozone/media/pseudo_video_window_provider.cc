@@ -28,11 +28,16 @@ namespace ui {
 
 namespace {
 const int kMinVideoGeometryUpdateInterval = 200;  // milliseconds
-}
+}  // namespace
 
-PseudoVideoWindowProvider::PseudoVideoWindow::PseudoVideoWindow() = default;
-
-PseudoVideoWindowProvider::PseudoVideoWindow::~PseudoVideoWindow() = default;
+struct PseudoVideoWindowProvider::PseudoVideoWindow : public ui::VideoWindow {
+  PseudoVideoWindow() = default;
+  ~PseudoVideoWindow() = default;
+  WindowEventCb window_event_cb_;
+  base::CancelableOnceCallback<void()> notify_geometry_cb_;
+  gfx::Rect rect_;
+  base::Time last_updated_ = base::Time::Now();
+};
 
 std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create(
     VideoWindowSupport* support) {
@@ -49,10 +54,16 @@ void PseudoVideoWindowProvider::CreateNativeVideoWindow(
     gfx::AcceleratedWidget w,
     const base::UnguessableToken& id,
     ui::VideoWindowProvider::WindowEventCb cb) {
-  auto& window = pseudo_windows_[id];
-  window.window_id_ = id;
-  window.native_window_name_ = "window_id_dummy";
-  window.window_event_cb_ = cb;
+  auto result =
+      pseudo_windows_.emplace(id, std::make_unique<PseudoVideoWindow>());
+  if (!result.second) {
+    LOG(ERROR) << __func__ << " failed to inster PseudoVideoWindow for " << id;
+    return;
+  }
+  auto& window = result.first->second;
+  window->window_id_ = id;
+  window->native_window_name_ = "window_id_dummy";
+  window->window_event_cb_ = cb;
   base::ThreadTaskRunnerHandle::Get()->PostTask(
       FROM_HERE,
       base::BindOnce(cb, id, ui::VideoWindowProvider::Event::kCreated));
@@ -60,48 +71,43 @@ void PseudoVideoWindowProvider::CreateNativeVideoWindow(
 
 void PseudoVideoWindowProvider::UpdateNativeVideoWindowGeometry(
     const base::UnguessableToken& window_id) {
-  auto it = pseudo_windows_.find(window_id);
-  if (it == pseudo_windows_.end()) {
-    LOG(ERROR) << __func__ << " failed to find pseudo window for " << window_id;
+  PseudoVideoWindow* win = FindWindow(window_id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find info for " << window_id;
     return;
   }
-
-  PseudoVideoWindow& w = it->second;
-  if (!w.notify_geometry_cb_.IsCancelled())
-    w.notify_geometry_cb_.Cancel();
+  if (!win->notify_geometry_cb_.IsCancelled())
+    win->notify_geometry_cb_.Cancel();
 
   support_->SendVideoWindowMessage(
-      new WaylandDisplay_VideoWindowGeometryChanged(window_id, w.rect_));
-  w.last_updated_ = base::Time::Now();
+      new WaylandDisplay_VideoWindowGeometryChanged(window_id, win->rect_));
+  win->last_updated_ = base::Time::Now();
 }
 
 void PseudoVideoWindowProvider::NativeVideoWindowGeometryChanged(
     const base::UnguessableToken& window_id,
     const gfx::Rect& rect) {
-  auto it = pseudo_windows_.find(window_id);
-  if (it == pseudo_windows_.end()) {
-    LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
+  PseudoVideoWindow* win = FindWindow(window_id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find info for " << window_id;
     return;
   }
-
-  PseudoVideoWindow& win = it->second;
-
-  if (win.rect_ == rect)
+  if (win->rect_ == rect)
     return;
-  win.rect_ = rect;
+  win->rect_ = rect;
 
   // callback is already scheduled!
-  if (!win.notify_geometry_cb_.IsCancelled()) {
+  if (!win->notify_geometry_cb_.IsCancelled()) {
     return;
   }
 
-  if (base::Time::Now() - win.last_updated_ <
+  if (base::Time::Now() - win->last_updated_ <
       base::TimeDelta::FromMilliseconds(kMinVideoGeometryUpdateInterval)) {
-    win.notify_geometry_cb_.Reset(base::BindOnce(
+    win->notify_geometry_cb_.Reset(base::BindOnce(
         &PseudoVideoWindowProvider::UpdateNativeVideoWindowGeometry,
         base::Unretained(this), window_id));
     base::ThreadTaskRunnerHandle::Get()->PostDelayedTask(
-        FROM_HERE, win.notify_geometry_cb_.callback(),
+        FROM_HERE, win->notify_geometry_cb_.callback(),
         base::TimeDelta::FromMilliseconds(kMinVideoGeometryUpdateInterval));
     return;
   }
@@ -114,13 +120,12 @@ void PseudoVideoWindowProvider::NativeVideoWindowVisibilityChanged(
   VLOG(1) << __func__ << " window_id=" << window_id
           << " visibility=" << visibility;
 
-  auto win_it = pseudo_windows_.find(window_id);
-  if (win_it == pseudo_windows_.end()) {
-    LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
+  PseudoVideoWindow* win = FindWindow(window_id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find info for " << window_id;
     return;
   }
-  PseudoVideoWindow& win = win_it->second;
-  if (!win.notify_geometry_cb_.IsCancelled()) {
+  if (!win->notify_geometry_cb_.IsCancelled()) {
     UpdateNativeVideoWindowGeometry(window_id);
   }
 
@@ -130,19 +135,32 @@ void PseudoVideoWindowProvider::NativeVideoWindowVisibilityChanged(
 
 void PseudoVideoWindowProvider::DestroyNativeVideoWindow(
     const base::UnguessableToken& id) {
-  auto it = pseudo_windows_.find(id);
-  if (it != pseudo_windows_.end()) {
-    base::ThreadTaskRunnerHandle::Get()->PostTask(
-        FROM_HERE, base::BindOnce(it->second.window_event_cb_, id,
-                                  ui::VideoWindowProvider::Event::kDestroyed));
-    pseudo_windows_.erase(id);
-  } else {
-    LOG(WARNING) << __func__ << " failed to find video window id=" << id;
+  PseudoVideoWindow* win = FindWindow(id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find info for " << id;
+    return;
   }
+  base::ThreadTaskRunnerHandle::Get()->PostTask(
+      FROM_HERE, base::BindOnce(win->window_event_cb_, id,
+                                ui::VideoWindowProvider::Event::kDestroyed));
+  pseudo_windows_.erase(id);
 }
 
 std::string PseudoVideoWindowProvider::GetNativeVideoWindowName(
     const base::UnguessableToken& id) {
-  return pseudo_windows_[id].native_window_name_;
+  PseudoVideoWindow* win = FindWindow(id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find info for " << id;
+    return "";
+  }
+  return win->native_window_name_;
+}
+
+PseudoVideoWindowProvider::PseudoVideoWindow*
+PseudoVideoWindowProvider::FindWindow(const base::UnguessableToken& window_id) {
+  auto it = pseudo_windows_.find(window_id);
+  if (it == pseudo_windows_.end())
+    return nullptr;
+  return it->second.get();
 }
 }  // namespace ui

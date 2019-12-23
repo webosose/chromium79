@@ -45,19 +45,14 @@ class PseudoVideoWindowProvider : public VideoWindowProvider {
       bool visibility) override;
 
  private:
-  struct PseudoVideoWindow : public ui::VideoWindow {
-    PseudoVideoWindow();
-    ~PseudoVideoWindow();
-    WindowEventCb window_event_cb_;
-    base::CancelableOnceCallback<void()> notify_geometry_cb_;
-    gfx::Rect rect_;
-    base::Time last_updated_ = base::Time::Now();
-  };
+  struct PseudoVideoWindow;
   void UpdateNativeVideoWindowGeometry(const base::UnguessableToken& window_id);
+  PseudoVideoWindow* FindWindow(const base::UnguessableToken& window_id);
 
   VideoWindowSupport* support_;
 
-  std::map<base::UnguessableToken, PseudoVideoWindow> pseudo_windows_;
+  std::map<base::UnguessableToken, std::unique_ptr<PseudoVideoWindow>>
+      pseudo_windows_;
 };
 
 }  // namespace ui

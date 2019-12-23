@@ -22,14 +22,18 @@
 
 namespace ui {
 
-VideoWindowControllerHostImpl::VideoWindowInfo::VideoWindowInfo(
-    gfx::AcceleratedWidget w,
-    const base::UnguessableToken& id,
-    Client* client,
-    const std::string& native_id)
-    : owner_(w), id_(id), client_(client), native_id_(native_id) {}
-
-VideoWindowControllerHostImpl::VideoWindowInfo::~VideoWindowInfo() = default;
+struct VideoWindowControllerHostImpl::VideoWindowInfo {
+  VideoWindowInfo(gfx::AcceleratedWidget w,
+                  const base::UnguessableToken& id,
+                  VideoWindowControllerHost::Client* client,
+                  const std::string& native_id)
+      : owner_(w), id_(id), client_(client), native_id_(native_id) {}
+  ~VideoWindowInfo() = default;
+  gfx::AcceleratedWidget owner_;
+  base::UnguessableToken id_;
+  VideoWindowControllerHost::Client* client_;
+  std::string native_id_;
+};
 
 VideoWindowControllerHostImpl::VideoWindowControllerHostImpl(
     OzoneGpuPlatformSupportHost* proxy)
@@ -54,7 +58,7 @@ void VideoWindowControllerHostImpl::UnRegisterClient(Client* client) {
   }
 
   for (auto it = video_windows_.cbegin(); it != video_windows_.cend();) {
-    if (it->second.client_ == client)
+    if (it->second->client_ == client)
       video_windows_.erase(it++);
     else
       it++;
@@ -66,9 +70,8 @@ base::UnguessableToken VideoWindowControllerHostImpl::CreateVideoWindow(
     Client* client,
     gfx::AcceleratedWidget owner) {
   base::UnguessableToken window_id = base::UnguessableToken::Create();
-  video_windows_.emplace(std::piecewise_construct,
-                         std::forward_as_tuple(window_id),
-                         std::forward_as_tuple(owner, window_id, client, ""));
+  video_windows_.emplace(window_id, std::make_unique<VideoWindowInfo>(
+                                        owner, window_id, client, ""));
   proxy_->Send(new WaylandDisplay_CreateVideoWindow(owner, window_id));
   return window_id;
 }
@@ -77,23 +80,22 @@ void VideoWindowControllerHostImpl::DestroyVideoWindow(
     Client* client,
     const base::UnguessableToken& window_id) {
   VideoWindowInfo* info = FindVideoWindowInfo(window_id);
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end() || it->second.client_ != client) {
-    LOG(ERROR) << __func__ << " window_id=" << window_id
-               << " is not created by client(" << client << ")";
+  if (!info) {
+    LOG(ERROR) << __func__
+               << " failed to find window info for window_id=" << window_id;
     return;
   }
   proxy_->Send(new WaylandDisplay_DestroyVideoWindow(info->owner_, window_id));
 }
 
 std::string VideoWindowControllerHostImpl::GetNativeLayerId(
-    const base::UnguessableToken& window_id) const {
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end()) {
+    const base::UnguessableToken& window_id) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(ERROR) << __func__ << " failed to find window_id=" << window_id;
     return "";
   }
-  return it->second.native_id_;
+  return info->native_id_;
 }
 
 void VideoWindowControllerHostImpl::OnMessageReceived(
@@ -112,14 +114,14 @@ void VideoWindowControllerHostImpl::OnVideoWindowCreated(
     const base::UnguessableToken& window_id,
     const std::string& native_id) {
   LOG(INFO) << __func__ << " w=" << w << " window_id=" << window_id;
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end() || it->second.client_ == nullptr) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info || !info->client_) {
     LOG(ERROR) << __func__
                << " failed to find client for window_id=" << window_id;
     return;
   }
-  it->second.native_id_ = native_id;
-  it->second.client_->OnVideoWindowCreated(window_id);
+  info->native_id_ = native_id;
+  info->client_->OnVideoWindowCreated(window_id);
 }
 
 void VideoWindowControllerHostImpl::OnVideoWindowGeometryChanged(
@@ -127,13 +129,13 @@ void VideoWindowControllerHostImpl::OnVideoWindowGeometryChanged(
     const gfx::Rect& rect) {
   LOG(INFO) << __func__ << " window_id=" << window_id
             << " rect=" << rect.ToString();
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end() || it->second.client_ == nullptr) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info || !info->client_) {
     LOG(ERROR) << __func__
                << " failed to find client for window_id=" << window_id;
     return;
   }
-  it->second.client_->OnVideoWindowGeometryChanged(window_id, rect);
+  info->client_->OnVideoWindowGeometryChanged(window_id, rect);
 }
 
 void VideoWindowControllerHostImpl::OnVideoWindowVisibilityChanged(
@@ -141,24 +143,24 @@ void VideoWindowControllerHostImpl::OnVideoWindowVisibilityChanged(
     bool visibility) {
   LOG(INFO) << __func__ << " window_id=" << window_id
             << " visibility=" << visibility;
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end() || it->second.client_ == nullptr) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info || !info->client_) {
     LOG(ERROR) << __func__
                << " failed to find client for window_id=" << window_id;
     return;
   }
-  it->second.client_->OnVideoWindowVisibilityChanged(window_id, visibility);
+  info->client_->OnVideoWindowVisibilityChanged(window_id, visibility);
 }
 
 void VideoWindowControllerHostImpl::OnVideoWindowDestroyed(
     const base::UnguessableToken& window_id) {
-  auto it = video_windows_.find(window_id);
-  if (it == video_windows_.end() || it->second.client_ == nullptr) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info || !info->client_) {
     LOG(ERROR) << __func__
                << " failed to find client for window_id=" << window_id;
     return;
   }
-  it->second.client_->OnVideoWindowDestroyed(window_id);
+  info->client_->OnVideoWindowDestroyed(window_id);
 }
 
 VideoWindowControllerHostImpl::VideoWindowInfo*
@@ -167,7 +169,7 @@ VideoWindowControllerHostImpl::FindVideoWindowInfo(
   auto it = video_windows_.find(window_id);
   if (it == video_windows_.end())
     return nullptr;
-  return &it->second;
+  return it->second.get();
 }
 
 }  // namespace ui

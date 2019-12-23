@@ -62,6 +62,7 @@ class CONTENT_EXPORT MediaStateManagerImpl
  private:
   friend struct base::DefaultSingletonTraits<MediaStateManagerImpl>;
 
+  struct VideoWindowInfo;
   using MediaPlayerId = std::pair<RenderFrameHost*, int>;
 
   MediaStateManagerImpl();
@@ -79,17 +80,11 @@ class CONTENT_EXPORT MediaStateManagerImpl
   void RequestVideoWindow(MediaPlayerId player, bool from_activation);
   void RemoveVideoWindow(MediaPlayerId player);
 
-  struct VideoWindowInfo {
-    VideoWindowInfo(const MediaPlayerId&);
-    ~VideoWindowInfo();
-    MediaPlayerId id_;
-    base::UnguessableToken window_id_;
-    std::string native_window_name_;
-    bool activation_requested_ = false;
-    bool is_valid_ = false;
-  };
+  VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
+
   // This is a bidirectional map between player and global media id.
-  std::map<base::UnguessableToken, VideoWindowInfo> id_to_info_map_;
+  std::map<base::UnguessableToken, std::unique_ptr<VideoWindowInfo>>
+      id_to_info_map_;
   std::map<MediaPlayerId, base::UnguessableToken> player_to_id_map_;
   std::unique_ptr<MediaStatePolicy> policy_;
 

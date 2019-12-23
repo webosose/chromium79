@@ -60,7 +60,7 @@ class VideoWindowControllerHost {
   virtual void DestroyVideoWindow(Client*,
                                   const base::UnguessableToken& window_id) = 0;
   virtual std::string GetNativeLayerId(
-      const base::UnguessableToken& window_id) const = 0;
+      const base::UnguessableToken& window_id) = 0;
 };
 }  // namespace ui
 
