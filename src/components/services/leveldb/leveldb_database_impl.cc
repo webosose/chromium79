@@ -154,10 +154,14 @@ void LevelDBDatabaseImpl::Write(
 
 void LevelDBDatabaseImpl::Get(const std::vector<uint8_t>& key,
                               GetCallback callback) {
+// (neva) GCC needs 'GetResult' structures to be defined in header file
+#if defined(__clang__)
   struct GetResult {
     Status status;
     storage::DomStorageDatabase::Value value;
   };
+#endif
+
   RunDatabaseTask(base::BindOnce(
                       [](const std::vector<uint8_t>& key,
                          const storage::DomStorageDatabase& db) {
@@ -175,10 +179,13 @@ void LevelDBDatabaseImpl::Get(const std::vector<uint8_t>& key,
 
 void LevelDBDatabaseImpl::GetPrefixed(const std::vector<uint8_t>& key_prefix,
                                       GetPrefixedCallback callback) {
+// (neva) GCC needs 'GetPrefixedResult' structures to be defined in header file
+#if defined(__clang__)
   struct GetPrefixedResult {
     Status status;
     std::vector<storage::DomStorageDatabase::KeyValuePair> entries;
   };
+#endif
 
   RunDatabaseTask(
       base::BindOnce(

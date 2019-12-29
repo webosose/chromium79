@@ -301,6 +301,18 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   WebContentsDelegate* GetDelegate() override;
   void SetDelegate(WebContentsDelegate* delegate) override;
   NavigationControllerImpl& GetController() override;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Notify the process creation of currently active RenderProcessHost
+  // It's added for neva app_runtime API
+  void RenderProcessCreated(RenderProcessHost* render_process_host) override;
+  // Set hardware resolution in content::ScreenInfo
+  // (added for the Neva AppRuntime API)
+  bool IsInspectablePage() const override;
+  void SetInspectablePage(bool inspectable) override;
+  void OverrideWebkitPrefs(WebPreferences* prefs) override;
+#endif
+
   BrowserContext* GetBrowserContext() override;
   const GURL& GetURL() override;
   const GURL& GetVisibleURL() override;
@@ -1869,6 +1881,10 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   bool is_overlay_content_;
 
   bool showing_context_menu_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool inspectable_page_ = true;
+#endif
 
   int currently_playing_video_count_ = 0;
   base::flat_map<MediaPlayerId, gfx::Size> cached_video_sizes_;

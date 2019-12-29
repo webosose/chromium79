@@ -14,6 +14,11 @@
 #include "ui/gfx/native_widget_types.h"
 #include "ui/platform_window/platform_window_delegate.h"
 
+// Added for extending ozone wayland window
+#if defined(USE_NEVA_APPRUNTIME)
+#include "ui/platform_window/neva/platform_window_base.h"
+#endif
+
 namespace gfx {
 class ImageSkia;
 class Point;
@@ -28,7 +33,13 @@ namespace ui {
 //
 // Each instance of PlatformWindowBase represents a single window in the
 // underlying platform windowing system (i.e. X11/Win/OSX).
+// Added for extending ozone wayland window
+#if defined(USE_NEVA_APPRUNTIME)
+class PlatformWindowBase : public neva::PlatformWindowBase,
+                           public PropertyHandler {
+#else
 class PlatformWindowBase : public PropertyHandler {
+#endif
  public:
   PlatformWindowBase();
   ~PlatformWindowBase() override;

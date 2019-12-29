@@ -53,6 +53,14 @@ const service_manager::Manifest& GetContentRendererManifest() {
           .RequireCapability(mojom::kBrowserServiceName, "renderer")
           .RequireCapability(mojom::kSystemServiceName, "renderer")
           .RequireCapability(mojom::kSystemServiceName, "sandbox_support")
+#if defined(USE_NEVA_APPRUNTIME)
+          .RequireCapability("neva_pal", "neva:memorymanager")
+          .RequireCapability("neva_pal", "neva:sample")
+          .RequireCapability("neva_pal", "neva:systemservicebridge")
+#endif
+#if defined(USE_NEVA_MEDIA)
+          .RequireCapability("neva_pal_media", "neva:media_player")
+#endif // USE_NEVA_MEDIA
           .RequireInterfaceFilterCapability_Deprecated(
               mojom::kBrowserServiceName, "navigation:shared_worker",
               "renderer")

@@ -198,6 +198,9 @@ std::unique_ptr<network::ResourceRequest> CreateResourceRequest(
   new_request->priority = net_priority;
 
   new_request->render_frame_id = frame_tree_node_id;
+#if defined(USE_NEVA_APPRUNTIME)
+  new_request->process_id = network::ResourceRequest::kBrowserProcessId;
+#endif
 
   // The code below to set fields like request_initiator, referrer, etc has
   // been copied from ResourceDispatcherHostImpl. We did not refactor the

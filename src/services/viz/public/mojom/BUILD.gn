@@ -49,6 +49,20 @@ mojom("mojom") {
     "//ui/latency/mojom",
   ]
 
+  if (use_neva_punch_hole) {
+    if (!defined(enabled_features)) {
+      enabled_features = []
+    }
+    enabled_features += [ "use_neva_punch_hole" ]
+  }
+
+  if (use_neva_media) {
+    if (!defined(enabled_features)) {
+      enabled_features = []
+    }
+    enabled_features += [ "use_neva_media" ]
+  }
+
   if (is_chromeos) {
     public_deps += [ "//components/chromeos_camera/common" ]
   }

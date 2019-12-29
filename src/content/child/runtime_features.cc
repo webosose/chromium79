@@ -249,6 +249,10 @@ void SetRuntimeFeaturesFromChromiumFeatures() {
            kUseFeatureState},
           {wf::EnableWasmCodeCache, blink::features::kWasmCodeCache,
            kUseFeatureState},
+#if defined(USE_FILESCHEME_CODECACHE)
+          {wf::EnableLocalResourceCodeCache, blink::features::kLocalResourceCodeCache,
+           kUseFeatureState},
+#endif
           {wf::EnableExperimentalProductivityFeatures,
            features::kExperimentalProductivityFeatures, kEnableOnly},
           {wf::EnableFeaturePolicyForSandbox,

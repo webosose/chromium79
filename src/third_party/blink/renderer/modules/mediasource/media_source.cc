@@ -54,6 +54,11 @@
 #include "third_party/blink/renderer/platform/network/mime/mime_type_registry.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "base/optional.h"
+#include "third_party/blink/public/platform/neva/web_media_type_restriction.h"
+#endif
+
 using blink::WebMediaSource;
 using blink::WebSourceBuffer;
 
@@ -339,6 +344,16 @@ bool MediaSource::isTypeSupported(const String& type) {
   ContentType content_type(type);
   String codecs = content_type.Parameter("codecs");
 
+#if defined(USE_NEVA_MEDIA)
+  // Below lines depends on a thing that ToInt() will returns 0 if we try to
+  // do that using empty WTFString.
+  int width = content_type.Parameter("width").ToInt();
+  int height = content_type.Parameter("height").ToInt();
+  int frame_rate = content_type.Parameter("framerate").ToInt();
+  int bit_rate = content_type.Parameter("bitrate").ToInt();
+  int channels = content_type.Parameter("channels").ToInt();
+#endif
+
   // 2. If type does not contain a valid MIME type string, then return false.
   if (content_type.GetType().IsEmpty()) {
     DVLOG(1) << __func__ << "(" << type << ") -> false (invalid mime type)";
@@ -363,6 +378,23 @@ bool MediaSource::isTypeSupported(const String& type) {
   // 5. If the MediaSource does not support the specified combination of media
   //    type, media subtype, and codecs then return false.
   // 6. Return true.
+#if defined(USE_NEVA_MEDIA)
+  if (RuntimeEnabledFeatures::MediaSourceIsSupportedExtensionEnabled()) {
+    base::Optional<WebMediaTypeRestriction> restriction;
+    if (width > 0 || height > 0 || frame_rate > 0 || bit_rate > 0 ||
+        channels > 0) {
+      WebMediaTypeRestriction web_media_type_restriction(
+          width, height, frame_rate, bit_rate, channels);
+      restriction = web_media_type_restriction;
+    }
+    bool result = MIMETypeRegistry::IsSupportedMediaSourceMIMEType(
+        content_type.GetType(), codecs, restriction);
+    DVLOG(1) << __func__ << "(" << type << ") -> "
+             << (result ? "true" : "false");
+    return result;
+  }
+#endif
+
   // For incompletely specified mime-type and codec combinations, we also return
   // false, complying with the non-normative guidance being incubated for the
   // MSE vNext codec switching feature at
@@ -919,7 +951,6 @@ void MediaSource::ScheduleEvent(const AtomicString& event_name) {
 
   Event* event = Event::Create(event_name);
   event->SetTarget(this);
-
   async_event_queue_->EnqueueEvent(FROM_HERE, *event);
 }
 

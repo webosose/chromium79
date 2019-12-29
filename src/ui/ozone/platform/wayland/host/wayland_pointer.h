@@ -17,6 +17,7 @@
 namespace ui {
 
 class WaylandWindow;
+class WaylandSeat;
 
 // Wraps the wl_pointer object and transmits events to the dispatcher callback.
 //
@@ -24,7 +25,9 @@ class WaylandWindow;
 // pointer.
 class WaylandPointer {
  public:
-  WaylandPointer(wl_pointer* pointer, const EventDispatchCallback& callback);
+  WaylandPointer(wl_pointer* pointer,
+                 WaylandSeat* wayland_seat,
+                 const EventDispatchCallback& callback);
   virtual ~WaylandPointer();
 
   void set_connection(WaylandConnection* connection) {
@@ -37,8 +40,9 @@ class WaylandPointer {
 
   WaylandCursor* cursor() { return cursor_.get(); }
 
-  void reset_window_with_pointer_focus() {
-    window_with_pointer_focus_ = nullptr;
+  void reset_window_with_pointer_focus(const WaylandWindow* window) {
+    if (window_with_pointer_focus_ == window)
+      window_with_pointer_focus_ = nullptr;
   }
 
  private:
@@ -77,6 +81,7 @@ class WaylandPointer {
   WaylandConnection* connection_ = nullptr;
   std::unique_ptr<WaylandCursor> cursor_;
   wl::Object<wl_pointer> obj_;
+  WaylandSeat* wayland_seat_ = nullptr;
   EventDispatchCallback callback_;
   gfx::PointF location_;
   // Flags is a bitmask of EventFlags corresponding to the pointer/keyboard

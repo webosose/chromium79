@@ -19,6 +19,7 @@
 #include "ui/ozone/platform/wayland/host/wayland_buffer_manager_host.h"
 #include "ui/ozone/platform/wayland/host/wayland_connection.h"
 #include "ui/ozone/platform/wayland/host/wayland_cursor_position.h"
+#include "ui/ozone/platform/wayland/host/wayland_extension.h"
 #include "ui/ozone/platform/wayland/host/wayland_output_manager.h"
 #include "ui/ozone/platform/wayland/host/wayland_pointer.h"
 #include "ui/ozone/platform/wayland/host/xdg_popup_wrapper_v5.h"
@@ -31,38 +32,61 @@ namespace ui {
 
 namespace {
 
-// Factory, which decides which version type of xdg object to build.
-class XDGShellObjectFactory {
+// Factory, which decides which version type of xdg object or extension shell
+// object to build.
+class ShellObjectFactory {
  public:
-  XDGShellObjectFactory() = default;
-  ~XDGShellObjectFactory() = default;
+  ShellObjectFactory() = default;
+  ~ShellObjectFactory() = default;
 
-  std::unique_ptr<XDGSurfaceWrapper> CreateXDGSurface(
+  std::unique_ptr<ShellSurfaceWrapper> CreateShellSurface(
       WaylandConnection* connection,
       WaylandWindow* wayland_window) {
+    std::unique_ptr<ShellSurfaceWrapper> surface;
+    if (connection->extension())
+      surface = connection->extension()->CreateShellSurface(wayland_window);
+
+    if (surface)
+      return surface;
+
     if (connection->shell_v6())
       return std::make_unique<XDGSurfaceWrapperV6>(wayland_window);
 
-    DCHECK(connection->shell());
-    return std::make_unique<XDGSurfaceWrapperV5>(wayland_window);
+    if (connection->shell())
+      return std::make_unique<XDGSurfaceWrapperV5>(wayland_window);
+
+    return nullptr;
   }
 
-  std::unique_ptr<XDGPopupWrapper> CreateXDGPopup(
+  std::unique_ptr<ShellPopupWrapper> CreateShellPopup(
       WaylandConnection* connection,
       WaylandWindow* wayland_window) {
+    std::unique_ptr<ShellPopupWrapper> popup;
+    if (connection->extension())
+      popup = connection->extension()->CreateShellPopup(wayland_window);
+
+    if (popup)
+      return popup;
+
     if (connection->shell_v6()) {
-      std::unique_ptr<XDGSurfaceWrapper> surface =
-          CreateXDGSurface(connection, wayland_window);
-      surface->Initialize(connection, wayland_window->surface(), false);
-      return std::make_unique<XDGPopupWrapperV6>(std::move(surface),
-                                                 wayland_window);
+      std::unique_ptr<ShellSurfaceWrapper> surface =
+          CreateShellSurface(connection, wayland_window);
+
+      if (surface &&
+          surface->Initialize(connection, wayland_window->surface(), false))
+        return std::make_unique<XDGPopupWrapperV6>(std::move(surface),
+                                                   wayland_window);
+      return nullptr;
     }
-    DCHECK(connection->shell());
-    return std::make_unique<XDGPopupWrapperV5>(wayland_window);
+
+    if (connection->shell())
+      return std::make_unique<XDGPopupWrapperV5>(wayland_window);
+
+    return nullptr;
   }
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(XDGShellObjectFactory);
+  DISALLOW_COPY_AND_ASSIGN(ShellObjectFactory);
 };
 
 // Translates bounds relative to top level window to specified parent.
@@ -87,7 +111,7 @@ WaylandWindow::WaylandWindow(PlatformWindowDelegate* delegate,
                              WaylandConnection* connection)
     : delegate_(delegate),
       connection_(connection),
-      xdg_shell_objects_factory_(new XDGShellObjectFactory()),
+      shell_objects_factory_(new ShellObjectFactory()),
       state_(PlatformWindowState::kNormal),
       pending_state_(PlatformWindowState::kUnknown) {
   // Set a class property key, which allows |this| to be used for interactive
@@ -112,7 +136,7 @@ WaylandWindow::~WaylandWindow() {
     parent_window_->set_child_window(nullptr);
 
   if (has_pointer_focus_)
-    connection_->pointer()->reset_window_with_pointer_focus();
+    connection_->wayland_seat_manager()->ResetWindowWithPointerFocus(this);
 }
 
 // static
@@ -122,7 +146,7 @@ WaylandWindow* WaylandWindow::FromSurface(wl_surface* surface) {
 }
 
 bool WaylandWindow::Initialize(PlatformWindowInitProperties properties) {
-  DCHECK(xdg_shell_objects_factory_);
+  DCHECK(shell_objects_factory_);
 
   // Properties contain DIP bounds but the buffer scale is initially 1 so it's
   // OK to assign.  The bounds will be recalculated when the buffer scale
@@ -159,7 +183,7 @@ bool WaylandWindow::Initialize(PlatformWindowInitProperties properties) {
       // TODO(msisov, jkim): Handle notification windows, which are marked
       // as popup windows as well. Those are the windows that do not have
       // parents and pop up when the browser receives a notification.
-      CreateXdgPopup();
+      CreateShellPopup();
       break;
     case ui::PlatformWindowType::kTooltip:
       // Tooltips subsurfaces are created on demand, upon ::Show calls.
@@ -170,7 +194,7 @@ bool WaylandWindow::Initialize(PlatformWindowInitProperties properties) {
     case ui::PlatformWindowType::kDrag:
       // TODO(msisov): Figure out what kind of surface we need to create for
       // bubble and drag windows.
-      CreateXdgSurface();
+      CreateShellSurface();
       break;
   }
 
@@ -218,7 +242,7 @@ gfx::AcceleratedWidget WaylandWindow::GetWidget() const {
   return surface_.id();
 }
 
-void WaylandWindow::CreateXdgPopup() {
+void WaylandWindow::CreateShellPopup() {
   if (bounds_px_.IsEmpty())
     return;
 
@@ -235,24 +259,26 @@ void WaylandWindow::CreateXdgPopup() {
     return;
   }
 
-  DCHECK(parent_window_ && !xdg_popup_);
+  DCHECK(parent_window_ && !shell_popup_);
 
-  auto bounds_px = AdjustPopupWindowPosition();
+  auto bounds = AdjustPopupWindowPosition();
 
-  xdg_popup_ = xdg_shell_objects_factory_->CreateXDGPopup(connection_, this);
-  if (!xdg_popup_ || !xdg_popup_->Initialize(connection_, surface(),
-                                             parent_window_, bounds_px)) {
-    CHECK(false) << "Failed to create xdg_popup";
+  shell_popup_ = shell_objects_factory_->CreateShellPopup(connection_, this);
+  if (!shell_popup_ ||
+      !shell_popup_->Initialize(connection_, surface(), parent_window_,
+                                bounds)) {
+    CHECK(false) << "Failed to create shell_popup";
   }
 
   parent_window_->set_child_window(this);
 }
 
-void WaylandWindow::CreateXdgSurface() {
-  xdg_surface_ =
-      xdg_shell_objects_factory_->CreateXDGSurface(connection_, this);
-  if (!xdg_surface_ || !xdg_surface_->Initialize(connection_, surface_.get())) {
-    CHECK(false) << "Failed to create xdg_surface";
+void WaylandWindow::CreateShellSurface() {
+  shell_surface_ =
+      shell_objects_factory_->CreateShellSurface(connection_, this);
+  if (!shell_surface_ ||
+      !shell_surface_->Initialize(connection_, surface_.get())) {
+    CHECK(false) << "Failed to create shell_surface";
   }
 }
 
@@ -291,10 +317,10 @@ void WaylandWindow::CreateAndShowTooltipSubSurface() {
 void WaylandWindow::ApplyPendingBounds() {
   if (pending_bounds_dip_.IsEmpty())
     return;
-  DCHECK(xdg_surface_);
+  DCHECK(shell_surface_);
 
   SetBoundsDip(pending_bounds_dip_);
-  xdg_surface_->SetWindowGeometry(pending_bounds_dip_);
+  shell_surface_->SetWindowGeometry(pending_bounds_dip_);
   pending_bounds_dip_ = gfx::Rect();
   connection_->ScheduleFlush();
 
@@ -316,13 +342,13 @@ void WaylandWindow::SetPointerFocus(bool focus) {
 void WaylandWindow::DispatchHostWindowDragMovement(
     int hittest,
     const gfx::Point& pointer_location_in_px) {
-  DCHECK(xdg_surface_);
+  DCHECK(shell_surface_);
 
   connection_->ResetPointerFlags();
   if (hittest == HTCAPTION)
-    xdg_surface_->SurfaceMove(connection_);
+    shell_surface_->SurfaceMove(connection_);
   else
-    xdg_surface_->SurfaceResize(connection_, hittest);
+    shell_surface_->SurfaceResize(connection_, hittest);
 
   connection_->ScheduleFlush();
 }
@@ -340,7 +366,7 @@ void WaylandWindow::Show(bool inactive) {
   if (!is_tooltip_)  // Tooltip windows should not get keyboard focus
     set_keyboard_focus(true);
 
-  if (xdg_surface_)
+  if (shell_surface_)
     return;
 
   if (is_tooltip_) {
@@ -348,14 +374,14 @@ void WaylandWindow::Show(bool inactive) {
     return;
   }
 
-  if (!xdg_popup_) {
+  if (!shell_popup_) {
     // When showing a sub-menu after it has been previously shown and hidden,
     // Wayland sends SetBounds prior to Show, and |bounds_px| takes the pixel
     // bounds.  This makes a difference against the normal flow when the
     // window is created (see |Initialize|).  To equalize things, rescale
     // |bounds_px_| to DIP.  It will be adjusted while creating the popup.
     bounds_px_ = gfx::ScaleToRoundedRect(bounds_px_, 1.0 / ui_scale_);
-    CreateXdgPopup();
+    CreateShellPopup();
     connection_->ScheduleFlush();
   }
 
@@ -368,15 +394,15 @@ void WaylandWindow::Hide() {
   } else {
     if (child_window_)
       child_window_->Hide();
-    if (xdg_popup_) {
+    if (shell_popup_) {
       parent_window_->set_child_window(nullptr);
-      xdg_popup_.reset();
+      shell_popup_.reset();
     }
   }
 
   // Detach buffer from surface in order to completely shutdown popups and
   // tooltips, and release resources.
-  if (!xdg_surface())
+  if (!shell_surface())
     connection_->buffer_manager_host()->ResetSurfaceContents(GetWidget());
 }
 
@@ -387,7 +413,7 @@ void WaylandWindow::Close() {
 bool WaylandWindow::IsVisible() const {
   // X and Windows return true if the window is minimized. For consistency, do
   // the same.
-  return (!!xdg_surface_ || !!xdg_popup_) || IsMinimized();
+  return (!!shell_surface_ || !!shell_popup_) || IsMinimized();
 }
 
 void WaylandWindow::PrepareForShutdown() {}
@@ -405,8 +431,8 @@ gfx::Rect WaylandWindow::GetBounds() {
 }
 
 void WaylandWindow::SetTitle(const base::string16& title) {
-  DCHECK(xdg_surface_);
-  xdg_surface_->SetTitle(title);
+  DCHECK(shell_surface_);
+  shell_surface_->SetTitle(title);
   connection_->ScheduleFlush();
 }
 
@@ -422,25 +448,29 @@ void WaylandWindow::ReleaseCapture() {
 
 bool WaylandWindow::HasCapture() const {
   // If WaylandWindow is a popup window, assume it has the capture.
-  return xdg_popup() ? true : has_implicit_grab_;
+  return shell_popup() ? true : has_implicit_grab_;
 }
 
 void WaylandWindow::ToggleFullscreen() {
-  DCHECK(xdg_surface_);
-
+  DCHECK(shell_surface_);
   // There are some cases, when Chromium triggers a fullscreen state change
   // before the surface is activated. In such cases, Wayland may ignore state
   // changes and such flags as --kiosk or --start-fullscreen will be ignored.
   // To overcome this, set a pending state, and once the surface is activated,
   // trigger the change.
+#if !defined(OS_WEBOS)
+  // TODO(yuri.sorochkin) WAM calls ToggleFullscreen for activation of window
+  // in case webOS. Temporary disable the condition for WebOS.
+  // For right solution we should implement WaylandWindow::Activate()
+  // method and to call it from app-runtime or WAM instead SetFullscreen.
   if (!is_active_) {
     DCHECK(!IsFullscreen());
     pending_state_ = PlatformWindowState::kFullScreen;
     return;
   }
-
+#endif
   // TODO(msisov, tonikitoo): add multiscreen support. As the documentation says
-  // if xdg_surface_set_fullscreen() is not provided with wl_output, it's up to
+  // if shell_surface_set_fullscreen() is not provided with wl_output, it's up to
   // the compositor to choose which display will be used to map this surface.
   if (!IsFullscreen()) {
     // Fullscreen state changes have to be handled manually and then checked
@@ -450,29 +480,29 @@ void WaylandWindow::ToggleFullscreen() {
     // DesktopWindowTreeHostPlatform::IsFullscreen, for example, and media
     // files can never be set to fullscreen.
     state_ = PlatformWindowState::kFullScreen;
-    xdg_surface_->SetFullscreen();
+    shell_surface_->SetFullscreen();
   } else {
     // Check the comment above. If it's not handled synchronously, media files
     // may not leave the fullscreen mode.
     state_ = PlatformWindowState::kUnknown;
-    xdg_surface_->UnSetFullscreen();
+    shell_surface_->UnSetFullscreen();
   }
 
   connection_->ScheduleFlush();
 }
 
 void WaylandWindow::Maximize() {
-  DCHECK(xdg_surface_);
+  DCHECK(shell_surface_);
 
   if (IsFullscreen())
     ToggleFullscreen();
 
-  xdg_surface_->SetMaximized();
+  shell_surface_->SetMaximized();
   connection_->ScheduleFlush();
 }
 
 void WaylandWindow::Minimize() {
-  DCHECK(xdg_surface_);
+  DCHECK(shell_surface_);
   DCHECK(!is_minimizing_);
   // Wayland doesn't explicitly say if a window is minimized. Instead, it
   // notifies that the window is not activated. But there are many cases, when
@@ -481,18 +511,18 @@ void WaylandWindow::Minimize() {
   // configuration event comes, check if the window has been deactivated and has
   // |is_minimizing_| set.
   is_minimizing_ = true;
-  xdg_surface_->SetMinimized();
+  shell_surface_->SetMinimized();
   connection_->ScheduleFlush();
 }
 
 void WaylandWindow::Restore() {
-  DCHECK(xdg_surface_);
+  DCHECK(shell_surface_);
 
   // Unfullscreen the window if it is fullscreen.
   if (IsFullscreen())
     ToggleFullscreen();
 
-  xdg_surface_->UnSetMaximized();
+  shell_surface_->UnSetMaximized();
   connection_->ScheduleFlush();
 }
 
@@ -555,6 +585,16 @@ bool WaylandWindow::ShouldWindowContentsBeTransparent() const {
   return false;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void WaylandWindow::SetWindowProperty(const std::string& name,
+                                      const std::string& value) {
+  DCHECK(shell_surface_);
+
+  shell_surface_->SetWindowProperty(name, value);
+  connection_->ScheduleFlush();
+}
+#endif
+
 void WaylandWindow::SetAspectRatio(const gfx::SizeF& aspect_ratio) {
   NOTIMPLEMENTED_LOG_ONCE();
 }
@@ -571,12 +611,12 @@ void WaylandWindow::SizeConstraintsChanged() {
 bool WaylandWindow::CanDispatchEvent(const PlatformEvent& event) {
   // This window is a nested popup window, all the events must be forwarded
   // to the main popup window.
-  if (child_window_ && child_window_->xdg_popup())
-    return !!xdg_popup_.get();
+  if (child_window_ && child_window_->shell_popup())
+    return !!shell_popup_.get();
 
   // If this is a nested menu window with a parent, it mustn't recieve any
   // events.
-  if (parent_window_ && parent_window_->xdg_popup())
+  if (parent_window_ && parent_window_->shell_popup())
     return false;
 
   // If another window has capture, return early before checking focus.
@@ -608,10 +648,10 @@ uint32_t WaylandWindow::DispatchEvent(const PlatformEvent& native_event) {
   // means the window is a popup window with a child popup window. In this case,
   // the location of the event must be converted from the nested popup to the
   // main popup, which the menu controller needs to properly handle events.
-  if (event->IsLocatedEvent() && xdg_popup()) {
+  if (event->IsLocatedEvent() && shell_popup()) {
     // Parent window of the main menu window is not a popup, but rather an
     // xdg surface.
-    DCHECK(!parent_window_->xdg_popup() && parent_window_->xdg_surface());
+    DCHECK(!parent_window_->shell_popup() && parent_window_->shell_surface());
     auto* window =
         connection_->wayland_window_manager()->GetCurrentFocusedWindow();
     if (window) {
@@ -632,7 +672,7 @@ void WaylandWindow::HandleSurfaceConfigure(int32_t width,
                                            bool is_maximized,
                                            bool is_fullscreen,
                                            bool is_activated) {
-  DCHECK(!xdg_popup());
+  DCHECK(!shell_popup());
 
   // Propagate the window state information to the client.
   PlatformWindowState old_state = state_;
@@ -716,7 +756,7 @@ void WaylandWindow::HandleSurfaceConfigure(int32_t width,
 }
 
 void WaylandWindow::HandlePopupConfigure(const gfx::Rect& bounds_dip) {
-  DCHECK(xdg_popup());
+  DCHECK(shell_popup());
   DCHECK(parent_window_);
 
   SetBufferScale(parent_window_->buffer_scale_, true);
@@ -735,7 +775,7 @@ void WaylandWindow::HandlePopupConfigure(const gfx::Rect& bounds_dip) {
   // is above the top level parent window, the origin of the top level window
   // has to be shifted by that value on y-axis so that the origin of the menu
   // becomes x,0, and events can be handled normally.
-  if (!parent_window_->xdg_popup()) {
+  if (!parent_window_->shell_popup()) {
     gfx::Rect parent_bounds = parent_window_->GetBounds();
     // The menu window is flipped along y-axis and have x,-y origin. Shift the
     // parent top level window instead.
@@ -765,10 +805,24 @@ void WaylandWindow::HandlePopupConfigure(const gfx::Rect& bounds_dip) {
   SetBoundsDip(new_bounds_dip);
 }
 
+void WaylandWindow::HandleStateChanged(PlatformWindowState state) {
+  if (state_ != state) {
+    state_ = state;
+    delegate_->OnWindowStateChanged(state_);
+  }
+}
+
+void WaylandWindow::HandleActivationChanged(bool is_activated) {
+  if (is_active_ != is_activated) {
+    is_active_ = is_activated;
+    delegate_->OnActivationChanged(is_active_);
+  }
+}
+
 void WaylandWindow::OnCloseRequest() {
-  // Before calling OnCloseRequest, the |xdg_popup_| must become hidden and
+  // Before calling OnCloseRequest, the |shell_popup_| must become hidden and
   // only then call OnCloseRequest().
-  DCHECK(!xdg_popup_);
+  DCHECK(!shell_popup_);
   delegate_->OnCloseRequest();
 }
 
@@ -887,7 +941,7 @@ void WaylandWindow::AddEnteredOutputId(struct wl_output* output) {
   // Wayland does weird things for popups so instead of tracking outputs that
   // we entered or left, we take that from the parent window and ignore this
   // event.
-  if (xdg_popup())
+  if (shell_popup())
     return;
 
   const uint32_t entered_output_id =
@@ -903,7 +957,7 @@ void WaylandWindow::RemoveEnteredOutputId(struct wl_output* output) {
   // Wayland does weird things for popups so instead of tracking outputs that
   // we entered or left, we take that from the parent window and ignore this
   // event.
-  if (xdg_popup())
+  if (shell_popup())
     return;
 
   const uint32_t left_output_id =
@@ -964,7 +1018,7 @@ void WaylandWindow::UpdateCursorPositionFromEvent(
 }
 
 gfx::Rect WaylandWindow::AdjustPopupWindowPosition() const {
-  auto* parent_window = parent_window_->xdg_popup()
+  auto* parent_window = parent_window_->shell_popup()
                             ? parent_window_->parent_window_
                             : parent_window_;
   DCHECK(parent_window);
@@ -992,10 +1046,10 @@ gfx::Rect WaylandWindow::AdjustPopupWindowPosition() const {
   // compositor may decide to position the nested window on the right side of
   // the parent menu window, which results in showing it on a second display if
   // more than one display is used.
-  if (parent_window_->xdg_popup() && parent_window_->parent_window_ &&
+  if (parent_window_->shell_popup() && parent_window_->parent_window_ &&
       !parent_window_->parent_window_->IsMaximized()) {
     auto* top_level_window = parent_window_->parent_window_;
-    DCHECK(top_level_window && !top_level_window->xdg_popup());
+    DCHECK(top_level_window && !top_level_window->shell_popup());
     if (new_bounds_dip.x() <= 0 && !top_level_window->IsMaximized()) {
       // Position the child menu window on the right side of the parent window
       // and let the Wayland compositor decide how to do constraint

@@ -84,6 +84,9 @@ ResourceResponseHead::ResourceResponseHead(
   was_in_prefetch_cache = url_response_head->was_in_prefetch_cache;
   intercepted_by_plugin = url_response_head->intercepted_by_plugin;
   is_legacy_tls_version = url_response_head->is_legacy_tls_version;
+#if defined(USE_FILESCHEME_CODECACHE)
+  file_last_modified_time = url_response_head->file_last_modified_time;
+#endif
   auth_challenge_info = url_response_head->auth_challenge_info;
   content_security_policy =
       ContentSecurityPolicy(url_response_head->content_security_policy.Clone());
@@ -150,6 +153,9 @@ scoped_refptr<ResourceResponse> ResourceResponse::DeepCopy() const {
   new_response->head.was_in_prefetch_cache = head.was_in_prefetch_cache;
   new_response->head.intercepted_by_plugin = head.intercepted_by_plugin;
   new_response->head.is_legacy_tls_version = head.is_legacy_tls_version;
+#if defined(USE_FILESCHEME_CODECACHE)
+  new_response->head.file_last_modified_time = head.file_last_modified_time;
+#endif
   new_response->head.auth_challenge_info = head.auth_challenge_info;
   new_response->head.content_security_policy = head.content_security_policy;
   new_response->head.origin_policy = head.origin_policy;
@@ -191,7 +197,12 @@ ResourceResponseHead::operator mojom::URLResponseHeadPtr() const {
       cors_exposed_header_names, did_service_worker_navigation_preload,
       should_report_corb_blocking, async_revalidation_requested, did_mime_sniff,
       is_signed_exchange_inner_response, was_in_prefetch_cache,
+#if defined(USE_FILESCHEME_CODECACHE)
+      intercepted_by_plugin, is_legacy_tls_version, file_last_modified_time,
+      auth_challenge_info,
+#else
       intercepted_by_plugin, is_legacy_tls_version, auth_challenge_info,
+#endif
       content_security_policy, request_start, response_start, origin_policy,
       recursive_prefetch_token);
 }

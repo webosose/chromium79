@@ -110,6 +110,7 @@ group("gn_all") {
       "//gpu/khronos_glcts_support:khronos_glcts_test",
       "//jingle:jingle_unittests",
       "//net:hpack_example_generator",
+      "//neva/wam_demo",
       "//ppapi:ppapi_unittests",
       "//ppapi/examples/2d",
       "//ppapi/examples/audio",
@@ -149,6 +150,7 @@ group("gn_all") {
       "//tools/polymer:polymer_tools_python_unittests",
       "//ui/accessibility:accessibility_unittests",
       "//ui/accessibility/extensions",
+      "//webos:weboswebruntime",
     ]
   }
 
@@ -727,7 +729,12 @@ group("gn_all") {
       "//third_party/opus:test_opus_padding",
       "//ui/display/types",
       "//ui/shell_dialogs:shell_dialogs_unittests",
+      "//neva/neva_unittests",
     ]
+
+    if (is_webos) {
+      deps += [ "//webos/install" ]
+    }
 
     if (enable_nacl) {
       deps += [ "//native_client/src/trusted/debug_stub:gdb_rsp_unittest" ]

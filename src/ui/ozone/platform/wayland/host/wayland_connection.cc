@@ -23,8 +23,10 @@
 #include "ui/ozone/platform/wayland/common/wayland_object.h"
 #include "ui/ozone/platform/wayland/host/wayland_buffer_manager_host.h"
 #include "ui/ozone/platform/wayland/host/wayland_drm.h"
+#include "ui/ozone/platform/wayland/host/wayland_extension.h"
 #include "ui/ozone/platform/wayland/host/wayland_input_method_context.h"
 #include "ui/ozone/platform/wayland/host/wayland_output_manager.h"
+#include "ui/ozone/platform/wayland/host/wayland_seat_manager.h"
 #include "ui/ozone/platform/wayland/host/wayland_shm.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 #include "ui/ozone/platform/wayland/host/wayland_zwp_linux_dmabuf.h"
@@ -85,12 +87,13 @@ bool WaylandConnection::Initialize() {
     LOG(ERROR) << "No wl_shm object";
     return false;
   }
-  if (!seat_) {
+  if (!seat()) {
     LOG(ERROR) << "No wl_seat object";
     return false;
   }
-  if (!shell_v6_ && !shell_) {
-    LOG(ERROR) << "No xdg_shell object";
+
+  if (!shell_v6_ && !shell_ && !(extension_ && extension_->HasShellObject())) {
+    LOG(ERROR) << "No shell object";
     return false;
   }
 
@@ -135,16 +138,12 @@ void WaylandConnection::ScheduleFlush() {
 
 void WaylandConnection::SetCursorBitmap(const std::vector<SkBitmap>& bitmaps,
                                         const gfx::Point& location) {
-  if (!pointer_ || !pointer_->cursor())
+  // TODO: Maybe we want that the update bitmap is called for all pointers from
+  // all seats. At the implementation, the update bitmap is called for the
+  // current pointer from the first seat.
+  if (!pointer() || !pointer()->cursor())
     return;
-  pointer_->cursor()->UpdateBitmap(bitmaps, location, serial_);
-}
-
-int WaylandConnection::GetKeyboardModifiers() const {
-  int modifiers = 0;
-  if (keyboard_)
-    modifiers = keyboard_->modifiers();
-  return modifiers;
+  pointer()->cursor()->UpdateBitmap(bitmaps, location, serial_);
 }
 
 void WaylandConnection::StartDrag(const ui::OSExchangeData& data,
@@ -180,8 +179,11 @@ bool WaylandConnection::IsDragInProgress() {
 }
 
 void WaylandConnection::ResetPointerFlags() {
-  if (pointer_)
-    pointer_->ResetFlags();
+  // TODO: Maybe we want that the ResetFlags is called for all pointers from
+  // all seats. At the implementation, the ResetFlags() is called for the
+  // current pointer from the first seat.
+  if (pointer())
+    pointer()->ResetFlags();
 }
 
 void WaylandConnection::OnDispatcherListChanged() {
@@ -232,9 +234,8 @@ void WaylandConnection::OnFileCanWriteWithoutBlocking(int fd) {
 }
 
 void WaylandConnection::EnsureDataDevice() {
-  if (!data_device_manager_ || !seat_)
+  if (!data_device_manager_ || !seat() || data_device_)
     return;
-  DCHECK(!data_device_);
   wl_data_device* data_device = data_device_manager_->GetDevice();
   data_device_ = std::make_unique<WaylandDataDevice>(this, data_device);
 
@@ -268,10 +269,6 @@ void WaylandConnection::Global(void* data,
                                uint32_t name,
                                const char* interface,
                                uint32_t version) {
-  static const wl_seat_listener seat_listener = {
-      &WaylandConnection::Capabilities,
-      &WaylandConnection::Name,
-  };
   static const xdg_shell_listener shell_listener = {
       &WaylandConnection::Ping,
   };
@@ -280,7 +277,14 @@ void WaylandConnection::Global(void* data,
   };
 
   WaylandConnection* connection = static_cast<WaylandConnection*>(data);
-  if (!connection->compositor_ && strcmp(interface, "wl_compositor") == 0) {
+
+  if (!connection->extension_) {
+    connection->extension_ = CreateWaylandExtension();
+  }
+
+  if (connection->extension_->Bind(registry, name, interface, version)) {
+  } else if (!connection->compositor_ &&
+             strcmp(interface, "wl_compositor") == 0) {
     connection->compositor_ = wl::Bind<wl_compositor>(
         registry, name, std::min(version, kMaxCompositorVersion));
     if (!connection->compositor_)
@@ -296,14 +300,19 @@ void WaylandConnection::Global(void* data,
     connection->shm_ = std::make_unique<WaylandShm>(shm.release(), connection);
     if (!connection->shm_)
       LOG(ERROR) << "Failed to bind to wl_shm global";
-  } else if (!connection->seat_ && strcmp(interface, "wl_seat") == 0) {
-    connection->seat_ =
+  } else if (strcmp(interface, "wl_seat") == 0) {
+    wl::Object<wl_seat> seat =
         wl::Bind<wl_seat>(registry, name, std::min(version, kMaxSeatVersion));
-    if (!connection->seat_) {
+    if (!seat) {
       LOG(ERROR) << "Failed to bind to wl_seat global";
       return;
     }
-    wl_seat_add_listener(connection->seat_.get(), &seat_listener, connection);
+    if (!connection->wayland_seat_manager_) {
+      connection->wayland_seat_manager_ =
+          std::make_unique<WaylandSeatManager>(connection);
+    }
+    connection->wayland_seat_manager_->AddSeat(name, seat.release());
+
     connection->EnsureDataDevice();
   } else if (!connection->shell_v6_ &&
              strcmp(interface, "zxdg_shell_v6") == 0) {
@@ -413,67 +422,6 @@ void WaylandConnection::GlobalRemove(void* data,
   if (connection->wayland_output_manager_)
     connection->wayland_output_manager_->RemoveWaylandOutput(name);
 }
-
-// static
-void WaylandConnection::Capabilities(void* data,
-                                     wl_seat* seat,
-                                     uint32_t capabilities) {
-  WaylandConnection* connection = static_cast<WaylandConnection*>(data);
-  if (capabilities & WL_SEAT_CAPABILITY_POINTER) {
-    if (!connection->pointer_) {
-      wl_pointer* pointer = wl_seat_get_pointer(connection->seat_.get());
-      if (!pointer) {
-        LOG(ERROR) << "Failed to get wl_pointer from seat";
-        return;
-      }
-      connection->pointer_ = std::make_unique<WaylandPointer>(
-          pointer, base::BindRepeating(&WaylandConnection::DispatchUiEvent,
-                                       base::Unretained(connection)));
-      connection->pointer_->set_connection(connection);
-
-      connection->wayland_cursor_position_ =
-          std::make_unique<WaylandCursorPosition>();
-    }
-  } else if (connection->pointer_) {
-    connection->pointer_.reset();
-    connection->wayland_cursor_position_.reset();
-  }
-  if (capabilities & WL_SEAT_CAPABILITY_KEYBOARD) {
-    if (!connection->keyboard_) {
-      wl_keyboard* keyboard = wl_seat_get_keyboard(connection->seat_.get());
-      if (!keyboard) {
-        LOG(ERROR) << "Failed to get wl_keyboard from seat";
-        return;
-      }
-      connection->keyboard_ = std::make_unique<WaylandKeyboard>(
-          keyboard, KeyboardLayoutEngineManager::GetKeyboardLayoutEngine(),
-          base::BindRepeating(&WaylandConnection::DispatchUiEvent,
-                              base::Unretained(connection)));
-      connection->keyboard_->set_connection(connection);
-    }
-  } else if (connection->keyboard_) {
-    connection->keyboard_.reset();
-  }
-  if (capabilities & WL_SEAT_CAPABILITY_TOUCH) {
-    if (!connection->touch_) {
-      wl_touch* touch = wl_seat_get_touch(connection->seat_.get());
-      if (!touch) {
-        LOG(ERROR) << "Failed to get wl_touch from seat";
-        return;
-      }
-      connection->touch_ = std::make_unique<WaylandTouch>(
-          touch, base::BindRepeating(&WaylandConnection::DispatchUiEvent,
-                                     base::Unretained(connection)));
-      connection->touch_->SetConnection(connection);
-    }
-  } else if (connection->touch_) {
-    connection->touch_.reset();
-  }
-  connection->ScheduleFlush();
-}
-
-// static
-void WaylandConnection::Name(void* data, wl_seat* seat, const char* name) {}
 
 // static
 void WaylandConnection::PingV6(void* data,

@@ -26,9 +26,15 @@
 #include "ui/views/linux_ui/linux_ui.h"
 #include "ui/views/widget/desktop_aura/desktop_screen.h"
 #include "ui/views/widget/native_widget_aura.h"
+// Added for ozone-wayland port
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+#include "ozone/ui/webui/ozone_webui.h"
+#endif
 
 namespace {
-
+// Added !defined(USE_OZONE) for compiling chrome browser with ozone-wayland
+// port
+#if !defined(USE_OZONE)
 ui::NativeTheme* GetNativeThemeForWindow(aura::Window* window) {
   if (!window)
     return nullptr;
@@ -53,6 +59,7 @@ ui::NativeTheme* GetNativeThemeForWindow(aura::Window* window) {
 
   return ui::NativeTheme::GetInstanceForNativeUi();
 }
+#endif
 
 }  // namespace
 
@@ -63,6 +70,9 @@ ChromeBrowserMainExtraPartsViewsLinux::
     ~ChromeBrowserMainExtraPartsViewsLinux() = default;
 
 void ChromeBrowserMainExtraPartsViewsLinux::PreEarlyInitialization() {
+// Added !defined(USE_OZONE) for compiling chrome browser with ozone-wayland
+// port
+#if !defined(USE_OZONE)
   views::LinuxUI* linux_ui = views::BuildLinuxUI();
   if (!linux_ui)
     return;
@@ -70,6 +80,15 @@ void ChromeBrowserMainExtraPartsViewsLinux::PreEarlyInitialization() {
   linux_ui->SetNativeThemeOverride(
       base::BindRepeating(&GetNativeThemeForWindow));
   views::LinuxUI::SetInstance(linux_ui);
+#else
+#if defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  // Added for Intel ozone-wayland port
+  views::LinuxUI::SetInstance(BuildWebUI());
+#else
+  // Added for Google ozone-wayland impl
+  ui::InitializeInputMethodForTesting();
+#endif
+#endif
 }
 
 void ChromeBrowserMainExtraPartsViewsLinux::ToolkitInitialized() {

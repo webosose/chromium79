@@ -91,6 +91,17 @@ LayoutSize LayoutVideo::CalculateIntrinsicSize() {
   WebMediaPlayer* web_media_player = MediaElement()->GetWebMediaPlayer();
   if (web_media_player &&
       video->getReadyState() >= HTMLVideoElement::kHaveMetadata) {
+#if defined(USE_NEVA_MEDIA)
+    if (!web_media_player->UsesIntrinsicSize()) {
+      const IntSize size = video->VideoRectInScreen().Size();
+      const IntSize widget_view_size = MediaElement()->WidgetViewRect().Size();
+      if (!size.IsEmpty() && (size.Width() >= widget_view_size.Width() ||
+                              size.Height() >= widget_view_size.Height() ||
+                              video->IsFullscreen())) {
+        return LayoutSize(size);
+      }
+    }
+#endif
     IntSize size = web_media_player->NaturalSize();
     if (!size.IsEmpty())
       return LayoutSize(size);

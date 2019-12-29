@@ -13,6 +13,7 @@
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_sender.h"
 #include "ipc/message_filter.h"
+#include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/ozone_platform.h"
 
@@ -29,12 +30,25 @@ void DispatchToGpuPlatformSupportHostTask(IPC::Message* msg) {
   delete msg;
 }
 
-void DispatchToGpuPlatformSupportTaskOnIO(IPC::Message* msg) {
-  IPC::MessageFilter* filter =
-      ui::OzonePlatform::GetInstance()->GetGpuMessageFilter();
-  if (filter)
-    filter->OnMessageReceived(*msg);
+void DispatchToGpuPlatformSupportTask(IPC::Message* msg) {
+  ui::OzonePlatform::GetInstance()->GetGpuPlatformSupport()->OnMessageReceived(
+      *msg);
   delete msg;
+}
+
+void DispatchToGpuPlatformSupportTaskOnIO(
+    const scoped_refptr<base::SingleThreadTaskRunner>& gpu_task_runner,
+    IPC::Message* msg) {
+  IPC::MessageFilter* filter = ui::OzonePlatform::GetInstance()
+                                   ->GetGpuPlatformSupport()
+                                   ->GetMessageFilter();
+  if (filter && filter->OnMessageReceived(*msg)) {
+    delete msg;
+    return;
+  }
+
+  gpu_task_runner->PostTask(FROM_HERE,
+                            base::Bind(DispatchToGpuPlatformSupportTask, msg));
 }
 
 }  // namespace
@@ -46,9 +60,16 @@ class FakeGpuProcess : public IPC::Channel {
       : ui_task_runner_(ui_task_runner) {}
   ~FakeGpuProcess() override {}
 
+  void Init() {
+    ui::OzonePlatform::GetInstance()
+        ->GetGpuPlatformSupport()
+        ->OnChannelEstablished(this);
+  }
+
   void InitOnIO() {
-    IPC::MessageFilter* filter =
-        ui::OzonePlatform::GetInstance()->GetGpuMessageFilter();
+    IPC::MessageFilter* filter = ui::OzonePlatform::GetInstance()
+                                     ->GetGpuPlatformSupport()
+                                     ->GetMessageFilter();
 
     if (filter)
       filter->OnFilterAdded(this);
@@ -83,7 +104,7 @@ class FakeGpuProcessHost {
 
   void InitOnIO() {
     base::RepeatingCallback<void(IPC::Message*)> sender =
-        base::BindRepeating(&DispatchToGpuPlatformSupportTaskOnIO);
+        base::BindRepeating(&DispatchToGpuPlatformSupportTaskOnIO, ui_task_runner_);
 
     ui::OzonePlatform::GetInstance()
         ->GetGpuPlatformSupportHost()

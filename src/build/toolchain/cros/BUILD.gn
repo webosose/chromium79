@@ -40,7 +40,7 @@ gcc_toolchain("target") {
   toolchain_args = {
     cc_wrapper = ""
     current_cpu = target_cpu
-    current_os = "chromeos"
+    current_os = target_os
     is_clang = is_clang
     use_debug_fission = use_debug_fission
     use_gold = use_gold
@@ -83,7 +83,7 @@ gcc_toolchain("nacl_bootstrap") {
   toolchain_args = {
     cc_wrapper = ""
     current_cpu = target_cpu
-    current_os = "chromeos"
+    current_os = target_os
     is_clang = is_clang
     use_debug_fission = false
     use_gold = false

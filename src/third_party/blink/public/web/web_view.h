@@ -406,6 +406,9 @@ class WebView {
   // Visibility -----------------------------------------------------------
 
   // Sets the visibility of the WebView.
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void SetLaunchingVisibilityState(bool is_hidden, bool is_launching) = 0;
+#endif
   virtual void SetIsHidden(bool hidden, bool is_initial_state) = 0;
   virtual bool IsHidden() = 0;
 

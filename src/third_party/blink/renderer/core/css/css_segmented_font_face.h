@@ -79,10 +79,19 @@ class CSSSegmentedFontFace final
   using FontFaceList = HeapListHashSet<Member<FontFace>>;
 
   FontSelectionCapabilities font_selection_capabilities_;
+
+// This is neva workaround for GCC 8 build v.77 because of crash when using the
+// FontCacheKey in HashMap. This crash related to changes in FontCacheKey but
+// if we rollback these changes to v.74 the crash is fixed but fonts work not
+// correctly.
+#if defined(__GNUC__)
+  HashMap<unsigned, scoped_refptr<SegmentedFontData>>
+#else
   HashMap<FontCacheKey,
           scoped_refptr<SegmentedFontData>,
           FontCacheKeyHash,
           FontCacheKeyTraits>
+#endif
       font_data_table_;
   // All non-CSS-connected FontFaces are stored after the CSS-connected ones.
   FontFaceList font_faces_;

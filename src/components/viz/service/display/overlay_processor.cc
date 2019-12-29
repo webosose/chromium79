@@ -129,20 +129,37 @@ std::unique_ptr<OverlayProcessor> OverlayProcessor::CreateOverlayProcessor(
     gpu::SurfaceHandle surface_handle,
     const OutputSurface::Capabilities& capabilities,
     const RendererSettings& renderer_settings) {
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+  return base::WrapUnique(new OverlayProcessor(
+      skia_output_surface, OverlayCandidateValidator::Create(
+                               surface_handle, capabilities, renderer_settings),
+      std::make_unique<DCLayerOverlayProcessor>(capabilities,
+                                                renderer_settings),
+      surface_handle));
+#else
   return base::WrapUnique(
       new OverlayProcessor(skia_output_surface,
                            OverlayCandidateValidator::Create(
                                surface_handle, capabilities, renderer_settings),
                            std::make_unique<DCLayerOverlayProcessor>(
                                capabilities, renderer_settings)));
+#endif
 }
 
 OverlayProcessor::OverlayProcessor(
     SkiaOutputSurface* skia_output_surface,
     std::unique_ptr<OverlayCandidateValidator> overlay_validator,
-    std::unique_ptr<DCLayerOverlayProcessor> dc_layer_overlay_processor)
+    std::unique_ptr<DCLayerOverlayProcessor> dc_layer_overlay_processor
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+    ,
+    gpu::SurfaceHandle surface_handle
+#endif
+    )
     : overlay_validator_(std::move(overlay_validator)),
       dc_layer_overlay_processor_(std::move(dc_layer_overlay_processor)),
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+      neva_processor_(surface_handle),
+#endif
       skia_output_surface_(skia_output_surface) {
   DCHECK(dc_layer_overlay_processor_);
   if (overlay_validator_)
@@ -246,6 +263,9 @@ void OverlayProcessor::ProcessForOverlays(
     // Update damage rect before calling ClearOverlayState, otherwise
     // previous_frame_overlay_rect_union will be empty.
     dc_layer_overlay_processor_->ClearOverlayState();
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+    neva_processor_.ClearOverlayState();
+#endif
     return;
   }
 
@@ -263,6 +283,13 @@ void OverlayProcessor::ProcessForOverlays(
   }
 
   DCHECK(candidates->empty());
+
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+  neva_processor_.Process(resource_provider,
+                          gfx::RectF(render_passes->back()->output_rect),
+                          render_passes, &overlay_damage_rect_, damage_rect);
+#endif
+
   // Only if that fails, attempt hardware overlay strategies.
   bool success = false;
   if (overlay_validator_) {

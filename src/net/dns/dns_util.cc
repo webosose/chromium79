@@ -143,8 +143,13 @@ const std::vector<DohUpgradeEntry>& GetDohUpgradeList() {
   // The provider names in these entries should be kept in sync with the
   // DohProviderId histogram suffix list in
   // tools/metrics/histograms/histograms.xml.
-  static const base::NoDestructor<std::vector<DohUpgradeEntry>>
-      upgradable_servers({
+
+// (neva) GCC 8.x.x
+#if !defined(__clang__)
+  std::vector<DohUpgradeEntry> entries({
+#else
+  static const base::NoDestructor<std::vector<DohUpgradeEntry>> upgradable_servers({
+#endif
           DohUpgradeEntry(
               "CleanBrowsingAdult",
               {"185.228.168.10", "185.228.169.11", "2a0d:2a00:1::1",
@@ -222,6 +227,12 @@ const std::vector<DohUpgradeEntry>& GetDohUpgradeList() {
               {"dns.quad9.net", "dns9.quad9.net"} /* DoT hostname */,
               {"https://dns.quad9.net/dns-query", true /* use_post */}),
       });
+// (neva) GCC 8.x.x
+#if !defined(__clang__)
+  static const base::NoDestructor<std::vector<DohUpgradeEntry>>
+      upgradable_servers(entries);
+#endif
+
   return *upgradable_servers;
 }
 

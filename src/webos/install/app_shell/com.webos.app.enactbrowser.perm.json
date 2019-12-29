@@ -1,0 +1,6 @@
+{
+    "com.webos.app.enactbrowser-*": [
+        "private",
+        "public"
+    ]
+}

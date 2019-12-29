@@ -77,6 +77,9 @@ int UtilityMain(const MainFunctionParams& parameters) {
   // Seccomp-BPF policy.
   auto sandbox_type =
       service_manager::SandboxTypeFromCommandLine(parameters.command_line);
+#if defined(OS_WEBOS)
+  if (!service_manager::IsUnsandboxedSandboxType(sandbox_type))
+#endif
   if (parameters.zygote_child ||
       sandbox_type == service_manager::SANDBOX_TYPE_NETWORK ||
 #if defined(OS_CHROMEOS)

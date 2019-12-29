@@ -137,6 +137,17 @@ void VideoFrameProviderClientImpl::DidReceiveFrame() {
                "VideoFrameProviderClientImpl::DidReceiveFrame",
                "active_video_layer",
                !!active_video_layer_);
+
+#if defined(USE_NEVA_MEDIA) && defined(NEVA_VIDEO_HOLE)
+  scoped_refptr<media::VideoFrame> vf = AcquireLockAndCurrentFrame();
+  if (vf.get() && vf.get()->storage_type() == media::VideoFrame::STORAGE_HOLE) {
+    // HW accelerated video playback on transparent hole doesn't need redraw
+    ReleaseLock();
+    return;
+  }
+  ReleaseLock();
+#endif
+
   DCHECK(thread_checker_.CalledOnValidThread());
   needs_put_current_frame_ = true;
   if (active_video_layer_)

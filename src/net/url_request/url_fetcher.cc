@@ -11,7 +11,8 @@ namespace net {
 
 URLFetcher::~URLFetcher() = default;
 
-#if (!defined(OS_WIN) && !defined(OS_LINUX)) || defined(OS_CHROMEOS)
+#if (!defined(OS_WIN) && !defined(OS_LINUX)) || defined(OS_CHROMEOS) || \
+    defined(USE_NEVA_APPRUNTIME)
 // static
 std::unique_ptr<URLFetcher> URLFetcher::Create(
     const GURL& url,

@@ -320,6 +320,9 @@ void Widget::Init(InitParams params) {
     widget_delegate_ =
         params.delegate ? params.delegate : default_widget_delegate.get();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (ViewsDelegate::GetInstance())
+#endif
     ViewsDelegate::GetInstance()->OnBeforeWidgetInit(&params, this);
 
     widget_delegate_ =
@@ -929,7 +932,11 @@ NonClientFrameView* Widget::CreateNonClientFrameView() {
       widget_delegate_->CreateNonClientFrameView(this);
   if (!frame_view)
     frame_view = native_widget_->CreateNonClientFrameView();
+#if defined(USE_NEVA_APPRUNTIME)
+  if (!frame_view && ViewsDelegate::GetInstance()) {
+#else
   if (!frame_view) {
+#endif
     frame_view =
         ViewsDelegate::GetInstance()->CreateDefaultNonClientFrameView(this);
   }

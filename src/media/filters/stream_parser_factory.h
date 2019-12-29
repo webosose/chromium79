@@ -13,6 +13,11 @@
 #include "media/base/media_log.h"
 #include "media/base/mime_util.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "base/optional.h"
+#include "media/base/neva/media_type_restriction.h"
+#endif
+
 namespace media {
 
 class StreamParser;
@@ -29,6 +34,15 @@ class MEDIA_EXPORT StreamParserFactory {
   // requires a codecs parameter that is missing.
   static SupportsType IsTypeSupported(const std::string& type,
                                       const std::vector<std::string>& codecs);
+
+#if defined(USE_NEVA_MEDIA)
+  // Checks to see if the specified additional options are supported.
+  // Returns true if conditions are supported.
+  static bool IsTypeSupported(
+      const std::string& type,
+      const std::vector<std::string>& codecs,
+      const base::Optional<MediaTypeRestriction>& restriction);
+#endif
 
   // Creates a new StreamParser object if the specified |type| and |codecs| list
   // are supported. |media_log| can be used to report errors if there is

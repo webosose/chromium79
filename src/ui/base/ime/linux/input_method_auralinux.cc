@@ -23,7 +23,8 @@ const int kIgnoreCommitsDurationInMilliseconds = 100;
 namespace ui {
 
 InputMethodAuraLinux::InputMethodAuraLinux(
-    internal::InputMethodDelegate* delegate)
+    internal::InputMethodDelegate* delegate,
+    unsigned handle)
     : InputMethodBase(delegate),
       text_input_type_(TEXT_INPUT_TYPE_NONE),
       is_sync_mode_(false),
@@ -31,12 +32,21 @@ InputMethodAuraLinux::InputMethodAuraLinux(
   DCHECK(LinuxInputMethodContextFactory::instance())
       << "Trying to initialize InputMethodAuraLinux, but "
          "LinuxInputMethodContextFactory is not initialized yet.";
-  context_ =
-      LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
-          this, false);
-  context_simple_ =
-      LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
-          this, true);
+  if (!!handle) {
+    context_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+          this, handle, false);
+    context_simple_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+          this, handle, true);
+  } else {
+    context_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+            this, false);
+    context_simple_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+            this, true);
+  }
 }
 
 InputMethodAuraLinux::~InputMethodAuraLinux() {

@@ -5,7 +5,7 @@
 #ifndef UI_OZONE_PLATFORM_WAYLAND_HOST_XDG_SURFACE_WRAPPER_V6_H_
 #define UI_OZONE_PLATFORM_WAYLAND_HOST_XDG_SURFACE_WRAPPER_V6_H_
 
-#include "ui/ozone/platform/wayland/host/xdg_surface_wrapper.h"
+#include "ui/ozone/platform/wayland/host/shell_surface_wrapper.h"
 
 #include "base/macros.h"
 
@@ -18,7 +18,7 @@ namespace ui {
 class WaylandConnection;
 class WaylandWindow;
 
-class XDGSurfaceWrapperV6 : public XDGSurfaceWrapper {
+class XDGSurfaceWrapperV6 : public ShellSurfaceWrapper {
  public:
   XDGSurfaceWrapperV6(WaylandWindow* wayland_window);
   ~XDGSurfaceWrapperV6() override;
@@ -36,6 +36,9 @@ class XDGSurfaceWrapperV6 : public XDGSurfaceWrapper {
   void SetTitle(const base::string16& title) override;
   void AckConfigure() override;
   void SetWindowGeometry(const gfx::Rect& bounds) override;
+  void SetInputRegion(const std::vector<gfx::Rect>& region) override;
+  void SetWindowProperty(const std::string& name,
+                         const std::string& value) override;
 
   // xdg_surface_listener
   static void Configure(void* data,

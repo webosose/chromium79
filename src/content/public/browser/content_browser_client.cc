@@ -265,6 +265,16 @@ bool ContentBrowserClient::IsFileAccessAllowed(
   return true;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+bool ContentBrowserClient::IsFileAccessAllowedForRequest(
+    const base::FilePath& path,
+    const base::FilePath& absolute_path,
+    const base::FilePath& profile_path,
+    const network::ResourceRequest& request) {
+  return true;
+}
+#endif
+
 bool ContentBrowserClient::ForceSniffingFileUrlsForHtml() {
   return false;
 }

@@ -109,6 +109,9 @@ class WebWidgetClient {
   virtual void SetShowDebugBorders(bool) {}
   virtual void SetShowScrollBottleneckRects(bool) {}
   virtual void SetShowHitTestBorders(bool) {}
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void SetVisible(bool) {}
+#endif
 
   // Sets the background color to be filled in as gutter behind/around the
   // painted content. Non-composited WebViews need not implement this, as they

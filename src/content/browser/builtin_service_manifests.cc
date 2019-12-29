@@ -27,6 +27,14 @@
 #include "services/service_manager/public/cpp/manifest_builder.h"
 #include "services/tracing/manifest.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "neva/pal_service/neva_pal_manifest.h"
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+#include "neva/pal_media_service/neva_pal_media_manifest.h"
+#endif
+
 namespace content {
 
 namespace {
@@ -68,6 +76,12 @@ const std::vector<service_manager::Manifest>& GetBuiltinServiceManifests() {
           media_session::GetManifest(),
           metrics::GetManifest(),
           tracing::GetManifest(),
+#if defined(USE_NEVA_APPRUNTIME)
+          pal::GetNevaPalManifest(),
+#endif
+#if defined(USE_NEVA_MEDIA)
+          pal_media::GetNevaPalMediaManifest(),
+#endif
       }};
   return *manifests;
 }

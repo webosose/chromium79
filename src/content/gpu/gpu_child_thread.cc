@@ -41,6 +41,7 @@
 #include "third_party/skia/include/core/SkGraphics.h"
 
 #if defined(USE_OZONE)
+#include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/ozone_platform.h"
 #endif
 
@@ -56,8 +57,9 @@ ChildThreadImpl::Options GetOptions() {
   ChildThreadImpl::Options::Builder builder;
 
 #if defined(USE_OZONE)
-  IPC::MessageFilter* message_filter =
-      ui::OzonePlatform::GetInstance()->GetGpuMessageFilter();
+  IPC::MessageFilter* message_filter = ui::OzonePlatform::GetInstance()
+                                           ->GetGpuPlatformSupport()
+                                           ->GetMessageFilter();
   if (message_filter)
     builder.AddStartupFilter(message_filter);
 #endif
@@ -281,6 +283,17 @@ bool GpuChildThread::Send(IPC::Message* msg) {
   return ChildThreadImpl::Send(msg);
 }
 
+// Recovered for ozone-wayland port.
+bool GpuChildThread::OnControlMessageReceived(const IPC::Message& msg) {
+#if defined(USE_OZONE)
+  if (ui::OzonePlatform::GetInstance()
+          ->GetGpuPlatformSupport()
+          ->OnMessageReceived(msg))
+    return true;
+#endif
+  return false;
+}
+
 void GpuChildThread::RunService(
     const std::string& service_name,
     mojo::PendingReceiver<service_manager::mojom::Service> receiver) {
@@ -312,6 +325,12 @@ void GpuChildThread::OnGpuServiceConnection(viz::GpuServiceImpl* gpu_service) {
                           base::ThreadTaskRunnerHandle::Get());
   gpu_service->media_gpu_channel_manager()->SetOverlayFactory(
       overlay_factory_cb);
+#endif
+
+#if defined(USE_OZONE)
+  ui::OzonePlatform::GetInstance()
+      ->GetGpuPlatformSupport()
+      ->OnChannelEstablished(this);
 #endif
 
   // Only set once per process instance.

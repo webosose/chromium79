@@ -80,6 +80,15 @@ void XDGSurfaceWrapperV5::SetWindowGeometry(const gfx::Rect& bounds) {
                                   bounds.width(), bounds.height());
 }
 
+void XDGSurfaceWrapperV5::SetInputRegion(const std::vector<gfx::Rect>& region) {
+  NOTIMPLEMENTED();
+}
+
+void XDGSurfaceWrapperV5::SetWindowProperty(const std::string& name,
+                                            const std::string& value) {
+  NOTIMPLEMENTED();
+}
+
 // static
 void XDGSurfaceWrapperV5::Configure(void* data,
                                     xdg_surface* obj,

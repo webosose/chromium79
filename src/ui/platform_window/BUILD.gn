@@ -15,6 +15,22 @@ source_set("platform_window") {
     "platform_window_init_properties.h",
   ]
 
+  sources += [
+    "neva/window_group_configuration.cc",
+    "neva/window_group_configuration.h",
+    "neva/window_group_configuration_param_traits.cc",
+    "neva/window_group_configuration_param_traits.h",
+  ]
+
+  if (use_neva_media) {
+    sources += [
+      "neva/video_window_controller.h",
+      "neva/video_window_controller_helper.cc",
+      "neva/video_window_controller_helper.h",
+      "neva/video_window_controller_host.h",
+    ]
+  }
+
   deps = [
     "//base",
     "//ui/base",

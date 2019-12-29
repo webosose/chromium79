@@ -69,12 +69,29 @@ class CONTENT_EXPORT RendererWebMediaPlayerDelegate
       int delegate_id,
       const media_session::MediaPosition& position) override;
 
+#if defined(USE_NEVA_MEDIA)
+  // WebMediaPlayerDelegate implementation.
+  void DidMediaCreated(int player_id, bool will_use_media_resource) override;
+  void DidMediaActivated(int player_id) override;
+  void DidMediaActivationNeeded(int player_id) override;
+  void DidMediaSuspended(int player_id) override;
+
+  // content::RenderFrameObserver implementation.
+  void OnMediaActivationPermitted(int player_id) override;
+  void OnSuspendMedia(int player_id) override;
+  void OnMediaLayerCreated(int player_id,
+                           const content::MediaLayerInfo& info) override;
+  void OnMediaLayerWillDestroyed(int player_id) override;
+  void OnMediaLayerGeometryChanged(int player_id,
+                                   const gfx::Rect& rect) override;
+  void OnMediaLayerVisibilityChanged(int player_id, bool visibility) override;
+#endif
+
   // content::RenderFrameObserver overrides.
   void WasHidden() override;
   void WasShown() override;
   bool OnMessageReceived(const IPC::Message& msg) override;
   void OnDestruct() override;
-
   // Zeros out |idle_cleanup_interval_|, sets |idle_timeout_| to |idle_timeout|,
   // and |is_low_end_| to |is_low_end|. A zero cleanup interval
   // will cause the idle timer to run with each run of the message loop.

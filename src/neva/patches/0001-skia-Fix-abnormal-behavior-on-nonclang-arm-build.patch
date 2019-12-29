@@ -1,0 +1,48 @@
+From 841e91d1f8cf069bb16b352892102c7c5d91eefb Mon Sep 17 00:00:00 2001
+From: JunHo Seo <junho0924.seo@lge.com>
+Date: Fri, 16 Nov 2018 17:32:37 +0300
+Subject: [PATCH 1/2] [skia] Fix abnormal behavior on nonclang + arm build
+
+:Release Notes:
+Applied a script patch for disabling unwanted function attribute
+
+:Detailed Notes:
+Note that this commit is applied by script execution.
+We found that real value of parameters in some functions are incorrect
+if we turn on __attribute__((pcs("aapcs-vfp"))) for function. So we
+disable the attribute.
+Because this attribute is used for only arm, build for other cpu types
+are never affected by this patch.
+
+:Test Scenario:
+1. Open https://google.com
+2. box-shadow effect in search box should be rendered correctly.
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-2635] Abnormal borders are displayed.
+---
+ src/opts/SkRasterPipeline_opts.h | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/opts/SkRasterPipeline_opts.h b/src/opts/SkRasterPipeline_opts.h
+index 9fe3d94..847aaed 100644
+--- a/src/opts/SkRasterPipeline_opts.h
++++ b/src/opts/SkRasterPipeline_opts.h
+@@ -705,7 +705,11 @@ static const size_t N = sizeof(F) / sizeof(float);
+ #if defined(__arm__) && defined(__ARM_NEON)
+     // This lets us pass vectors more efficiently on 32-bit ARM.
+     // We can still only pass 16 floats, so best as 4x {r,g,b,a}.
+-    #define ABI __attribute__((pcs("aapcs-vfp")))
++    #if defined(__clang__)
++#define ABI __attribute__((pcs("aapcs-vfp")))
++#else
++#define ABI
++#endif
+     #define JUMPER_NARROW_STAGES 1
+ #elif 0 && defined(_MSC_VER) && defined(__clang__) && defined(__x86_64__)
+     // SysV ABI makes it very sensible to use wide stages with clang-cl.
+-- 
+2.7.4
+

@@ -176,6 +176,10 @@ Feature::Context ScriptContextSet::ClassifyJavaScriptContext(
     int32_t world_id,
     const GURL& url,
     const blink::WebSecurityOrigin& origin) {
+#if defined(USE_NEVA_EXTENSIONS)
+  return Feature::BLESSED_EXTENSION_CONTEXT;
+#endif
+
   // WARNING: This logic must match ProcessMap::GetContextType, as much as
   // possible.
 

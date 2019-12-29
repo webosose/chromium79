@@ -1,0 +1,74 @@
+# Copyright 2017-2019 LG Electronics, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+import("//neva/neva.gni")
+
+neva = {
+  configs = []
+  public_configs = []
+  deps = []
+  public_deps = [
+    "//base",
+    "//neva/pal_media_service/public/mojom",
+    "//third_party/jsoncpp",
+  ]
+  _dir = get_path_info("../neva", "abspath")
+  sources = [
+    "$_dir/media_info_loader.cc",
+    "$_dir/media_info_loader.h",
+    "$_dir/mediaplayer_mojo.cc",
+    "$_dir/mediaplayer_mojo.h",
+    "$_dir/media_player_neva_interface.cc",
+    "$_dir/media_player_neva_interface.h",
+    "$_dir/mediaplayerneva_factory.h",
+    "$_dir/mediaplayerneva_factory_stub.cc",
+    "$_dir/stream_texture_interface.h",
+    "$_dir/video_frame_provider_impl.cc",
+    "$_dir/video_frame_provider_impl.h",
+    "$_dir/video_util_neva.cc",
+    "$_dir/video_util_neva.h",
+    "$_dir/webmediaplayer_mse.cc",
+    "$_dir/webmediaplayer_mse.h",
+    "$_dir/webmediaplayer_neva.cc",
+    "$_dir/webmediaplayer_neva.h",
+    "$_dir/webmediaplayer_neva_factory.h",
+    "$_dir/webmediaplayer_neva_factory.cc",
+    "$_dir/webmediaplayer_params_neva.cc",
+    "$_dir/webmediaplayer_params_neva.h",
+  ]
+  if (is_webos) {
+    sources -= [
+      "$_dir/mediaplayerneva_factory_stub.cc",
+    ]
+    import ("//media/blink/neva/webos/build.gni")
+    configs += webos.configs
+    public_configs += webos.public_configs
+    deps += webos.deps
+    public_deps += webos.public_deps
+    sources += webos.sources
+  }
+
+  if(use_neva_media_for_testing) {
+    sources -= [
+      "$_dir/mediaplayerneva_factory_stub.cc",
+    ]
+    sources += [
+      "$_dir/fake_url_mediaplayer.cc",
+      "$_dir/fake_url_mediaplayer.h",
+      "$_dir/fake_mediaplayerneva_factory.cc",
+    ]
+  }
+}

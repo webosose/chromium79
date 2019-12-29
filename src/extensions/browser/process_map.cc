@@ -108,6 +108,9 @@ std::set<std::string> ProcessMap::GetExtensionsInProcess(int process_id) const {
 Feature::Context ProcessMap::GetMostLikelyContextType(
     const Extension* extension,
     int process_id) const {
+#if defined(USE_NEVA_EXTENSIONS)
+  return Feature::BLESSED_EXTENSION_CONTEXT;
+#endif
   // WARNING: This logic must match ScriptContextSet::ClassifyJavaScriptContext,
   // as much as possible.
 

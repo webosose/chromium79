@@ -12,6 +12,8 @@ import("//ui/base/ui_features.gni")
 import("//ui/ozone/ozone.gni")
 import("//ui/views/features.gni")
 
+import("//neva/neva.gni")
+
 config("flags") {
   defines = [ "TOOLKIT_VIEWS=1" ]
 }
@@ -776,6 +778,30 @@ jumbo_component("views") {
         sources +=
             [ "widget/desktop_aura/desktop_window_tree_host_platform.cc" ]
       }
+      #{neva
+      if (use_ozone) {
+        if (ozone_platform_wayland_external) {
+          deps += [ "//ozone/ui/desktop_aura:views_ozone_wayland" ]
+          sources += [
+            "widget/desktop_aura/desktop_factory_ozone.cc",
+            "widget/desktop_aura/desktop_factory_ozone.h",
+            "widget/desktop_aura/desktop_screen_headless.cc",
+            "widget/desktop_aura/desktop_screen_headless.h",
+            "widget/desktop_aura/desktop_window_tree_host_ozone.cc",
+          ]
+          public -= [
+            "widget/desktop_aura/desktop_window_tree_host_linux.h",
+            "widget/desktop_aura/desktop_window_tree_host_platform.h"
+          ]
+          sources -= [
+            "widget/desktop_aura/desktop_window_tree_host_linux.cc",
+            "widget/desktop_aura/desktop_window_tree_host_platform.cc",
+            "widget/desktop_aura/window_event_filter_linux.cc",
+            "widget/desktop_aura/window_event_filter_linux.h",
+          ]
+        }
+      }
+      #neva}
     }
   }
 

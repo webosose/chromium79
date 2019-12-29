@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import ("//neva/neva.gni")
+
 typemaps = [
   "//content/common/frame_messages.typemap",
   "//content/common/input/synchronous_compositor.typemap",
@@ -11,3 +13,9 @@ typemaps = [
   "//content/common/render_frame_metadata.typemap",
   "//content/common/web_preferences.typemap",
 ]
+
+if (use_neva_media) {
+  typemaps += [
+    "//content/common/media/neva/media_layer_info.typemap"
+  ]
+}

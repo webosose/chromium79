@@ -1,0 +1,11 @@
+mojom = "//content/common/media/neva/media_layer_info.mojom"
+public_headers = [ "//content/common/media/neva/media_layer_info.h" ]
+traits_headers = [ "//content/common/media/neva/media_layer_info_mojom_traits.h" ]
+sources = [
+  "//content/common/media/neva/media_layer_info_mojom_traits.cc",
+  "//content/common/media/neva/media_layer_info_mojom_traits.h"
+]
+public_deps = [ "//base" ]
+type_mappings = [
+  "content.mojom.MediaLayerInfo=::content::MediaLayerInfo",
+]

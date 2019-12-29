@@ -323,6 +323,43 @@ std::string HashesToBase64String(const net::HashValueVector& hashes) {
   return str;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+class ExtraHeaderNetworkDelegate : public NetworkServiceNetworkDelegate,
+                                   public mojom::ExtraHeaderNetworkDelegate {
+ public:
+  ExtraHeaderNetworkDelegate(
+      bool enable_referrers,
+      bool validate_referrer_policy_on_initial_request,
+      mojom::ProxyErrorClientPtrInfo proxy_error_client_info,
+      NetworkContext* network_context, mojom::ExtraHeaderNetworkDelegateRequest request)
+      : NetworkServiceNetworkDelegate(enable_referrers, validate_referrer_policy_on_initial_request,
+      std::move(proxy_error_client_info), network_context),
+        binding_(this, std::move(request)) {}
+
+  void SetWebSocketHeader(const std::string& key,
+                          const std::string& value) override {
+    extra_websocket_headers_.insert(std::make_pair(key, value));
+  }
+
+  void OnBeforeSendHeaders(
+      net::URLRequest* request,
+      const net::ProxyInfo& proxy_info,
+      const net::ProxyRetryInfoMap& proxy_retry_info,
+      net::HttpRequestHeaders* headers) override {
+    // Extra WebSocket headers should be applied for WebSocket requests only
+    if (request->url().SchemeIsWSOrWSS()) {
+      for (const auto& pair : extra_websocket_headers_) {
+        headers->SetHeader(pair.first, pair.second);
+      }
+    }
+    NetworkServiceNetworkDelegate::OnBeforeSendHeaders(request, proxy_info, proxy_retry_info, headers);
+  }
+
+ private:
+  mojo::Binding<mojom::ExtraHeaderNetworkDelegate> binding_;
+  std::map<std::string, std::string> extra_websocket_headers_;
+};
+#endif
 }  // namespace
 
 constexpr uint32_t NetworkContext::kMaxOutstandingRequestsPerProcess;
@@ -1594,11 +1631,20 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext() {
   builder.SetCertVerifier(IgnoreErrorsCertVerifier::MaybeWrapCertVerifier(
       *command_line, nullptr, std::move(cert_verifier)));
 
+#if defined(USE_NEVA_APPRUNTIME)
+  std::unique_ptr<NetworkServiceNetworkDelegate> network_delegate =
+      std::make_unique<ExtraHeaderNetworkDelegate>(
+          params_->enable_referrers,
+          params_->validate_referrer_policy_on_initial_request,
+          std::move(params_->proxy_error_client), this,
+          std::move(params_->network_delegate_request));
+#else
   std::unique_ptr<NetworkServiceNetworkDelegate> network_delegate =
       std::make_unique<NetworkServiceNetworkDelegate>(
           params_->enable_referrers,
           params_->validate_referrer_policy_on_initial_request,
           std::move(params_->proxy_error_client), this);
+#endif
   network_delegate_ = network_delegate.get();
   builder.set_network_delegate(std::move(network_delegate));
 

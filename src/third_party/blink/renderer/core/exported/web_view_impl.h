@@ -313,6 +313,9 @@ class CORE_EXPORT WebViewImpl final : public WebView,
   PaintLayerCompositor* Compositor() const;
 
   PageScheduler* Scheduler() const override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void SetLaunchingVisibilityState(bool is_hidden, bool is_launching) override;
+#endif
   void SetIsHidden(bool hidden, bool is_initial_state) override;
   bool IsHidden() override;
 

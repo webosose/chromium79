@@ -9,6 +9,10 @@
 
 #include "cc/base/base_export.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "cc/base/switches_neva.h"
+#endif
+
 // Since cc is used from the render process, anything that goes here also needs
 // to be added to render_process_host_impl.cc.
 

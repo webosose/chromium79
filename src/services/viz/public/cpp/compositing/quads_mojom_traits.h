@@ -551,6 +551,20 @@ struct StructTraits<viz::mojom::DrawQuadDataView, DrawQuadWithSharedQuadState> {
     return input.quad->needs_blending;
   }
 
+#if defined(USE_NEVA_PUNCH_HOLE)
+  static bool force_draw_transparent_color(
+      const DrawQuadWithSharedQuadState& input) {
+    return input.quad->force_draw_transparent_color;
+  }
+#endif  // USE_NEVA_PUNCH_HOLE
+
+#if defined(USE_NEVA_MEDIA)
+  static bool is_overlay_for_video_hole(
+      const DrawQuadWithSharedQuadState& input) {
+    return input.quad->is_overlay_for_video_hole;
+  }
+#endif  // USE_NEVA_MEDIA
+
   static OptSharedQuadState sqs(const DrawQuadWithSharedQuadState& input) {
     return {input.shared_quad_state};
   }

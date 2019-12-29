@@ -841,6 +841,10 @@ class Document::SecurityContextInit : public FeaturePolicyParserDelegate {
             security_origin_->BlockLocalAccessFromLocalOrigin();
           }
         }
+#if defined(USE_NEVA_APPRUNTIME)
+        if (settings->GetAllowLocalResourceLoad())
+          security_origin_->GrantLoadLocalResources();
+#endif
       }
     }
 
@@ -1265,7 +1269,6 @@ void Document::SetCompatibilityMode(CompatibilityMode mode) {
     UseCounter::Count(*this, WebFeature::kQuirksModeDocument);
   else if (compatibility_mode_ == kLimitedQuirksMode)
     UseCounter::Count(*this, WebFeature::kLimitedQuirksModeDocument);
-
   compatibility_mode_ = mode;
   GetSelectorQueryCache().Invalidate();
 }
@@ -5298,6 +5301,19 @@ bool Document::SetFocusedElement(Element* new_focused_element,
       last_focus_type_ = params.type;
 
     focused_element_->SetFocused(true, params.type);
+
+#if defined(USE_NEVA_APPRUNTIME)
+    // Fix app_shell crash built by GCC 6.4.0
+    // focused_element_->SetFocused(true, params.type) can call
+    // SetFocusedElement and clear
+    // focused_element_.
+    if (focused_element_ != new_focused_element) {
+      UpdateStyleAndLayoutTree();
+      if (LocalFrame* frame = GetFrame())
+        frame->Selection().DidChangeFocus();
+      return false;
+    }
+#endif
     focused_element_->SetHasFocusWithinUpToAncestor(true, ancestor);
 
     // Element::setFocused for frames can dispatch events.

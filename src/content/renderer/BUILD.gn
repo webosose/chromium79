@@ -8,6 +8,7 @@ import("//build/config/jumbo.gni")
 import("//build/config/ui.gni")
 import("//content/common/features.gni")
 import("//media/media_options.gni")
+import("//neva/neva.gni")
 import("//ppapi/buildflags/buildflags.gni")
 import("//printing/buildflags/buildflags.gni")
 import("//third_party/webrtc/webrtc.gni")
@@ -469,6 +470,16 @@ target(link_target_type, "renderer") {
     "//ui/surface",
     "//v8",
   ]
+
+  if (use_neva_media) {
+    import("//content/renderer/neva/build.gni")
+    sources += rebase_path(neva.sources,".")
+    import("//content/renderer/gpu/neva/build.gni")
+    sources += rebase_path(neva_gpu.sources,".")
+    import("//content/renderer/media/neva/build.gni")
+    sources += rebase_path(neva_media.sources,".")
+  }
+
   allow_circular_includes_from = []
 
   if (use_external_popup_menu) {
@@ -715,6 +726,10 @@ target(link_target_type, "renderer") {
 
   if (is_chromecast) {
     defines += [ "IS_CHROMECAST" ]
+  }
+
+  if (use_neva_suspend_media_capture) {
+    deps += [ "//content/renderer/media/audio/neva" ]
   }
 }
 

@@ -76,6 +76,9 @@ class GpuChildThread : public ChildThreadImpl,
       mojo::PendingReceiver<service_manager::mojom::Service> receiver) override;
   void BindServiceInterface(mojo::GenericPendingReceiver receiver) override;
 
+  // Recovered for ozone-wayland port.
+  bool OnControlMessageReceived(const IPC::Message& msg) override;
+
   // IPC::Listener implementation via ChildThreadImpl:
   void OnAssociatedInterfaceRequest(
       const std::string& name,

@@ -30,7 +30,12 @@ class MEDIA_EXPORT RendererFactorySelector {
     COURIER = 3,       // CourierRendererFactory.
     FLINGING = 4,      // FlingingRendererClientFactory.
     CAST = 5,          // CastRendererClientFactory.
+#if defined(USE_NEVA_MEDIA)
+    NEVA_MEDIA_PLAYER = 6, // NevaMediaPlayerRendererFactory.
+    FACTORY_TYPE_MAX = NEVA_MEDIA_PLAYER,
+#else
     FACTORY_TYPE_MAX = CAST,
+#endif
   };
 
   RendererFactorySelector();

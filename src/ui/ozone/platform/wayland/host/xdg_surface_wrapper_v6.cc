@@ -116,6 +116,15 @@ void XDGSurfaceWrapperV6::SetWindowGeometry(const gfx::Rect& bounds) {
                                       bounds.height());
 }
 
+void XDGSurfaceWrapperV6::SetInputRegion(const std::vector<gfx::Rect>& region) {
+  NOTIMPLEMENTED();
+}
+
+void XDGSurfaceWrapperV6::SetWindowProperty(const std::string& name,
+                                            const std::string& value) {
+  NOTIMPLEMENTED();
+}
+
 // static
 void XDGSurfaceWrapperV6::Configure(void* data,
                                     struct zxdg_surface_v6* zxdg_surface_v6,

@@ -103,7 +103,11 @@ scoped_refptr<FontData> CSSSegmentedFontFace::GetFontData(
       FontFaceCreationParams(), is_unique_match, font_selection_request);
 
   scoped_refptr<SegmentedFontData>& font_data =
+#if defined(__GNUC__)
+      font_data_table_.insert(key.GetHash(), nullptr).stored_value->value;
+#else
       font_data_table_.insert(key, nullptr).stored_value->value;
+#endif
   if (font_data && font_data->NumFaces()) {
     // No release, we have a reference to an object in the cache which should
     // retain the ref count it has.

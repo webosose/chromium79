@@ -665,8 +665,13 @@ static void PartitionDumpPageStats(PartitionBucketMemoryStats* stats_out,
   }
 }
 
+#if defined(USE_MEMORY_TRACE)
+void PartitionDumpBucketStats(PartitionBucketMemoryStats* stats_out,
+                              const internal::PartitionBucket* bucket) {
+#else
 static void PartitionDumpBucketStats(PartitionBucketMemoryStats* stats_out,
                                      const internal::PartitionBucket* bucket) {
+#endif
   DCHECK(!bucket->is_direct_mapped());
   stats_out->is_valid = false;
   // If the active page list is empty (==

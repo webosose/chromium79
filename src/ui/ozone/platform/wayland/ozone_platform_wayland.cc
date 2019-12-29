@@ -28,6 +28,7 @@
 #include "ui/ozone/platform/wayland/host/wayland_input_method_context_factory.h"
 #include "ui/ozone/platform/wayland/host/wayland_output_manager.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
+#include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/input_controller.h"
 #include "ui/ozone/public/ozone_platform.h"
@@ -92,6 +93,10 @@ class OzonePlatformWayland : public OzonePlatform {
 
   InputController* GetInputController() override {
     return input_controller_.get();
+  }
+
+  GpuPlatformSupport* GetGpuPlatformSupport() override {
+    return gpu_platform_support_.get();
   }
 
   GpuPlatformSupportHost* GetGpuPlatformSupportHost() override {
@@ -186,6 +191,7 @@ class OzonePlatformWayland : public OzonePlatform {
 
   void InitializeGPU(const InitParams& args) override {
     buffer_manager_ = std::make_unique<WaylandBufferManagerGpu>();
+    gpu_platform_support_.reset(CreateStubGpuPlatformSupport());
     surface_factory_ = std::make_unique<WaylandSurfaceFactory>(
         connection_.get(), buffer_manager_.get());
 #if defined(WAYLAND_GBM)
@@ -229,6 +235,7 @@ class OzonePlatformWayland : public OzonePlatform {
   std::unique_ptr<StubOverlayManager> overlay_manager_;
   std::unique_ptr<InputController> input_controller_;
   std::unique_ptr<GpuPlatformSupportHost> gpu_platform_support_host_;
+  std::unique_ptr<GpuPlatformSupport> gpu_platform_support_;
   std::unique_ptr<WaylandInputMethodContextFactory>
       input_method_context_factory_;
   std::unique_ptr<WaylandBufferManagerConnector> buffer_manager_connector_;

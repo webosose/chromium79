@@ -37,6 +37,7 @@ enum ScrollRestoration {"auto", "manual"};
     [CallWith=ScriptState, RaisesException] void go(optional long delta = 0);
     [CallWith=ScriptState, RaisesException] void back();
     [CallWith=ScriptState, RaisesException] void forward();
-    [MeasureAs=HistoryPushState, RaisesException] void pushState(SerializedScriptValue data, DOMString title, optional DOMString? url = null);
-    [MeasureAs=HistoryReplaceState, RaisesException] void replaceState(SerializedScriptValue data, DOMString title, optional DOMString? url = null);
+    // Neva changed title value to optional of pushState and replaceState for CP backward compatibility
+    [MeasureAs=HistoryPushState, RaisesException] void pushState(SerializedScriptValue data, optional DOMString? title = null, optional DOMString? url = null);
+    [MeasureAs=HistoryReplaceState, RaisesException] void replaceState(SerializedScriptValue data, optional DOMString? title = null, optional DOMString? url = null);
 };

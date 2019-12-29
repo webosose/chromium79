@@ -173,8 +173,9 @@ gfx::Rect GetAnchorRect(MenuType menu_type,
 
 }  // namespace
 
-XDGPopupWrapperV6::XDGPopupWrapperV6(std::unique_ptr<XDGSurfaceWrapper> surface,
-                                     WaylandWindow* wayland_window)
+XDGPopupWrapperV6::XDGPopupWrapperV6(
+    std::unique_ptr<ShellSurfaceWrapper> surface,
+    WaylandWindow* wayland_window)
     : wayland_window_(wayland_window), zxdg_surface_v6_(std::move(surface)) {
   DCHECK(zxdg_surface_v6_);
 }
@@ -199,14 +200,14 @@ bool XDGPopupWrapperV6::Initialize(WaylandConnection* connection,
   XDGSurfaceWrapperV6* parent_xdg_surface;
   // If the parent window is a popup, the surface of that popup must be used as
   // a parent.
-  if (parent_window->xdg_popup()) {
+  if (parent_window->shell_popup()) {
     XDGPopupWrapperV6* popup =
-        reinterpret_cast<XDGPopupWrapperV6*>(parent_window->xdg_popup());
+        reinterpret_cast<XDGPopupWrapperV6*>(parent_window->shell_popup());
     parent_xdg_surface =
-        reinterpret_cast<XDGSurfaceWrapperV6*>(popup->xdg_surface());
+        reinterpret_cast<XDGSurfaceWrapperV6*>(popup->shell_surface());
   } else {
     parent_xdg_surface =
-        reinterpret_cast<XDGSurfaceWrapperV6*>(parent_window->xdg_surface());
+        reinterpret_cast<XDGSurfaceWrapperV6*>(parent_window->shell_surface());
   }
 
   if (!parent_xdg_surface)
@@ -282,7 +283,7 @@ zxdg_positioner_v6* XDGPopupWrapperV6::CreatePositioner(
   MenuType menu_type = MenuType::TYPE_UNKNOWN;
   if (is_right_click_menu)
     menu_type = MenuType::TYPE_RIGHT_CLICK;
-  else if (parent_window->xdg_popup())
+  else if (parent_window->shell_popup())
     menu_type = MenuType::TYPE_3DOT_CHILD_MENU;
   else
     menu_type = MenuType::TYPE_3DOT_PARENT_MENU;
@@ -333,7 +334,7 @@ void XDGPopupWrapperV6::PopupDone(void* data,
   window->OnCloseRequest();
 }
 
-XDGSurfaceWrapper* XDGPopupWrapperV6::xdg_surface() {
+ShellSurfaceWrapper* XDGPopupWrapperV6::shell_surface() {
   DCHECK(zxdg_surface_v6_.get());
   return zxdg_surface_v6_.get();
 }

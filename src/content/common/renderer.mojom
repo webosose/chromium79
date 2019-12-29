@@ -265,6 +265,15 @@ interface Renderer {
   // Tells the renderer process of a change in visibility or background state.
   SetProcessState(RenderProcessState process_state);
 
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Tells the renderer process to suspend.
+  ProcessSuspend();
+
+  // Tells the renderer process to resume.
+  ProcessResume();
+  ///@}
+
   // Tells the scheduler about "keep-alive" state which can be due to:
   // service workers, shared workers, or fetch keep-alive.
   // If set to true, then the scheduler should not freeze the renderer.

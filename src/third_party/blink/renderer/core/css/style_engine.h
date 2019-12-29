@@ -136,12 +136,13 @@ class CORE_EXPORT StyleEngine final : public GarbageCollected<StyleEngine>,
   void HtmlImportAddedOrRemoved();
   void V0ShadowAddedOnV1Document();
 
-  void InjectSheet(const StyleSheetKey&, StyleSheetContents*,
-                   WebDocument::CSSOrigin =
-                       WebDocument::kAuthorOrigin);
+  void InjectSheet(const StyleSheetKey&,
+                   StyleSheetContents*,
+                   WebDocument::CSSOrigin = WebDocument::kAuthorOrigin);
   void RemoveInjectedSheet(const StyleSheetKey&,
                            WebDocument::CSSOrigin =
                                WebDocument::kAuthorOrigin);
+
   CSSStyleSheet& EnsureInspectorStyleSheet();
   RuleSet* WatchedSelectorsRuleSet() {
     DCHECK(IsMaster());

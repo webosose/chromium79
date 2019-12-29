@@ -171,6 +171,7 @@
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_constants.h"
 #include "content/public/common/content_features.h"
+#include "content/public/common/content_neva_switches.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/process_type.h"
 #include "content/public/common/resource_type.h"
@@ -265,6 +266,14 @@
 
 #if BUILDFLAG(ENABLE_LIBRARY_CDMS)
 #include "content/browser/media/key_system_support_impl.h"
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+#include "media/base/media_switches_neva.h"
+#endif
+
+#if defined(USE_MEMORY_TRACE) || defined(USE_NEVA_APPRUNTIME)
+#include "base/neva/base_switches.h"
 #endif
 
 #if BUILDFLAG(ENABLE_PLUGINS)
@@ -2046,8 +2055,11 @@ void RenderProcessHostImpl::RegisterMojoInterfaces() {
           &RenderProcessHostImpl::CreateBroadcastChannelProvider,
           base::Unretained(this)));
 
+#if !(defined(USE_NEVA_APPRUNTIME) && defined(USE_OZONE) && \
+      defined(OZONE_PLATFORM_WAYLAND_EXTERNAL))
   AddUIThreadInterface(registry.get(),
                        base::BindRepeating(&ClipboardHostImpl::Create));
+#endif
 
   AddUIThreadInterface(
       registry.get(),
@@ -3024,6 +3036,7 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
     switches::kEnablePrintBrowser,
     switches::kEnablePreferCompositingToLCDText,
     switches::kEnableRGBA4444Textures,
+    switches::kEnableSampleInjection,
     switches::kEnableSkiaBenchmarking,
     switches::kEnableSubresourceRedirect,
     switches::kEnableThreadedCompositing,
@@ -3140,6 +3153,22 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
 #if defined(USE_OZONE)
     switches::kOzonePlatform,
 #endif
+#if defined(USE_NEVA_MEDIA)
+    switches::kDisableWebMediaPlayerNeva,
+    switches::kEnablePalMediaService,
+    switches::kFakeUrlMediaDuration,
+#endif
+#if defined(USE_NEVA_APPRUNTIME)
+    switches::kAllowScriptsToCloseWindows,
+    switches::kDecodedImageWorkingSetBudgetMB,
+    switches::kMemPressureGPUCacheSizeReductionFactor,
+    switches::kTileManagerLowMemPolicyBytesLimitReductionFactor,
+    cc::switches::kEnableAggressiveReleasePolicy,
+#endif
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+    switches::kDisableSuspendAudioCapture,
+    switches::kDisableSuspendVideoCapture,
+#endif
 #if defined(ENABLE_IPC_FUZZER)
     switches::kIpcDumpDirectory,
     switches::kIpcFuzzerTestcase,
@@ -3150,6 +3179,43 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
 
   BrowserChildProcessHostImpl::CopyFeatureAndFieldTrialFlags(renderer_cmd);
   BrowserChildProcessHostImpl::CopyTraceStartupFlags(renderer_cmd);
+
+#if defined(USE_MEMORY_TRACE)
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryRenderer)) {
+    // Pass kTraceMemoryRenderer switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryRenderer,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryRenderer));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryInterval)) {
+    // Pass kTraceMemoryInterval switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryInterval,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryInterval));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryToFile)) {
+    // Pass kTraceMemoryToFile switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryToFile,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryToFile));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryLogFormat)) {
+    // Pass kTraceMemoryLogFormat switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryLogFormat,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryLogFormat));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryByteUnit)) {
+    // Pass kTraceMemoryByteUnit switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryByteUnit,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryByteUnit));
+  }
+#endif
 
   // Only run the Stun trials in the first renderer.
   if (!has_done_stun_trials &&

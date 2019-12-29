@@ -341,6 +341,10 @@ source_set("common") {
     "//content/public/common:interfaces",
   ]
 
+  if (use_lttng) {
+    deps += [ "//content/common/neva/lttng:lttng" ]
+  }
+
   if (is_android && use_seccomp_bpf) {
     set_sources_assignment_filter([])
     sources += [
@@ -489,6 +493,13 @@ mojom("mojo_bindings") {
     "renderer_host.mojom",
     "widget.mojom",
   ]
+
+  if (use_neva_media) {
+    sources += [
+      "media/neva/frame_media_controller.mojom",
+      "media/neva/media_layer_info.mojom",
+    ]
+  }
 
   enabled_features = []
   if (enable_ipc_logging) {

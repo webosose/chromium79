@@ -5,14 +5,14 @@
 #ifndef UI_OZONE_PLATFORM_WAYLAND_HOST_XDG_POPUP_WRAPPER_V5_H_
 #define UI_OZONE_PLATFORM_WAYLAND_HOST_XDG_POPUP_WRAPPER_V5_H_
 
-#include "ui/ozone/platform/wayland/host/xdg_popup_wrapper.h"
+#include "ui/ozone/platform/wayland/host/shell_popup_wrapper.h"
 
 namespace ui {
 
 class WaylandConnection;
 class WaylandWindow;
 
-class XDGPopupWrapperV5 : public XDGPopupWrapper {
+class XDGPopupWrapperV5 : public ShellPopupWrapper {
  public:
   XDGPopupWrapperV5(WaylandWindow* wayland_window);
   ~XDGPopupWrapperV5() override;

@@ -332,6 +332,12 @@ void DesktopWindowTreeHostLinux::AddAdditionalInitProperties(
   }
   properties->prefer_dark_theme = linux_ui && linux_ui->PreferDarkTheme();
   properties->background_color = background_color;
+#if defined(USE_NEVA_APPRUNTIME)
+  // TODO(neva): This is workaround to fix wam_demo crash when using
+  // Google ozone/wayland graphics backend.
+  // Need to think about ViewsDelegate support in wam_demo.
+  if (ViewsDelegate::GetInstance())
+#endif
   properties->icon = ViewsDelegate::GetInstance()->GetDefaultWindowIcon();
 
   properties->wm_class_name = params.wm_class_name;

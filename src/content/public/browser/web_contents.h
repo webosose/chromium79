@@ -306,6 +306,15 @@ class WebContents : public PageNavigator,
   // See also GetVisibleURL above, which may differ from this URL.
   virtual const GURL& GetLastCommittedURL() = 0;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Notify the process creation of currently active RenderProcessHost
+  // It's added for neva app_runtime API
+  virtual void RenderProcessCreated(RenderProcessHost* render_process_host) = 0;
+
+  virtual bool IsInspectablePage() const = 0;
+  virtual void SetInspectablePage(bool inspectable) = 0;
+#endif
+
   // Returns the main frame for the currently active view.
   virtual RenderFrameHost* GetMainFrame() = 0;
 

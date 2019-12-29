@@ -380,6 +380,10 @@ void ThreadableLoader::MakeCrossOriginAccessRequest(
   // Cross-origin requests are only allowed certain registered schemes. We would
   // catch this when checking response headers later, but there is no reason to
   // send a request, preflighted or not, that's guaranteed to be denied.
+#if defined(USE_NEVA_APPRUNTIME)
+  LocalFrame* frame = GetDocument() ? GetDocument()->GetFrame() : nullptr;
+  if (frame && !frame->GetSettings()->GetAllowLocalResourceLoad())
+#endif
   if (!SchemeRegistry::ShouldTreatURLSchemeAsCorsEnabled(
           request.Url().Protocol())) {
     DispatchDidFail(ResourceError(
@@ -1038,6 +1042,25 @@ void ThreadableLoader::LoadRequest(
   }
 
   request.SetRequestorOrigin(original_security_origin_);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  auto* frame = GetDocument() ? GetDocument()->GetFrame() : nullptr;
+  if (frame) {
+    bool can_load_universal_access = false;
+    if (frame->GetSettings()->GetAllowUniversalAccessFromFileURLs() &&
+        GetDocument()->Url().ProtocolIs("file"))
+      can_load_universal_access = true;
+
+    bool can_load_local_file = false;
+    if (frame->GetSettings()->GetAllowLocalResourceLoad() &&
+        !GetDocument()->Url().ProtocolIs("file") &&
+        request.Url().ProtocolIs("file"))
+      can_load_local_file = true;
+
+    if (can_load_universal_access || can_load_local_file)
+      request.SetMode(network::mojom::RequestMode::kNoCors);
+  }
+#endif
 
   if (!actual_request_.IsNull())
     resource_loader_options.data_buffering_policy = kBufferData;

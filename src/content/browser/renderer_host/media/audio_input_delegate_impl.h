@@ -59,6 +59,10 @@ class CONTENT_EXPORT AudioInputDelegateImpl : public media::AudioInputDelegate {
   // AudioInputDelegate implementation.
   int GetStreamId() override;
   void OnRecordStream() override;
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  void OnPauseStream() override;
+  void OnResumeStream() override;
+#endif
   void OnSetVolume(double volume) override;
   void OnSetOutputDeviceForAec(
       const std::string& raw_output_device_id) override;

@@ -220,6 +220,12 @@ jumbo_source_set("common_sources") {
     "widget_type.h",
   ]
 
+  # Neva's files
+  sources += [
+    "content_neva_switches.cc",
+    "content_neva_switches.h",
+  ]
+
   configs += [
     "//build/config:precompiled_headers",
     "//content:content_implementation",

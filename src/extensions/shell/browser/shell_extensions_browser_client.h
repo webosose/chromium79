@@ -114,7 +114,11 @@ class ShellExtensionsBrowserClient : public ExtensionsBrowserClient {
   // |context| is the single BrowserContext used for IsValidContext().
   // |pref_service| is used for GetPrefServiceForContext().
   void InitWithBrowserContext(content::BrowserContext* context,
+#if defined(USE_NEVA_EXTENSIONS)
+                              PrefService* pref_service) override;
+#else
                               PrefService* pref_service);
+#endif
 
   // Sets the API client.
   void SetAPIClientForTest(ExtensionsAPIClient* api_client);

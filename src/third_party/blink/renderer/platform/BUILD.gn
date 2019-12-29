@@ -14,6 +14,7 @@ import("//third_party/blink/renderer/build/scripts/scripts.gni")
 import("//third_party/blink/renderer/config.gni")
 import("//third_party/blink/renderer/platform/platform_generated.gni")
 import("//v8/gni/v8.gni")
+import("//neva/neva.gni")
 
 # Most targets in this file are private actions so use that as the default.
 visibility = [
@@ -1573,6 +1574,10 @@ jumbo_component("platform") {
     ]
   }
 
+  if (use_memory_trace) {
+    deps += [ "//third_party/blink/renderer/platform/neva" ]
+  }
+
   if (current_cpu == "x86" || current_cpu == "x64") {
     deps += [ ":blink_x86_avx" ]
   }
@@ -1650,7 +1655,7 @@ jumbo_static_library("test_support") {
   ]
 
   # fuzzed_data_provider may not work with a custom toolchain.
-  if (custom_toolchain == "") {
+  if (custom_toolchain == "" && !is_webos) {
     sources += [
       "testing/fuzzed_data_provider.cc",
       "testing/fuzzed_data_provider.h",

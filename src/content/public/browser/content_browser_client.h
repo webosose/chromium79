@@ -510,6 +510,17 @@ class CONTENT_EXPORT ContentBrowserClient {
                                    const base::FilePath& absolute_path,
                                    const base::FilePath& profile_path);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Indicates whether a file path should be accessible via file URL given a
+  // request from a browser context which lives within |profile_path|. Request,
+  // process_id and frame_tree_node_id are added to passed parameters.
+  virtual bool IsFileAccessAllowedForRequest(
+      const base::FilePath& path,
+      const base::FilePath& absolute_path,
+      const base::FilePath& profile_path,
+      const network::ResourceRequest& request);
+#endif
+
   // Indicates whether to force the MIME sniffer to sniff file URLs for HTML.
   // By default, disabled. May be called on either the UI or IO threads.
   // See https://crbug.com/777737

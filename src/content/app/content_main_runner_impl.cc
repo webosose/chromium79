@@ -82,6 +82,10 @@
 #include "ui/display/display_switches.h"
 #include "ui/gfx/switches.h"
 
+#if defined(USE_LTTNG)
+#include "content/common/neva/lttng/lttng_init.h"
+#endif
+
 #if defined(OS_WIN)
 #include <malloc.h>
 #include <cstring>
@@ -744,6 +748,11 @@ int ContentMainRunnerImpl::Initialize(const ContentMainParams& params) {
 
     RegisterPathProvider();
     RegisterContentSchemes(delegate_->ShouldLockSchemeRegistry());
+
+#if defined(USE_LTTNG)
+    if (process_type.empty())
+      neva::LttngInit();
+#endif
 
 #if defined(OS_ANDROID) && (ICU_UTIL_DATA_IMPL == ICU_UTIL_DATA_FILE)
     // On Android, we have two ICU data files. A main one with most languages

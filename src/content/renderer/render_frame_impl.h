@@ -116,6 +116,12 @@
 #include "content/renderer/pepper/plugin_power_saver_helper.h"
 #endif
 
+// neva include
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/frame_media_controller.mojom.h"
+#include "content/renderer/neva/frame_media_controller_impl.h"
+#endif
+
 struct FrameMsg_MixedContentFound_Params;
 struct FrameMsg_TextTrackSettings_Params;
 
@@ -735,6 +741,12 @@ class CONTENT_EXPORT RenderFrameImpl
   void DownloadURL(const blink::WebURLRequest& request,
                    network::mojom::RedirectMode cross_origin_redirect_behavior,
                    mojo::ScopedMessagePipeHandle blob_url_token) override;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // content::RenderFrame
+  void ResetStateToMarkNextPaintForContainer() override;
+#endif
+
   void BeginNavigation(std::unique_ptr<blink::WebNavigationInfo> info) override;
   void WillSendSubmitEvent(const blink::WebFormElement& form) override;
   void DidCreateDocumentLoader(
@@ -1005,6 +1017,9 @@ class CONTENT_EXPORT RenderFrameImpl
   const RenderFrameImpl* GetLocalRoot() const;
 
  private:
+#if defined(USE_NEVA_MEDIA)
+  friend class neva::FrameMediaControllerImpl;
+#endif
   friend class RenderFrameImplTest;
   friend class RenderFrameObserver;
   friend class RenderAccessibilityImplTest;
@@ -1702,6 +1717,10 @@ class CONTENT_EXPORT RenderFrameImpl
   std::vector<media::RoutingTokenCallback> pending_routing_token_callbacks_;
 
   InputTargetClientImpl input_target_client_impl_;
+
+#if defined(USE_NEVA_MEDIA)
+  neva::FrameMediaControllerImpl frame_media_controller_impl_;
+#endif
 
   // Used for devtools instrumentation and trace-ability. This token is
   // used to tag calls and requests in order to attribute them to the context

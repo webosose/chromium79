@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "content/shell/common/shell_neva_switches.h"
+
 namespace switches {
 
 extern const char kContentShellDataPath[];

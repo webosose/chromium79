@@ -260,6 +260,22 @@ void AudioInputDelegateImpl::OnRecordStream() {
   audio_log_->OnStarted();
 }
 
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+void AudioInputDelegateImpl::OnPauseStream() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  LogMessage(stream_id_, "OnPauseStream");
+  controller_->Pause();
+  audio_log_->OnPaused();
+}
+
+void AudioInputDelegateImpl::OnResumeStream() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  LogMessage(stream_id_, "OnResumeStream");
+  controller_->Resume();
+  audio_log_->OnResumed();
+}
+#endif
+
 void AudioInputDelegateImpl::OnSetVolume(double volume) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
   DCHECK_GE(volume, 0);

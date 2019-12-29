@@ -14,6 +14,10 @@
 #include "ui/aura/window_tree_host_observer.h"
 #include "ui/gfx/native_widget_types.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "ui/views/widget/desktop_aura/neva/native_event_delegate.h"
+#endif
+
 namespace aura {
 class WindowTreeHost;
 namespace client {
@@ -41,6 +45,9 @@ class AppWindow;
 // updated via the chrome.app.window API.
 class RootWindowController : public aura::client::WindowParentingClient,
                              public aura::WindowTreeHostObserver,
+#if defined(USE_NEVA_APPRUNTIME)
+                             public views::NativeEventDelegate,
+#endif
                              public AppWindowRegistry::Observer {
  public:
   class DesktopDelegate {
@@ -83,9 +90,29 @@ class RootWindowController : public aura::client::WindowParentingClient,
 
   // aura::WindowTreeHostObserver:
   void OnHostCloseRequested(aura::WindowTreeHost* host) override;
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  void OnWindowHostStateChanged(aura::WindowTreeHost* host, ui::WidgetState new_state) override;
+#endif
 
   // AppWindowRegistry::Observer:
   void OnAppWindowRemoved(AppWindow* app_window) override;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Overridden from NativeEventDelegate
+  void WindowHostClose() override;
+  void CompositorBuffersSwapped() override;
+  void CursorVisibilityChanged(bool visible) override;
+  void InputPanelVisibilityChanged(bool visible) override;
+  void InputPanelRectChanged(int32_t x,
+                             int32_t y,
+                             uint32_t width,
+                             uint32_t height) override;
+  void KeyboardEnter() override;
+  void KeyboardLeave() override;
+  void WindowHostExposed() override;
+  void WindowHostStateChanged(ui::WidgetState new_state) override;
+  void WindowHostStateAboutToChange(ui::WidgetState state) override;
+#endif
 
  private:
   void DestroyWindowTreeHost();

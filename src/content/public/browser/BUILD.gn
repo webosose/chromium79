@@ -11,6 +11,8 @@ if (is_android) {
   import("//build/config/android/rules.gni")
 }
 
+import("//neva/neva.gni")
+
 # See //content/BUILD.gn for how this works.
 group("browser") {
   if (is_component_build) {
@@ -388,6 +390,12 @@ jumbo_source_set("browser_sources") {
     "webvr_service_provider.cc",
     "webvr_service_provider.h",
   ]
+
+  # Neva media
+  if (use_neva_media) {
+    sources += [ "neva/media_state_manager.h" ]
+  }
+
   configs += [
     "//build/config:precompiled_headers",
     "//build/config/compiler:wexit_time_destructors",

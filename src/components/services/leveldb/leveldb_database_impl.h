@@ -82,6 +82,20 @@ class LevelDBDatabaseImpl {
                     const std::vector<uint8_t>& destination_key_prefix,
                     StatusCallback callback);
 
+// (neva) GCC needs 'GetResult' and 'GetPrefixedResult' structures to be
+// defined in header file
+#if !defined(__clang__)
+  struct GetResult {
+    Status status;
+    storage::DomStorageDatabase::Value value;
+  };
+
+  struct GetPrefixedResult {
+    Status status;
+    std::vector<storage::DomStorageDatabase::KeyValuePair> entries;
+  };
+#endif
+
   template <typename ResultType>
   void RunDatabaseTask(
       base::OnceCallback<ResultType(const storage::DomStorageDatabase&)> task,

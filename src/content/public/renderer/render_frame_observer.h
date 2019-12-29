@@ -30,6 +30,10 @@
 #include "ui/base/page_transition_types.h"
 #include "v8/include/v8.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/media_layer_info.h"
+#endif
+
 class GURL;
 
 namespace blink {
@@ -235,6 +239,26 @@ class CONTENT_EXPORT RenderFrameObserver : public IPC::Listener,
   virtual void OnInterfaceRequestForFrame(
       const std::string& interface_name,
       mojo::ScopedMessagePipeHandle* interface_pipe) {}
+
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void DidResetStateToMarkNextPaintForContainer() {}
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+  // Called when a compositor frame has committed.
+  virtual void OnMediaActivationPermitted(int player_id) {}
+  virtual void OnSuspendMedia(int player_id) {}
+  virtual void OnMediaLayerCreated(int player_id,
+                                   const content::MediaLayerInfo& info) {}
+  virtual void OnMediaLayerWillDestroyed(int player_id) {}
+  virtual void OnMediaLayerGeometryChanged(int player_id,
+                                           const gfx::Rect& rect) {}
+  virtual void OnMediaLayerVisibilityChanged(int player_id, bool visibility) {}
+
+  // Called when this RenderFrame is suspended or resumed.
+  // This interface is used for supporting legacy implementation.
+  virtual void OnSuppressedMediaPlay(bool suppressed) {}
+#endif
 
   // Similar to above but for handling Channel-associated interface requests.
   // Returns |true| if the request is handled by the implementation (taking

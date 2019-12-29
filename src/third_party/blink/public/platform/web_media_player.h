@@ -46,6 +46,10 @@ class PaintCanvas;
 class PaintFlags;
 }  // namespace cc
 
+#if defined(USE_NEVA_MEDIA)
+#include "third_party/blink/public/platform/neva/web_media_player.h"
+#endif
+
 namespace gpu {
 namespace gles2 {
 class GLES2Interface;
@@ -62,7 +66,11 @@ enum class WebFullscreenVideoStatus;
 struct WebRect;
 struct WebSize;
 
+#if defined(USE_NEVA_MEDIA)
+class WebMediaPlayer : public neva::WebMediaPlayer {
+#else
 class WebMediaPlayer {
+#endif
  public:
   enum NetworkState {
     kNetworkStateEmpty,
@@ -99,7 +107,13 @@ class WebMediaPlayer {
     kLoadTypeURL = 0,
     kLoadTypeMediaSource = 1,
     kLoadTypeMediaStream = 2,
+#if defined(USE_NEVA_MEDIA)
+    kLoadTypeBlobURL = 3,
+    kLoadTypeDataURL = 4,
+    kLoadTypeMax = kLoadTypeDataURL,
+#else
     kLoadTypeMax = kLoadTypeMediaStream,
+#endif
   };
 
   typedef WebString TrackId;

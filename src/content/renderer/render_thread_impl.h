@@ -63,6 +63,16 @@
 #include "third_party/blink/public/web/web_memory_statistics.h"
 #include "ui/gfx/native_widget_types.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "third_party/blink/public/platform/web_scoped_page_pauser.h"
+///@}
+
+#if defined(USE_NEVA_MEDIA) || defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+// Mix-in for neva
+#include "content/renderer/neva/render_thread_impl.h"
+#endif
+
 class SkBitmap;
 
 namespace blink {
@@ -131,6 +141,9 @@ class CONTENT_EXPORT RenderThreadImpl
     : public RenderThread,
       public ChildThreadImpl,
       public mojom::Renderer,
+#if defined(USE_NEVA_MEDIA) || defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+      public neva::RenderThreadImpl<RenderThreadImpl>,
+#endif
       public viz::mojom::CompositingModeWatcher,
       public CompositorDependencies {
  public:
@@ -510,6 +523,11 @@ class CONTENT_EXPORT RenderThreadImpl
   void PurgePluginListCache(bool reload_pages) override;
   void SetProcessState(mojom::RenderProcessState process_state) override;
   void SetSchedulerKeepActive(bool keep_active) override;
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  void ProcessResume() override;
+  void ProcessSuspend() override;
+  ///@}
   void SetIsLockedToSite() override;
   void EnableV8LowMemoryMode() override;
 
@@ -696,12 +714,26 @@ class CONTENT_EXPORT RenderThreadImpl
 
   mojo::Remote<mojom::FrameSinkProvider> frame_sink_provider_;
 
+#if defined(USE_NEVA_MEDIA)
+  template <typename original_t>
+  friend class neva::RenderThreadImpl;
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+  unsigned suspension_count_ = 0;
+#endif
+
   // A mojo connection to the CompositingModeReporter service.
   viz::mojom::CompositingModeReporterPtr compositing_mode_reporter_;
   // The class is a CompositingModeWatcher, which is bound to mojo through
   // this member.
   mojo::Receiver<viz::mojom::CompositingModeWatcher>
       compositing_mode_watcher_receiver_{this};
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+  std::unique_ptr<blink::WebScopedPagePauser> page_pauser_;
+///@}
 
   base::WeakPtrFactory<RenderThreadImpl> weak_factory_{this};
 

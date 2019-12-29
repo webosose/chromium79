@@ -16,6 +16,10 @@
 #include "components/viz/service/viz_service_export.h"
 #include "gpu/ipc/common/surface_handle.h"
 
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+#include "components/viz/service/display/neva/neva_layer_overlay.h"
+#endif
+
 namespace cc {
 class DisplayResourceProvider;
 }
@@ -162,7 +166,12 @@ class VIZ_SERVICE_EXPORT OverlayProcessor {
   OverlayProcessor(
       SkiaOutputSurface* skia_output_surface,
       std::unique_ptr<OverlayCandidateValidator> overlay_validator,
-      std::unique_ptr<DCLayerOverlayProcessor> dc_layer_overlay_processor);
+      std::unique_ptr<DCLayerOverlayProcessor> dc_layer_overlay_processor
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+      ,
+      gpu::SurfaceHandle surface_handle = 0
+#endif
+      );
 
   bool ProcessForCALayers(
       DisplayResourceProvider* resource_provider,
@@ -189,6 +198,11 @@ class VIZ_SERVICE_EXPORT OverlayProcessor {
 
   SkiaOutputSurface* skia_output_surface_;
   bool output_surface_already_handled_;
+
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+  NevaLayerOverlayProcessor neva_processor_;
+#endif
+
   DISALLOW_COPY_AND_ASSIGN(OverlayProcessor);
 };
 

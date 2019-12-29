@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//neva/neva.gni")
 import("//third_party/blink/public/public_features.gni")
 
 if (is_android) {
@@ -186,6 +187,12 @@ mojom("mojom_platform") {
     public_deps += [
       "//media/capture/mojom:video_capture",
       "//media/mojo/mojom",
+    ]
+  }
+
+  if (use_neva_appruntime) {
+    sources += [
+      "neva/app_runtime_blink_delegate.mojom",
     ]
   }
 

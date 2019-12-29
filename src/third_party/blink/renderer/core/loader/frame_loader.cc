@@ -121,6 +121,11 @@
 #include "third_party/blink/renderer/platform/wtf/text/string_utf8_adaptor.h"
 #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
+#include "third_party/blink/public/mojom/neva/app_runtime_blink_delegate.mojom.h"
+#endif
+
 namespace blink {
 
 using namespace html_names;
@@ -833,6 +838,29 @@ static bool ShouldNavigate(WebNavigationParams* params, LocalFrame* frame) {
     // The server does not want us to replace the page contents.
     return false;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  if (status_code >= 400) {
+    // If there is any policy for response having status code greater than 400
+    AssociatedInterfaceProvider* provider =
+        frame->Client()->GetRemoteNavigationAssociatedInterfaces();
+    if (provider) {
+      mojo::AssociatedRemote<mojom::AppRuntimeBlinkDelegate>
+          app_runtime_blink_delegate;
+      provider->GetInterface(&app_runtime_blink_delegate);
+      if (app_runtime_blink_delegate.is_bound()) {
+        bool has_policy = false;
+        if (app_runtime_blink_delegate->DecidePolicyForResponse(
+                frame->IsMainFrame(), status_code,
+                params->response.CurrentRequestUrl().GetString().Latin1(),
+                params->response.HttpStatusText().Latin1(), &has_policy) &&
+            has_policy) {
+          return false;
+        }
+      }
+    }
+  }
+#endif
 
   if (IsContentDispositionAttachment(
           params->response.HttpHeaderField(http_names::kContentDisposition))) {

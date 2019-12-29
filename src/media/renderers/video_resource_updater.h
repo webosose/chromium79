@@ -53,6 +53,11 @@ enum class VideoFrameResourceType {
   RGBA_PREMULTIPLIED,
   RGBA,
   STREAM_TEXTURE,
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+  // TODO(danakj): Implement this with a solid color layer instead of a video
+  // frame and video layer.
+  HOLE,
+#endif  // defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
   // The VideoFrame is merely a hint to compositor that a hole must be made
   // transparent so the video underlay will be visible.
   // Used by Chromecast only.

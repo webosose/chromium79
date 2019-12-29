@@ -66,13 +66,21 @@ scoped_refptr<SimpleFontData> CSSFontFaceSource::GetFontData(
   // font_data_table_, because it is modified below during pruning.
   scoped_refptr<SimpleFontData> font_data;
   {
+#if defined(__GNUC__)
+    auto* it = font_data_table_.insert(key.GetHash(), nullptr).stored_value;
+#else
     auto* it = font_data_table_.insert(key, nullptr).stored_value;
+#endif
     if (!it->value)
       it->value = CreateFontData(font_description, font_selection_capabilities);
     font_data = it->value;
   }
 
+#if defined(__GNUC__)
+  font_cache_key_age.PrependOrMoveToFirst(key.GetHash());
+#else
   font_cache_key_age.PrependOrMoveToFirst(key);
+#endif
   PruneOldestIfNeeded();
 
   DCHECK_LE(font_data_table_.size(), kMaxCachedFontData);
@@ -84,8 +92,13 @@ scoped_refptr<SimpleFontData> CSSFontFaceSource::GetFontData(
 void CSSFontFaceSource::PruneOldestIfNeeded() {
   if (font_cache_key_age.size() > kMaxCachedFontData) {
     DCHECK_EQ(font_cache_key_age.size() - 1, kMaxCachedFontData);
+#if defined(__GNUC__)
+    unsigned hash = font_cache_key_age.back();
+    auto font_data_entry = font_data_table_.Take(hash);
+#else
     FontCacheKey& key = font_cache_key_age.back();
     auto font_data_entry = font_data_table_.Take(key);
+#endif
     font_cache_key_age.pop_back();
     DCHECK_EQ(font_cache_key_age.size(), kMaxCachedFontData);
     if (font_data_entry && font_data_entry->GetCustomFontData())

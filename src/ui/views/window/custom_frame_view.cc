@@ -336,9 +336,20 @@ gfx::Rect CustomFrameView::IconBounds() const {
 }
 
 bool CustomFrameView::ShouldShowTitleBarAndBorder() const {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (frame_->IsFullscreen())
+    return false;
+
+  if (ViewsDelegate::GetInstance())
+    return !ViewsDelegate::GetInstance()->WindowManagerProvidesTitleBar(
+        frame_->IsMaximized());
+
+  return true;
+#else
   return !frame_->IsFullscreen() &&
          !ViewsDelegate::GetInstance()->WindowManagerProvidesTitleBar(
              frame_->IsMaximized());
+#endif
 }
 
 bool CustomFrameView::ShouldShowClientEdge() const {

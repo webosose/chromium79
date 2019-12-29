@@ -29,6 +29,11 @@
 #include "ui/events/platform_event.h"
 #include "ui/gfx/native_widget_types.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "ui/aura/window_tree_host_neva.h"
+///@}
+
 namespace gfx {
 class Point;
 class Rect;
@@ -44,6 +49,12 @@ class InputMethod;
 class ViewProp;
 struct PlatformWindowInitProperties;
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+namespace views {
+class NativeEventDelegate;
+}
+#endif
 
 namespace aura {
 
@@ -61,7 +72,8 @@ class WindowTreeHostObserver;
 class AURA_EXPORT WindowTreeHost : public ui::internal::InputMethodDelegate,
                                    public ui::EventSource,
                                    public display::DisplayObserver,
-                                   public ui::CompositorObserver {
+                                   public ui::CompositorObserver,
+                                   public WindowTreeHostNeva {
  public:
   ~WindowTreeHost() override;
 
@@ -222,6 +234,12 @@ class AURA_EXPORT WindowTreeHost : public ui::internal::InputMethodDelegate,
   // Returns a map of KeyboardEvent code to KeyboardEvent key values.
   virtual base::flat_map<std::string, std::string> GetKeyboardLayoutMap() = 0;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void SetNativeEventDelegate(views::NativeEventDelegate* delegate) {
+    native_event_delegate_ = delegate;
+  }
+#endif
+
   // Returns true if KeyEvents should be send to IME. This is called from
   // WindowEventDispatcher during event dispatch.
   virtual bool ShouldSendKeyEventToIme();
@@ -287,6 +305,9 @@ class AURA_EXPORT WindowTreeHost : public ui::internal::InputMethodDelegate,
   void OnHostDisplayChanged();
   void OnHostCloseRequested();
   void OnHostLostWindowCapture();
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  void OnWindowHostStateChanged(ui::WidgetState new_state);
+#endif
 
   // Sets the currently displayed cursor.
   virtual void SetCursorNative(gfx::NativeCursor cursor) = 0;
@@ -325,6 +346,10 @@ class AURA_EXPORT WindowTreeHost : public ui::internal::InputMethodDelegate,
       const {
     return observers_;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  views::NativeEventDelegate* native_event_delegate_;
+#endif
 
  private:
   friend class test::WindowTreeHostTestApi;

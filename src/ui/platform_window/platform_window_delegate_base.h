@@ -8,6 +8,11 @@
 #include "base/optional.h"
 #include "ui/gfx/native_widget_types.h"
 
+// Added for extending PlatformWindowDelegateBase
+#if defined(USE_NEVA_APPRUNTIME)
+#include "ui/platform_window/neva/platform_window_delegate.h"
+#endif
+
 namespace gfx {
 class Rect;
 class Size;
@@ -28,7 +33,11 @@ enum class PlatformWindowState {
 // This is the bare minimum for PlatformWindowDeelegate, but some platforms may
 // require more, and should do so in a subclass. Please refer to
 // PlatformWindowDelegateLinux for an example.
+#if defined(USE_NEVA_APPRUNTIME)
+class PlatformWindowDelegateBase : public neva::PlatformWindowDelegate {
+#else
 class PlatformWindowDelegateBase {
+#endif
  public:
   PlatformWindowDelegateBase();
   virtual ~PlatformWindowDelegateBase();

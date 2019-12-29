@@ -78,10 +78,6 @@ const char* OzonePlatform::GetPlatformName() {
   return GetOzonePlatformName();
 }
 
-IPC::MessageFilter* OzonePlatform::GetGpuMessageFilter() {
-  return nullptr;
-}
-
 std::unique_ptr<PlatformScreen> OzonePlatform::CreateScreen() {
   return nullptr;
 }
@@ -119,4 +115,13 @@ void OzonePlatform::AfterSandboxEntry() {
   DCHECK(!single_process_);
 }
 
+#if defined(USE_NEVA_MEDIA)
+ui::VideoWindowControllerHost* OzonePlatform::GetVideoWindowControllerHost() {
+  return nullptr;
+}
+
+ui::VideoWindowController* OzonePlatform::GetVideoWindowController() {
+  return nullptr;
+}
+#endif  // defined(USE_NEVA_MEDIA)
 }  // namespace ui

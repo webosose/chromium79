@@ -410,6 +410,9 @@ class CONTENT_EXPORT RenderWidget
   void SetShowDebugBorders(bool) override;
   void SetShowScrollBottleneckRects(bool) override;
   void SetShowHitTestBorders(bool) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void SetVisible(bool is_shown) override;
+#endif
   void SetBackgroundColor(SkColor color) override;
   void IntrinsicSizingInfoChanged(
       const blink::WebIntrinsicSizingInfo&) override;
@@ -539,6 +542,10 @@ class CONTENT_EXPORT RenderWidget
   const RenderWidgetInputHandler& input_handler() const {
     return *input_handler_;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool has_ime_event_guard() const { return ime_event_guard_ != nullptr; }
+#endif
 
   void SetHandlingInputEvent(bool handling_input_event);
 

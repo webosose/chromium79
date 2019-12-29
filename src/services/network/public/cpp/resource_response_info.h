@@ -203,6 +203,10 @@ struct COMPONENT_EXPORT(NETWORK_CPP) ResourceResponseInfo {
   // will be removed in the future.
   bool is_legacy_tls_version = false;
 
+#if defined(USE_FILESCHEME_CODECACHE)
+  base::Time file_last_modified_time;
+#endif
+
   // If the request received an authentication challenge, the challenge info is
   // recorded here.
   base::Optional<net::AuthChallengeInfo> auth_challenge_info;

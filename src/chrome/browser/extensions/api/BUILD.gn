@@ -37,5 +37,8 @@ function_registration("api_registration") {
   if (is_chromeos) {
     deps += [ "//components/drive:proto" ]
   }
-  deps += [ "//extensions/common/api" ]
+  deps += [
+    "//extensions/common/api",
+    "//services/identity/public/mojom"
+  ]
 }

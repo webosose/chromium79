@@ -144,6 +144,12 @@ void WebRuntimeFeatures::EnableWasmCodeCache(bool enable) {
   RuntimeEnabledFeatures::SetWasmCodeCacheEnabled(enable);
 }
 
+#if defined(USE_FILESCHEME_CODECACHE)
+void WebRuntimeFeatures::EnableLocalResourceCodeCache(bool enable) {
+  RuntimeEnabledFeatures::SetLocalResourceCodeCacheEnabled(enable);
+}
+#endif
+
 void WebRuntimeFeatures::EnableCanvas2dImageChromium(bool enable) {
   RuntimeEnabledFeatures::SetCanvas2dImageChromiumEnabled(enable);
 }

@@ -13,10 +13,18 @@
 #include "services/network/public/mojom/url_loader.mojom-forward.h"
 #include "third_party/blink/public/mojom/fetch/fetch_api_request.mojom-forward.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "third_party/blink/public/common/common_export.h"
+///@}
+
 namespace mojo {
 
 template <>
-struct StructTraits<blink::mojom::FetchAPIRequestBodyDataView,
+///@name USE_NEVA_APPRUNTIME
+///@{
+struct BLINK_COMMON_EXPORT StructTraits<blink::mojom::FetchAPIRequestBodyDataView,
+///@}
                     scoped_refptr<network::ResourceRequestBody>> {
   static bool IsNull(const scoped_refptr<network::ResourceRequestBody>& r) {
     return !r;
@@ -46,7 +54,10 @@ struct StructTraits<blink::mojom::FetchAPIRequestBodyDataView,
 };
 
 template <>
-struct StructTraits<blink::mojom::FetchAPIDataElementDataView,
+///@name USE_NEVA_APPRUNTIME
+///@{
+struct BLINK_COMMON_EXPORT StructTraits<blink::mojom::FetchAPIDataElementDataView,
+///@}
                     network::DataElement> {
   static const network::mojom::DataElementType& type(
       const network::DataElement& element) {

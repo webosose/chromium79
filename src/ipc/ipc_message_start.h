@@ -51,6 +51,11 @@ enum IPCMessageStart {
   SurfaceViewManagerMsgStart,
   ExtensionWorkerMsgStart,
   SubresourceFilterMsgStart,
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Added for neva injections.
+  InjectionMsgStart,
+  ///@}
   UnfreezableFrameMsgStart,
   LastIPCMsgStart  // Must come last.
 };

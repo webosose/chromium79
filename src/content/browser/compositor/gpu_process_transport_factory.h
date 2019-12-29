@@ -107,6 +107,10 @@ class GpuProcessTransportFactory : public ui::ContextFactory,
       ui::Compositor* compositor,
       viz::mojom::VSyncParameterObserverPtr observer) override;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void ForceImmediateDrawAndSwapIfPossible(ui::Compositor* compositor) override;
+#endif
+
   // ImageTransportFactory implementation.
   void DisableGpuCompositing() override;
   ui::ContextFactory* GetContextFactory() override;

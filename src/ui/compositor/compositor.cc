@@ -203,6 +203,11 @@ Compositor::Compositor(const viz::FrameSinkId& frame_sink_id,
     settings.enable_latency_recovery = false;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  settings.use_aggressive_release_policy =
+      command_line->HasSwitch(cc::switches::kEnableAggressiveReleasePolicy);
+#endif
+
   if (base::FeatureList::IsEnabled(
           features::kCompositorThreadedScrollbarScrolling)) {
     settings.compositor_threaded_scrollbar_scrolling = true;
@@ -315,6 +320,11 @@ void Compositor::OnChildResizing() {
 }
 
 void Compositor::ScheduleDraw() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (disable_drawing_)
+    return;
+#endif
+
   host_->SetNeedsCommit();
 }
 
@@ -340,6 +350,11 @@ void Compositor::SetDisplayColorMatrix(const SkMatrix44& matrix) {
 }
 
 void Compositor::ScheduleFullRedraw() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (disable_drawing_)
+    return;
+#endif
+
   // TODO(enne): Some callers (mac) call this function expecting that it
   // will also commit.  This should probably just redraw the screen
   // from damage and not commit.  ScheduleDraw/ScheduleRedraw need
@@ -349,6 +364,11 @@ void Compositor::ScheduleFullRedraw() {
 }
 
 void Compositor::ScheduleRedrawRect(const gfx::Rect& damage_rect) {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (disable_drawing_)
+    return;
+#endif
+
   // TODO(enne): Make this not commit.  See ScheduleFullRedraw.
   host_->SetNeedsRedrawRect(damage_rect);
   host_->SetNeedsCommit();
@@ -697,5 +717,26 @@ void Compositor::RequestPresentationTimeForNextFrame(
     PresentationTimeCallback callback) {
   host_->RequestPresentationTimeForNextFrame(std::move(callback));
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void Compositor::SuspendDrawing() {
+  if (disable_drawing_)
+    return;
+
+  if (context_factory_private_)
+    context_factory_private_->ForceImmediateDrawAndSwapIfPossible(this);
+
+  disable_drawing_ = true;
+  host_->SetVisible(false);
+}
+
+void Compositor::ResumeDrawing() {
+  if (!disable_drawing_)
+    return;
+
+  disable_drawing_ = false;
+  host_->SetVisible(true);
+}
+#endif
 
 }  // namespace ui

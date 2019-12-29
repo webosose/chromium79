@@ -8,6 +8,10 @@
 #include "ui/aura/aura_export.h"
 #include "ui/aura/window.h"
 
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+#include "ui/views/widget/desktop_aura/neva/ui_constants.h"
+#endif
+
 namespace gfx {
 class Point;
 }
@@ -29,6 +33,12 @@ class AURA_EXPORT WindowTreeHostObserver {
 
   // Called when the native window system sends the host request to close.
   virtual void OnHostCloseRequested(WindowTreeHost* host) {}
+
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  // Called when the host's state has changed.
+  virtual void OnWindowHostStateChanged(WindowTreeHost* host,
+                                        ui::WidgetState new_state) {}
+#endif
 
   // Called when the occlusion status of the native window changes, iff
   // occlusion tracking is enabled for a descendant of the root.

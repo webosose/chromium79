@@ -154,6 +154,10 @@ class CC_EXPORT LayerTreeSettings {
   // submitting a CompositorFrame.
   bool build_hit_test_data = false;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  bool use_aggressive_release_policy = false;
+#endif
+
   // When false, sync tokens are expected to be present, and are verified,
   // before transfering gpu resources to the display compositor.
   bool delegated_sync_points_required = true;

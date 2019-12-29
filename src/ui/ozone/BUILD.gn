@@ -6,6 +6,7 @@ import("//build/buildflag_header.gni")
 import("//build/config/jumbo.gni")
 import("//build/config/ui.gni")
 import("//gpu/vulkan/features.gni")
+import("//neva/neva.gni")
 import("//testing/test.gni")
 import("//ui/ozone/ozone.gni")
 
@@ -49,6 +50,12 @@ if (ozone_platform_wayland) {
   ozone_platform_test_deps += [ "platform/wayland:wayland_unittests" ]
 }
 
+# Added for ozone wayland external port
+if (ozone_platform_wayland_external) {
+  ozone_platforms += [ "wayland" ]
+  ozone_platform_deps += [ "//ozone:ozone_wayland" ]
+}
+
 if (ozone_platform_x11) {
   ozone_platforms += [ "x11" ]
   ozone_platform_deps += [ "platform/x11" ]
@@ -69,6 +76,8 @@ jumbo_component("ozone_base") {
     "public/cursor_factory_ozone.cc",
     "public/cursor_factory_ozone.h",
     "public/gl_ozone.h",
+    "public/gpu_platform_support.cc",
+    "public/gpu_platform_support.h",
     "public/gpu_platform_support_host.cc",
     "public/gpu_platform_support_host.h",
     "public/input_controller.cc",
@@ -133,6 +142,11 @@ jumbo_component("ozone_base") {
     "//ui/base/ime/chromeos/*",
   ]
 
+  # Added for ozone wayland external port
+  if (ozone_platform_wayland_external) {
+    visibility += ["//ozone:ozone_wayland",]
+  }
+
   # Out of tree platforms can depend on this.
   visibility += ozone_external_platform_visibility
 }
@@ -188,6 +202,14 @@ source_set("platform") {
 
   # This is used for platform tests.
   visibility += [ "//ui/ozone/platform/*" ]
+
+  # Added for ozone wayland external port
+  if (ozone_platform_wayland_external) {
+    visibility += [
+      "//ozone/ui/desktop_aura/*",
+      "//ozone/ui/webui",
+    ]
+  }
 
   # This can be used for out of tree platforms tests.
   visibility += ozone_external_platform_visibility
@@ -253,6 +275,11 @@ action("generate_ozone_platform_list") {
       ] + ozone_platforms
 
   visibility += [ "//media:*" ]
+
+  # Added for ozone wayland external port
+  if (ozone_platform_wayland_external) {
+    visibility += ["//ozone/ui/desktop_aura:generate_desktop_factory_ozone_list",]
+  }
 }
 
 action("generate_constructor_list") {

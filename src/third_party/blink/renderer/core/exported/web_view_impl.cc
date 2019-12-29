@@ -3413,6 +3413,15 @@ PageScheduler* WebViewImpl::Scheduler() const {
   return GetPage()->GetPageScheduler();
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void WebViewImpl::SetLaunchingVisibilityState(bool is_hidden, bool is_launching) {
+  SetIsHidden(is_hidden || is_launching, is_launching);
+  WebWidgetClient* widget_client = MainFrameImpl()->LocalRootFrameWidget()->Client();
+  if (widget_client)
+    widget_client->SetVisible(!is_hidden);
+}
+#endif
+
 void WebViewImpl::SetIsHidden(bool hidden, bool is_initial_state) {
   DCHECK(GetPage());
   GetPage()->SetIsHidden(hidden, is_initial_state);

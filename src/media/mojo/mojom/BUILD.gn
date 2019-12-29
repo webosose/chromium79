@@ -4,6 +4,7 @@
 
 import("//media/media_options.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//neva/neva.gni")
 
 mojom("mojom") {
   # TODO(crbug.com/676224): Conditionally add source files in this list when we
@@ -68,8 +69,13 @@ mojom("mojom") {
     public_deps += [ "//sandbox/mac/mojom" ]
   }
 
+  enabled_features = []
+  if (use_neva_suspend_media_capture) {
+    enabled_features += [ "use_neva_suspend_media_capture" ]
+  }
+
   if (enable_cast_renderer) {
-    enabled_features = [ "enable_cast_renderer" ]
+    enabled_features += [ "enable_cast_renderer" ]
   }
 
   export_class_attribute_blink = "BLINK_PLATFORM_EXPORT"

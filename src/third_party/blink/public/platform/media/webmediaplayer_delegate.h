@@ -8,6 +8,10 @@
 #include "third_party/blink/public/platform/web_common.h"
 #include "third_party/blink/public/platform/web_media_player.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/media_layer_info.h"
+#endif
+
 namespace gfx {
 class Size;
 }  // namespace gfx
@@ -74,6 +78,15 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerDelegate {
     // Called to set as the persistent video. A persistent video should hide its
     // controls and go fullscreen.
     virtual void OnBecamePersistentVideo(bool value) = 0;
+
+#if defined(USE_NEVA_MEDIA)
+    virtual void OnMediaActivationPermitted() {}
+    virtual void OnSuspend() {}
+    virtual void OnMediaLayerCreated(const content::MediaLayerInfo& info) {}
+    virtual void OnMediaLayerWillDestroyed() {}
+    virtual void OnMediaLayerGeometryChanged(const gfx::Rect& rect) {}
+    virtual void OnMediaLayerVisibilityChanged(bool visibility) {}
+#endif
   };
 
   // Returns true if the host frame is hidden or closed.
@@ -150,6 +163,13 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerDelegate {
   virtual void SetIsEffectivelyFullscreen(
       int player_id,
       blink::WebFullscreenVideoStatus fullscreen_video_status) = 0;
+
+#if defined(USE_NEVA_MEDIA)
+  virtual void DidMediaCreated(int player_id, bool will_use_media_resource) = 0;
+  virtual void DidMediaActivated(int player_id) = 0;
+  virtual void DidMediaActivationNeeded(int player_id) = 0;
+  virtual void DidMediaSuspended(int player_id) = 0;
+#endif
 
  protected:
   WebMediaPlayerDelegate() = default;

@@ -7,6 +7,7 @@
 
 #include "base/compiler_specific.h"
 #include "base/logging.h"
+#include "neva/logging.h"
 
 // An official build shouldn't generate code to print out messages for
 // the CHECK* macros, nor should it have the strings in the
@@ -31,6 +32,7 @@ void DoCheckEq(int x, int y) {
 }
 
 int main(int argc, const char* argv[]) {
+  NEVA_DCHECK(argv == 0);
   DoCheck(argc > 1);
   DoCheckEq(argc, 1);
   DoBlinkReleaseAssert(argc > 1);

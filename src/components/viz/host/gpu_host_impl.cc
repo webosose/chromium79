@@ -281,8 +281,12 @@ void GpuHostImpl::InitOzone() {
   // The Ozone/Wayland requires mojo communication to be established to be
   // functional with a separate gpu process. Thus, using the PlatformProperties,
   // check if there is such a requirement.
+#if defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  if (false) {
+#else
   if (features::IsOzoneDrmMojo() ||
       ui::OzonePlatform::GetInstance()->GetPlatformProperties().requires_mojo) {
+#endif
     // TODO(rjkroege): Remove the legacy IPC code paths when no longer
     // necessary. https://crbug.com/806092
     auto interface_binder = base::BindRepeating(&GpuHostImpl::BindInterface,

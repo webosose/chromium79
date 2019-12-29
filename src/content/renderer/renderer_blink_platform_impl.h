@@ -126,6 +126,12 @@ class CONTENT_EXPORT RendererBlinkPlatformImpl : public BlinkPlatformImpl {
       const media::AudioSourceParameters& params) override;
   viz::ContextProvider* SharedMainThreadContextProvider() override;
   bool RTCSmoothnessAlgorithmEnabled() override;
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  void AddSourceToAudioCapturerSourceManager(
+      media::AudioCapturerSource* source) override;
+  void RemoveSourceFromAudioCapturerSourceManager(
+      media::AudioCapturerSource* source) override;
+#endif
   std::unique_ptr<blink::WebRTCPeerConnectionHandler>
   CreateRTCPeerConnectionHandler(
       blink::WebRTCPeerConnectionHandlerClient* client,

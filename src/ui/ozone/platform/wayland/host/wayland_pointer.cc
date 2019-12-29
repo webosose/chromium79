@@ -11,6 +11,7 @@
 #include "ui/events/base_event_utils.h"
 #include "ui/events/event.h"
 #include "ui/ozone/platform/wayland/host/wayland_connection.h"
+#include "ui/ozone/platform/wayland/host/wayland_seat.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 
 // TODO(forney): Handle version 5 of wl_pointer.
@@ -33,8 +34,12 @@ bool HasAnyButtonFlag(int flags) {
 }  // namespace
 
 WaylandPointer::WaylandPointer(wl_pointer* pointer,
+                               WaylandSeat* wayland_seat,
                                const EventDispatchCallback& callback)
-    : obj_(pointer), callback_(callback), weak_ptr_factory_(this) {
+    : obj_(pointer),
+      wayland_seat_(wayland_seat),
+      callback_(callback),
+      weak_ptr_factory_(this) {
   static const wl_pointer_listener listener = {
       &WaylandPointer::Enter,  &WaylandPointer::Leave, &WaylandPointer::Motion,
       &WaylandPointer::Button, &WaylandPointer::Axis,
@@ -200,7 +205,7 @@ int WaylandPointer::GetFlagsWithKeyboardModifiers() {
 
   // Remove old modifiers from flags and then update them with new modifiers.
   flags_ &= ~keyboard_modifiers_;
-  keyboard_modifiers_ = connection_->GetKeyboardModifiers();
+  keyboard_modifiers_ = wayland_seat_->GetKeyboardModifiers();
 
   int old_flags = flags_;
   flags_ |= keyboard_modifiers_;

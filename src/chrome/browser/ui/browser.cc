@@ -246,6 +246,11 @@
 #include "chrome/browser/extensions/extension_browser_window_helper.h"
 #endif
 
+#if defined(OS_WEBOS)
+#include "content/common/renderer.mojom.h"
+#include "extensions/common/switches.h"
+#endif
+
 #if BUILDFLAG(ENABLE_PRINTING)
 #include "components/printing/browser/print_composite_client.h"
 #endif
@@ -369,7 +374,18 @@ Browser::CreateParams Browser::CreateParams::CreateForDevTools(
 class Browser::InterstitialObserver : public content::WebContentsObserver {
  public:
   InterstitialObserver(Browser* browser, content::WebContents* web_contents)
-      : WebContentsObserver(web_contents), browser_(browser) {}
+      : WebContentsObserver(web_contents), browser_(browser) {
+#if defined(OS_WEBOS)
+    base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+    if (web_contents && command_line->HasSwitch(extensions::switches::kWebOSAppId)) {
+      std::string app_id = command_line->GetSwitchValueASCII(extensions::switches::kWebOSAppId);
+      blink::mojom::RendererPreferences* renderer_prefs =
+          web_contents->GetMutableRendererPrefs();
+      renderer_prefs->application_id = app_id;
+      web_contents->SyncRendererPrefs();
+    }
+#endif
+  }
 
   void DidAttachInterstitialPage() override {
     browser_->UpdateBookmarkBarState(BOOKMARK_BAR_STATE_CHANGE_TAB_STATE);

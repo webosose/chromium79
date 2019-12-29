@@ -1509,6 +1509,10 @@ void WebMediaPlayerImpl::SetCdmInternal(
   CdmContext* cdm_context = cdm_context_ref->GetCdmContext();
   DCHECK(cdm_context);
 
+#if defined(USE_NEVA_MEDIA)
+  OnSetCdm(cdm);
+#endif
+
   // Keep the reference to the CDM, as it shouldn't be destroyed until
   // after the pipeline is done with the |cdm_context|.
   pending_cdm_context_ref_ = std::move(cdm_context_ref);
@@ -2807,7 +2811,11 @@ scoped_refptr<VideoFrame> WebMediaPlayerImpl::GetCurrentFrameFromCompositor()
 
 void WebMediaPlayerImpl::UpdatePlayState() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
+#if defined(USE_NEVA_MEDIA)
+  bool can_auto_suspend = false;
+#else
   bool can_auto_suspend = !disable_pipeline_auto_suspend_;
+#endif
   // For streaming videos, we only allow suspending at the very beginning of the
   // video, and only if we know the length of the video. (If we don't know
   // the length, it might be a dynamically generated video, and suspending

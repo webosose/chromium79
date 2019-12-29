@@ -21,6 +21,11 @@ class CommandLine;
 
 namespace content {
 class BrowserContext;
+#if defined(USE_NEVA_APPRUNTIME)
+struct GlobalRequestID;
+class LoginDelegate;
+class WebContents;
+#endif
 }
 
 namespace extensions {
@@ -91,6 +96,32 @@ class ShellContentBrowserClient : public content::ContentBrowserClient {
       mojo::PendingRemote<network::mojom::TrustedURLLoaderHeaderClient>*
           header_client,
       bool* bypass_redirect_checks) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void GetStoragePartitionConfigForSite(
+      content::BrowserContext* browser_context,
+      const GURL& site,
+      bool can_be_default,
+      std::string* partition_domain,
+      std::string* partition_name,
+      bool* in_memory) override;
+  void RunServiceInstance(
+      const service_manager::Identity& identity,
+      mojo::PendingReceiver<service_manager::mojom::Service>* receiver)
+      override;
+  mojo::Remote<network::mojom::NetworkContext> CreateNetworkContext(
+      content::BrowserContext* context,
+      bool in_memory,
+      const base::FilePath& relative_partition_path) override;
+  std::unique_ptr<content::LoginDelegate> CreateLoginDelegate(
+      const net::AuthChallengeInfo& auth_info,
+      content::WebContents* web_contents,
+      const content::GlobalRequestID& request_id,
+      bool is_request_for_main_frame,
+      const GURL& url,
+      scoped_refptr<net::HttpResponseHeaders> response_headers,
+      bool first_auth_attempt,
+      LoginAuthRequiredCallback auth_required_callback) override;
+#endif
   bool HandleExternalProtocol(
       const GURL& url,
       content::WebContents::Getter web_contents_getter,
@@ -130,6 +161,11 @@ class ShellContentBrowserClient : public content::ContentBrowserClient {
 
   // Owned by ShellBrowserMainParts.
   ShellBrowserMainDelegate* browser_main_delegate_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Store the path of V8 snapshot blob for app_shell.
+  std::pair<int, std::string> v8_snapshot_path_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(ShellContentBrowserClient);
 };

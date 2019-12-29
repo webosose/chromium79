@@ -211,9 +211,16 @@ class ResourceLoader::CodeCacheRequest {
   // Notifies about the response from webURLLoader. Stores the
   // resource_response_time that is used to validate responses from
   // code cache. Might send cached code if available.
+#if defined(USE_FILESCHEME_CODECACHE)
+  void DidReceiveResponse(const base::Time& resource_response_time,
+                          bool use_isolated_code_cache,
+                          ResourceLoader* resource_loader,
+                          const base::Time& file_last_modified_time);
+#else
   void DidReceiveResponse(const base::Time& resource_response_time,
                           bool use_isolated_code_cache,
                           ResourceLoader* resource_loader);
+#endif
 
   // Stores the value of defers that is needed to restore the state
   // once fetching from code cache is finished. Returns true if the
@@ -242,6 +249,9 @@ class ResourceLoader::CodeCacheRequest {
   // web_url_loader.
   void MaybeSendCachedCode(mojo_base::BigBuffer data,
                            ResourceLoader* resource_loader);
+#if defined(USE_FILESCHEME_CODECACHE)
+  bool CheckValidCachedCode();
+#endif
 
   CodeCacheRequestStatus status_;
   std::unique_ptr<CodeCacheLoader> code_cache_loader_;
@@ -250,6 +260,9 @@ class ResourceLoader::CodeCacheRequest {
   mojo_base::BigBuffer cached_code_;
   base::Time cached_code_response_time_;
   base::Time resource_response_time_;
+#if defined(USE_FILESCHEME_CODECACHE)
+  base::Time file_last_modified_time_;
+#endif
   bool use_isolated_code_cache_ = false;
   base::WeakPtrFactory<CodeCacheRequest> weak_ptr_factory_{this};
 };
@@ -294,6 +307,18 @@ bool ResourceLoader::CodeCacheRequest::FetchFromCodeCacheSynchronously(
 
 // This is called when a response is received from the WebURLLoader. We buffer
 // the response_time if the response from code cache is not available yet.
+#if defined(USE_FILESCHEME_CODECACHE)
+void ResourceLoader::CodeCacheRequest::DidReceiveResponse(
+    const base::Time& resource_response_time,
+    bool use_isolated_code_cache,
+    ResourceLoader* resource_loader,
+    const base::Time& file_last_modified_time) {
+  resource_response_time_ = resource_response_time;
+  use_isolated_code_cache_ = use_isolated_code_cache;
+  file_last_modified_time_ = file_last_modified_time;
+  MaybeSendCachedCode(std::move(cached_code_), resource_loader);
+}
+#else
 void ResourceLoader::CodeCacheRequest::DidReceiveResponse(
     const base::Time& resource_response_time,
     bool use_isolated_code_cache,
@@ -302,6 +327,7 @@ void ResourceLoader::CodeCacheRequest::DidReceiveResponse(
   use_isolated_code_cache_ = use_isolated_code_cache;
   MaybeSendCachedCode(std::move(cached_code_), resource_loader);
 }
+#endif
 
 // Returns true if |this| handles |defers| and therefore the callsite, i.e. the
 // loader, doesn't need to take care of it). Returns false otherwise.
@@ -350,16 +376,24 @@ void ResourceLoader::CodeCacheRequest::ProcessCodeCacheResponse(
 void ResourceLoader::CodeCacheRequest::MaybeSendCachedCode(
     mojo_base::BigBuffer data,
     ResourceLoader* resource_loader) {
+#if defined(USE_FILESCHEME_CODECACHE)
+  if (status_ != kReceivedResponse) {
+#else
   if (status_ != kReceivedResponse || cached_code_response_time_.is_null() ||
       resource_response_time_.is_null()) {
+#endif
     return;
   }
 
+#if defined(USE_FILESCHEME_CODECACHE)
+  if (!CheckValidCachedCode()) {
+#else
   // If the resource was fetched for service worker script or was served from
   // CacheStorage via service worker then they maintain their own code cache.
   // We should not use the isolated cache.
   if (!use_isolated_code_cache_ ||
       resource_response_time_ != cached_code_response_time_) {
+#endif
     resource_loader->ClearCachedCode();
     return;
   }
@@ -368,6 +402,29 @@ void ResourceLoader::CodeCacheRequest::MaybeSendCachedCode(
     resource_loader->SendCachedCodeToResource(std::move(data));
   }
 }
+
+#if defined(USE_FILESCHEME_CODECACHE)
+bool ResourceLoader::CodeCacheRequest::CheckValidCachedCode() {
+  // If the resource was fetched for service worker script or was served from
+  // CacheStorage via service worker then they maintain their own code cache.
+  // We should not use the isolated cache.
+  if (!use_isolated_code_cache_)
+    return false;
+
+  if (gurl_.SchemeIsFile() &&
+      RuntimeEnabledFeatures::LocalResourceCodeCacheEnabled() &&
+      !file_last_modified_time_.is_null()) {
+    if (file_last_modified_time_ < cached_code_response_time_) {
+      return true;
+    }
+  }
+
+  if (resource_response_time_ != cached_code_response_time_)
+    return false;
+
+  return true;
+}
+#endif
 
 ResourceLoader::ResourceLoader(ResourceFetcher* fetcher,
                                ResourceLoadScheduler* scheduler,
@@ -421,7 +478,13 @@ bool ResourceLoader::ShouldFetchCodeCache() {
 
   const ResourceRequest& request = resource_->GetResourceRequest();
   if (!request.Url().ProtocolIsInHTTPFamily())
+#if defined(USE_FILESCHEME_CODECACHE)
+    if (!request.Url().IsLocalFile() ||
+        !RuntimeEnabledFeatures::LocalResourceCodeCacheEnabled())
+      return false;
+#else
     return false;
+#endif
   // When loading the service worker scripts, we don't need to check the
   // GeneratedCodeCache. The code cache corresponding to these scripts is in
   // the service worker's "installed script storage" and would be fetched along
@@ -1051,8 +1114,14 @@ void ResourceLoader::DidReceiveResponseInternal(
   // Resource expects that we receive the response first before the
   // corresponding cached code.
   if (code_cache_request_) {
+#if defined(USE_FILESCHEME_CODECACHE)
+    code_cache_request_->DidReceiveResponse(
+        response.ResponseTime(), should_use_isolated_code_cache_, this,
+        response.FileLastModifiedTime());
+#else
     code_cache_request_->DidReceiveResponse(
         response.ResponseTime(), should_use_isolated_code_cache_, this);
+#endif
   }
 
   if (FrameScheduler* frame_scheduler = fetcher_->GetFrameScheduler()) {

@@ -186,6 +186,11 @@ struct URLResponseHead {
   // will be removed in the future.
   bool is_legacy_tls_version = false;
 
+  ///@name USE_FILESCHEME_CODECACHE
+  ///@{
+  mojo_base.mojom.Time file_last_modified_time;
+  ///@}
+
   // If the request received an authentication challenge, the challenge info is
   // recorded here.
   AuthChallengeInfo? auth_challenge_info;

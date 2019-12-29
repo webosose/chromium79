@@ -45,6 +45,9 @@ source_set("wayland") {
     "host/internal/wayland_data_offer_base.h",
     "host/internal/wayland_data_source_base.cc",
     "host/internal/wayland_data_source_base.h",
+    "host/shell_popup_wrapper.h",
+    "host/shell_surface_wrapper.cc",
+    "host/shell_surface_wrapper.h",
     "host/wayland_buffer_manager_connector.cc",
     "host/wayland_buffer_manager_connector.h",
     "host/wayland_buffer_manager_host.cc",
@@ -67,6 +70,8 @@ source_set("wayland") {
     "host/wayland_data_source.h",
     "host/wayland_drm.cc",
     "host/wayland_drm.h",
+    "host/wayland_extension_stub.cc",
+    "host/wayland_extension.h",
     "host/wayland_input_method_context.cc",
     "host/wayland_input_method_context.h",
     "host/wayland_input_method_context_factory.cc",
@@ -81,6 +86,10 @@ source_set("wayland") {
     "host/wayland_pointer.h",
     "host/wayland_screen.cc",
     "host/wayland_screen.h",
+    "host/wayland_seat.cc",
+    "host/wayland_seat.h",
+    "host/wayland_seat_manager.cc",
+    "host/wayland_seat_manager.h",
     "host/wayland_shm.cc",
     "host/wayland_shm.h",
     "host/wayland_shm_buffer.cc",
@@ -95,13 +104,10 @@ source_set("wayland") {
     "host/wayland_window_observer.h",
     "host/wayland_zwp_linux_dmabuf.cc",
     "host/wayland_zwp_linux_dmabuf.h",
-    "host/xdg_popup_wrapper.h",
     "host/xdg_popup_wrapper_v5.cc",
     "host/xdg_popup_wrapper_v5.h",
     "host/xdg_popup_wrapper_v6.cc",
     "host/xdg_popup_wrapper_v6.h",
-    "host/xdg_surface_wrapper.cc",
-    "host/xdg_surface_wrapper.h",
     "host/xdg_surface_wrapper_v5.cc",
     "host/xdg_surface_wrapper_v5.h",
     "host/xdg_surface_wrapper_v6.cc",
@@ -173,6 +179,16 @@ source_set("wayland") {
       "//third_party/minigbm",
       "//ui/gfx:memory_buffer",
       "//ui/ozone/common/linux:gbm",
+    ]
+  }
+
+  if (is_webos) {
+    sources -= [
+      "host/wayland_extension_stub.cc",
+    ]
+
+    deps += [
+      "extensions/webos",
     ]
   }
 

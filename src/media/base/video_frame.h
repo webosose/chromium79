@@ -91,7 +91,15 @@ class MEDIA_EXPORT VideoFrame : public base::RefCountedThreadSafe<VideoFrame> {
     // MojoSharedBufferVideoFrame subclass.
     STORAGE_MOJO_SHARED_BUFFER = 6,
     STORAGE_GPU_MEMORY_BUFFER = 7,
+#if defined(USE_NEVA_MEDIA)
+#if defined(NEVA_VIDEO_HOLE)
+    STORAGE_HOLE = 8,
+#endif
+    STORAGE_BLACK = 9,
+    STORAGE_LAST = STORAGE_BLACK,
+#else
     STORAGE_LAST = STORAGE_GPU_MEMORY_BUFFER,
+#endif
   };
 
   // CB to be called on the mailbox backing this frame when the frame is
@@ -304,6 +312,10 @@ class MEDIA_EXPORT VideoFrame : public base::RefCountedThreadSafe<VideoFrame> {
   // equivalent of RGBA(0,0,0,0).
   static scoped_refptr<VideoFrame> CreateTransparentFrame(
       const gfx::Size& size);
+
+#if defined(NEVA_VIDEO_HOLE) && defined(USE_NEVA_MEDIA)
+  static scoped_refptr<VideoFrame> CreateHoleFrame(const gfx::Size& size);
+#endif
 
   static size_t NumPlanes(VideoPixelFormat format);
 

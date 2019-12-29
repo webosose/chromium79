@@ -7,17 +7,17 @@
 
 #include <memory>
 
-#include "ui/ozone/platform/wayland/host/xdg_popup_wrapper.h"
+#include "ui/ozone/platform/wayland/host/shell_popup_wrapper.h"
 
 namespace ui {
 
-class XDGSurfaceWrapper;
+class ShellSurfaceWrapper;
 class WaylandConnection;
 class WaylandWindow;
 
-class XDGPopupWrapperV6 : public XDGPopupWrapper {
+class XDGPopupWrapperV6 : public ShellPopupWrapper {
  public:
-  XDGPopupWrapperV6(std::unique_ptr<XDGSurfaceWrapper> surface,
+  XDGPopupWrapperV6(std::unique_ptr<ShellSurfaceWrapper> surface,
                     WaylandWindow* wayland_window);
   ~XDGPopupWrapperV6() override;
 
@@ -40,11 +40,11 @@ class XDGPopupWrapperV6 : public XDGPopupWrapper {
                         int32_t height);
   static void PopupDone(void* data, struct zxdg_popup_v6* zxdg_popup_v6);
 
-  XDGSurfaceWrapper* xdg_surface();
+  ShellSurfaceWrapper* shell_surface();
 
  private:
   WaylandWindow* const wayland_window_;
-  std::unique_ptr<XDGSurfaceWrapper> zxdg_surface_v6_;
+  std::unique_ptr<ShellSurfaceWrapper> zxdg_surface_v6_;
   wl::Object<zxdg_popup_v6> xdg_popup_;
 
   DISALLOW_COPY_AND_ASSIGN(XDGPopupWrapperV6);

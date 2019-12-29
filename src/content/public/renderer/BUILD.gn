@@ -5,6 +5,7 @@
 import("//build/config/features.gni")
 import("//build/config/jumbo.gni")
 import("//media/media_options.gni")
+import("//neva/neva.gni")
 import("//ppapi/buildflags/buildflags.gni")
 
 # See //content/BUILD.gn for how this works.
@@ -104,6 +105,13 @@ target(link_target_type, "renderer_sources") {
     # include headers from each other.
     "//content/renderer",
   ]
+
+  if (use_injections) {
+    deps += [
+      "//neva/injection",
+      "//neva/injection:resources"
+    ]
+  }
 
   if (is_android) {
     # For seccomp_sandbox_status_android.h.

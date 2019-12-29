@@ -1454,6 +1454,11 @@ enum HistogramValue {
   AUTOTESTPRIVATE_WAITFORDISPLAYROTATION = 1391,
   AUTOTESTPRIVATE_ARCAPPTRACINGSTART = 1392,
   AUTOTESTPRIVATE_ARCAPPTRACINGSTOPANDANALYZE = 1393,
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  WEBVIEWINTERNAL_RESUME = 1394,
+  WEBVIEWINTERNAL_SUSPEND = 1395,
+  ///@}
   // Last entry: Add new entries above, then run:
   // python tools/metrics/histograms/update_extension_histograms.py
   ENUM_BOUNDARY

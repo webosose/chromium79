@@ -354,7 +354,12 @@ WindowTreeHost::RequestUnadjustedMovement() {
 // WindowTreeHost, protected:
 
 WindowTreeHost::WindowTreeHost(std::unique_ptr<Window> window)
-    : window_(window.release()),  // See header for details on ownership.
+#if defined(USE_NEVA_APPRUNTIME)
+    : native_event_delegate_(nullptr),
+#else
+    :
+#endif
+      window_(window.release()),  // See header for details on ownership.
       occlusion_state_(Window::OcclusionState::UNKNOWN),
       last_cursor_(ui::CursorType::kNull),
       input_method_(nullptr),
@@ -490,6 +495,13 @@ void WindowTreeHost::OnHostCloseRequested() {
   for (WindowTreeHostObserver& observer : observers_)
     observer.OnHostCloseRequested(this);
 }
+
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+void WindowTreeHost::OnWindowHostStateChanged(ui::WidgetState new_state) {
+  for (WindowTreeHostObserver& observer : observers_)
+    observer.OnWindowHostStateChanged(this, new_state);
+}
+#endif
 
 void WindowTreeHost::OnHostLostWindowCapture() {
   // It is possible for this function to be called during destruction, after the

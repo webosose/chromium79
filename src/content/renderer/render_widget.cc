@@ -132,6 +132,10 @@
 #include "third_party/skia/include/core/SkPixelRef.h"
 #endif  // defined(OS_POSIX)
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "base/neva/base_switches.h"
+#endif
+
 using blink::WebImeTextSpan;
 using blink::WebCursorInfo;
 using blink::WebDeviceEmulationParams;
@@ -1255,6 +1259,10 @@ void RenderWidget::RequestNewLayerTreeFrameSink(
     LayerTreeFrameSinkCallback callback) {
   // For widgets that are never visible, we don't start the compositor, so we
   // never get a request for a cc::LayerTreeFrameSink.
+#if defined(OS_WEBOS) && defined(USE_NEVA_EXTENSIONS)
+  if (is_undead_)
+    return;
+#endif
   DCHECK(!compositor_never_visible_);
   // Undead RenderWidgets should not be doing any compositing. However note that
   // widgets for provisional frames do start their compositor.
@@ -1379,6 +1387,12 @@ void RenderWidget::SetShowHitTestBorders(bool show) {
   debug_state.show_hit_test_borders = show;
   layer_tree_host_->SetDebugState(debug_state);
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidget::SetVisible(bool is_shown) {
+  layer_tree_view_->SetVisible(is_shown);
+}
+#endif
 
 void RenderWidget::SetBackgroundColor(SkColor color) {
   layer_tree_host_->set_background_color(color);
@@ -3010,6 +3024,11 @@ cc::LayerTreeSettings RenderWidget::GenerateLayerTreeSettings(
       compositor_deps->IsElasticOverscrollEnabled();
   settings.resource_settings.use_gpu_memory_buffer_resources =
       compositor_deps->IsGpuMemoryBufferCompositorResourcesEnabled();
+#if defined(USE_NEVA_APPRUNTIME)
+  settings.use_aggressive_release_policy =
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          cc::switches::kEnableAggressiveReleasePolicy);
+#endif
   settings.use_painted_device_scale_factor =
       compositor_deps->IsUseZoomForDSFEnabled();
 
@@ -3166,6 +3185,17 @@ cc::LayerTreeSettings RenderWidget::GenerateLayerTreeSettings(
   }
 #endif  // defined(OS_ANDROID)
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (cmd.HasSwitch(switches::kDecodedImageWorkingSetBudgetMB)) {
+    int budget_bytes_mb = 0;
+    if (switch_value_as_int(cmd, switches::kDecodedImageWorkingSetBudgetMB,
+                            1, std::numeric_limits<int>::max(),
+                            &budget_bytes_mb))
+      settings.decoded_image_working_set_budget_bytes =
+          budget_bytes_mb * 1024 * 1024;
+  }
+#endif
+
   if (using_low_memory_policy) {
     // RGBA_4444 textures are only enabled:
     //  - If the user hasn't explicitly disabled them
@@ -3188,6 +3218,10 @@ cc::LayerTreeSettings RenderWidget::GenerateLayerTreeSettings(
       }
     }
   }
+
+#if defined(USE_VIDEO_TEXTURE)
+  settings.use_stream_video_draw_quad = true;
+#endif
 
   if (cmd.HasSwitch(switches::kEnableLowResTiling))
     settings.create_low_res_tiling = true;

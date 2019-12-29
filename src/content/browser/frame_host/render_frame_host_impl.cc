@@ -224,6 +224,10 @@
 #include "content/browser/serial/serial_service.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/public/browser/web_contents.h"
+#endif
+
 #if defined(OS_MACOSX)
 #include "content/browser/frame_host/popup_menu_helper_mac.h"
 #endif
@@ -1423,7 +1427,9 @@ void RenderFrameHostImpl::AddMessageToConsole(
 void RenderFrameHostImpl::ExecuteJavaScript(const base::string16& javascript,
                                             JavaScriptResultCallback callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
+#if !defined(USE_NEVA_APPRUNTIME)
   CHECK(CanExecuteJavaScript());
+#endif
 
   const bool wants_result = !callback.is_null();
   GetNavigationControl()->JavaScriptExecuteRequest(javascript, wants_result,
@@ -4705,6 +4711,17 @@ CanCommitStatus RenderFrameHostImpl::CanCommitOriginAndUrl(
     return CanCommitStatus::CAN_COMMIT_ORIGIN_AND_URL;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (origin.scheme() == url::kFileScheme) {
+    if (delegate_->GetAsWebContents()) {
+      blink::mojom::RendererPreferences* renderer_prefs =
+          delegate_->GetAsWebContents()->GetMutableRendererPrefs();
+      if (!renderer_prefs->file_security_origin.empty())
+        return CanCommitStatus::CAN_COMMIT_ORIGIN_AND_URL;
+    }
+  }
+#endif
+
   // Renderer-debug URLs can never be committed.
   if (IsRendererDebugURL(url))
     return CanCommitStatus::CANNOT_COMMIT_URL;
@@ -6890,6 +6907,67 @@ mojom::FrameNavigationControl* RenderFrameHostImpl::GetNavigationControl() {
     GetRemoteAssociatedInterfaces()->GetInterface(&navigation_control_);
   return navigation_control_.get();
 }
+
+#if defined(USE_NEVA_MEDIA)
+mojom::FrameMediaController* RenderFrameHostImpl::GetFrameMediaController() {
+  if (!frame_media_controller_)
+    GetRemoteAssociatedInterfaces()->GetInterface(&frame_media_controller_);
+  return frame_media_controller_.get();
+}
+
+void RenderFrameHostImpl::PermitMediaActivation(int player_id) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->PermitMediaActivation(player_id);
+}
+
+void RenderFrameHostImpl::SetSuppressed(bool is_suppressed) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->SetSuppressed(is_suppressed);
+}
+
+void RenderFrameHostImpl::SuspendMedia(int player_id) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->SuspendMedia(player_id);
+}
+
+void RenderFrameHostImpl::NotifyMediaLayerCreated(int player_id,
+                                                  const MediaLayerInfo& info) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->NotifyMediaLayerCreated(player_id, info);
+}
+
+void RenderFrameHostImpl::NotifyMediaLayerWillDestroyed(int player_id) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->NotifyMediaLayerWillDestroyed(player_id);
+}
+
+void RenderFrameHostImpl::NotifyMediaLayerGeometryChanged(
+    int player_id,
+    const gfx::Rect& rect) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->NotifyMediaLayerGeometryChanged(player_id, rect);
+}
+
+void RenderFrameHostImpl::NotifyMediaLayerVisibilityChanged(int player_id,
+                                                            bool visibility) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->NotifyMediaLayerVisibilityChanged(player_id,
+                                                                 visibility);
+}
+
+gfx::AcceleratedWidget RenderFrameHostImpl::GetAcceleratedWidget() {
+  RenderWidgetHostViewBase* view = static_cast<RenderWidgetHostViewBase*>(
+      frame_tree_node_->IsMainFrame()
+          ? render_view_host_->GetWidget()->GetView()
+          : frame_tree_node_->frame_tree()
+                ->GetMainFrame()
+                ->render_view_host_->GetWidget()
+                ->GetView());
+  if (view)
+    return view->GetAcceleratedWidget();
+  return gfx::kNullAcceleratedWidget;
+}
+#endif
 
 bool RenderFrameHostImpl::ValidateDidCommitParams(
     NavigationRequest* navigation_request,

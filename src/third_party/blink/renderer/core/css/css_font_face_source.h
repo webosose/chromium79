@@ -85,12 +85,21 @@ class CORE_EXPORT CSSFontFaceSource
 
  private:
   void PruneOldestIfNeeded();
+// This is neva workaround for GCC 8 build v.77 because of crash when using the
+// FontCacheKey in  HashMap. This crash related to changes in FontCacheKey but
+// if we rollback these changes to v.74 the crash is fixed but fonts work not
+// correctly.
+#if defined(__GNUC__)
+  using FontDataTable = HashMap<unsigned, scoped_refptr<SimpleFontData>>;
+  using FontCacheKeyAgeList = LinkedHashSet<unsigned>;
+#else
   using FontDataTable = HashMap<FontCacheKey,
                                 scoped_refptr<SimpleFontData>,
                                 FontCacheKeyHash,
                                 FontCacheKeyTraits>;
   using FontCacheKeyAgeList =
       LinkedHashSet<FontCacheKey, FontCacheKeyHash, FontCacheKeyTraits>;
+#endif
 
   FontDataTable font_data_table_;
   FontCacheKeyAgeList font_cache_key_age;

@@ -120,6 +120,11 @@ class CONTENT_EXPORT WebContentsObserver : public IPC::Listener {
   // just swapped out.
   virtual void RenderViewDeleted(RenderViewHost* render_view_host) {}
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // This method is invoked when the process for the current RenderView created.
+  virtual void RenderProcessCreated(base::ProcessHandle) {}
+#endif
+
   // This method is invoked when the process for the current main
   // RenderFrameHost exits (usually by crashing, though possibly by other
   // means). The WebContents continues to use the RenderFrameHost, e.g. when the

@@ -40,6 +40,10 @@
 #include "base/base_paths_fuchsia.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/shell/common/shell_neva_switches.h"
+#endif
+
 namespace content {
 
 ShellBrowserContext::ShellResourceContext::ShellResourceContext() {}
@@ -108,12 +112,16 @@ void ShellBrowserContext::InitWhileIOAllowed() {
   CHECK(base::PathService::Get(base::DIR_LOCAL_APP_DATA, &path_));
   path_ = path_.Append(std::wstring(L"content_shell"));
 #elif defined(OS_LINUX)
+#if defined(USE_NEVA_APPRUNTIME)
+  path_ = cmd_line->GetSwitchValuePath(switches::kUserDataDir);
+#else
   std::unique_ptr<base::Environment> env(base::Environment::Create());
   base::FilePath config_dir(
       base::nix::GetXDGDirectory(env.get(),
                                  base::nix::kXdgConfigHomeEnvVar,
                                  base::nix::kDotConfigDir));
   path_ = config_dir.Append("content_shell");
+#endif
 #elif defined(OS_MACOSX)
   CHECK(base::PathService::Get(base::DIR_APP_DATA, &path_));
   path_ = path_.Append("Chromium Content Shell");

@@ -47,6 +47,9 @@ ui::PlatformWindowInitProperties ConvertWidgetInitParamsToInitProperties(
 
   switch (params.type) {
     case Widget::InitParams::TYPE_WINDOW:
+#if defined(OS_WEBOS)
+    case Widget::InitParams::TYPE_WINDOW_FRAMELESS:
+#endif
       properties.type = ui::PlatformWindowType::kWindow;
       break;
 

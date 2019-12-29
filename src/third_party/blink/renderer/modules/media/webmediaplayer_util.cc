@@ -27,6 +27,12 @@ std::string LoadTypeToString(blink::WebMediaPlayer::LoadType load_type) {
       return "MSE";
     case blink::WebMediaPlayer::kLoadTypeMediaStream:
       return "MS";
+#if defined(USE_NEVA_MEDIA)
+    case blink::WebMediaPlayer::kLoadTypeBlobURL:
+      return "BLOB";
+    case blink::WebMediaPlayer::kLoadTypeDataURL:
+      return "DATA";
+#endif
   }
 
   NOTREACHED();
@@ -102,6 +108,12 @@ WebTimeRanges ConvertToWebTimeRanges(
 WebMediaPlayer::NetworkState PipelineErrorToNetworkState(
     media::PipelineStatus error) {
   switch (error) {
+#if defined(USE_NEVA_MEDIA)
+    case media::DECODER_ERROR_RESOURCE_IS_RELEASED:
+    case media::PIPELINE_ERROR_DECRYPT:
+      return WebMediaPlayer::kNetworkStateFormatError;
+#endif
+
     case media::PIPELINE_ERROR_NETWORK:
     case media::PIPELINE_ERROR_READ:
     case media::CHUNK_DEMUXER_ERROR_EOS_STATUS_NETWORK_ERROR:

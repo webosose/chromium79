@@ -66,6 +66,9 @@ struct DropData;
 struct NativeWebKeyboardEvent;
 struct Referrer;
 struct SecurityStyleExplanations;
+#if defined(USE_NEVA_APPRUNTIME)
+struct WebPreferences;
+#endif
 }  // namespace content
 
 namespace gfx {
@@ -594,6 +597,14 @@ class CONTENT_EXPORT WebContentsDelegate {
                                                  bool allowed_per_prefs,
                                                  const url::Origin& origin,
                                                  const GURL& resource_url);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Added for neva app-runtime frame focused notification
+  // Notify that the frame was focused
+  virtual void DidFrameFocused() {}
+
+  virtual void OverrideWebkitPrefs(WebPreferences* prefs) {}
+#endif
 
   virtual void SetTopControlsShownRatio(WebContents* web_contents,
                                         float ratio) {}

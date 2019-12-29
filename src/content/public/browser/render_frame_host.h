@@ -36,6 +36,10 @@
 #include "url/gurl.h"
 #include "url/origin.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/media_layer_info.h"
+#endif  //  defined(USE_NEVA_MEDIA)
+
 namespace blink {
 class AssociatedInterfaceProvider;
 struct WebMediaPlayerAction;
@@ -344,6 +348,20 @@ class CONTENT_EXPORT RenderFrameHost : public IPC::Listener,
   // Opens view-source tab for the document last committed in this
   // RenderFrameHost.
   virtual void ViewSource() = 0;
+
+#if defined(USE_NEVA_MEDIA)
+  virtual void PermitMediaActivation(int player_id) = 0;
+  virtual void SetSuppressed(bool is_suppressed) = 0;
+  virtual void SuspendMedia(int player_id) = 0;
+  virtual void NotifyMediaLayerCreated(int player_id,
+                                       const MediaLayerInfo& info) = 0;
+  virtual void NotifyMediaLayerWillDestroyed(int player_id) = 0;
+  virtual void NotifyMediaLayerGeometryChanged(int player_id,
+                                               const gfx::Rect& rect) = 0;
+  virtual void NotifyMediaLayerVisibilityChanged(int player_id,
+                                                 bool visibility) = 0;
+  virtual gfx::AcceleratedWidget GetAcceleratedWidget() = 0;
+#endif
 
   // Starts pausing subresource loading on this frame and returns
   // PauseSubresourceLoadingHandle that controls the pausing behavior.  As long

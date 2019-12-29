@@ -204,6 +204,15 @@ class MEDIA_EXPORT AudioInputController final
   // This method is called on the creator thread.
   virtual void Record();
 
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  // Pauses capturing the audio input stream so it can be
+  // resumed later.
+  virtual void Pause();
+
+  // Resumes the previously paused audio input stream.
+  virtual void Resume();
+#endif
+
   // Closes the audio input stream. The state is changed and the resources
   // are freed on the audio thread. |closed_task| is then executed on the thread
   // that called Close().
@@ -288,6 +297,10 @@ class MEDIA_EXPORT AudioInputController final
                 bool enable_agc);
   void DoCreateForStream(AudioInputStream* stream_to_control, bool enable_agc);
   void DoRecord();
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  void DoPause();
+  void DoResume();
+#endif
   void DoClose();
   void DoReportError();
   void DoSetVolume(double volume);

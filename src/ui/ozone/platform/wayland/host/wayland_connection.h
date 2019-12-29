@@ -23,20 +23,22 @@
 #include "ui/ozone/platform/wayland/host/wayland_data_device.h"
 #include "ui/ozone/platform/wayland/host/wayland_data_device_manager.h"
 #include "ui/ozone/platform/wayland/host/wayland_data_source.h"
-#include "ui/ozone/platform/wayland/host/wayland_keyboard.h"
 #include "ui/ozone/platform/wayland/host/wayland_output.h"
 #include "ui/ozone/platform/wayland/host/wayland_pointer.h"
-#include "ui/ozone/platform/wayland/host/wayland_touch.h"
+#include "ui/ozone/platform/wayland/host/wayland_seat.h"
+#include "ui/ozone/platform/wayland/host/wayland_seat_manager.h"
 #include "ui/ozone/platform/wayland/host/wayland_window_manager.h"
 
 namespace ui {
 
 class WaylandBufferManagerHost;
+class WaylandExtension;
 class WaylandOutputManager;
 class WaylandWindow;
 class WaylandDrm;
 class WaylandZwpLinuxDmabuf;
 class WaylandShm;
+class WaylandSeatManager;
 
 class WaylandConnection : public PlatformEventSource,
                           public base::MessagePumpForUI::FdWatcher {
@@ -55,7 +57,11 @@ class WaylandConnection : public PlatformEventSource,
   wl_subcompositor* subcompositor() const { return subcompositor_.get(); }
   xdg_shell* shell() const { return shell_.get(); }
   zxdg_shell_v6* shell_v6() const { return shell_v6_.get(); }
-  wl_seat* seat() const { return seat_.get(); }
+  wl_seat* seat() const {
+    if (wayland_seat_manager_ && wayland_seat_manager_->GetFirstSeat())
+      return wayland_seat_manager_->GetFirstSeat()->seat();
+    return nullptr;
+  }
   wl_data_device* data_device() const { return data_device_->data_device(); }
   gtk_primary_selection_device* primary_selection_device() const {
     return primary_selection_device_->data_device();
@@ -71,13 +77,19 @@ class WaylandConnection : public PlatformEventSource,
   void SetCursorBitmap(const std::vector<SkBitmap>& bitmaps,
                        const gfx::Point& location);
 
-  int GetKeyboardModifiers() const;
-
-  // Returns the current pointer, which may be null.
-  WaylandPointer* pointer() const { return pointer_.get(); }
+  // Returns the current pointer (from the first seat), which may be null.
+  WaylandPointer* pointer() const {
+    if (wayland_seat_manager_ && wayland_seat_manager_->GetFirstSeat())
+      return wayland_seat_manager_->GetFirstSeat()->pointer();
+    return nullptr;
+  }
 
   // Returns the current touch, which may be null.
-  WaylandTouch* touch() const { return touch_.get(); }
+  WaylandTouch* touch() const {
+    if (wayland_seat_manager_ && wayland_seat_manager_->GetFirstSeat())
+      return wayland_seat_manager_->GetFirstSeat()->touch();
+    return nullptr;
+  }
 
   WaylandClipboard* clipboard() const { return clipboard_.get(); }
 
@@ -89,14 +101,22 @@ class WaylandConnection : public PlatformEventSource,
     return wayland_output_manager_.get();
   }
 
-  // Returns the cursor position, which may be null.
+  WaylandSeatManager* wayland_seat_manager() const {
+    return wayland_seat_manager_.get();
+  }
+
+  // Returns the cursor position (from the first seat), which may be null.
   WaylandCursorPosition* wayland_cursor_position() const {
-    return wayland_cursor_position_.get();
+    if (wayland_seat_manager_ && wayland_seat_manager_->GetFirstSeat())
+      return wayland_seat_manager_->GetFirstSeat()->wayland_cursor_position();
+    return nullptr;
   }
 
   WaylandBufferManagerHost* buffer_manager_host() const {
     return buffer_manager_host_.get();
   }
+
+  WaylandExtension* extension() { return extension_.get(); }
 
   WaylandZwpLinuxDmabuf* zwp_dmabuf() const { return zwp_dmabuf_.get(); }
 
@@ -139,6 +159,8 @@ class WaylandConnection : public PlatformEventSource,
  private:
   // WaylandInputMethodContextFactory needs access to DispatchUiEvent
   friend class WaylandInputMethodContextFactory;
+  // WaylandSeat needs access to DispatchUiEvent
+  friend class WaylandSeat;
 
   void Flush();
   void DispatchUiEvent(Event* event);
@@ -164,10 +186,6 @@ class WaylandConnection : public PlatformEventSource,
                      uint32_t version);
   static void GlobalRemove(void* data, wl_registry* registry, uint32_t name);
 
-  // wl_seat_listener
-  static void Capabilities(void* data, wl_seat* seat, uint32_t capabilities);
-  static void Name(void* data, wl_seat* seat, const char* name);
-
   // zxdg_shell_v6_listener
   static void PingV6(void* data, zxdg_shell_v6* zxdg_shell_v6, uint32_t serial);
 
@@ -178,7 +196,6 @@ class WaylandConnection : public PlatformEventSource,
   wl::Object<wl_registry> registry_;
   wl::Object<wl_compositor> compositor_;
   wl::Object<wl_subcompositor> subcompositor_;
-  wl::Object<wl_seat> seat_;
   wl::Object<xdg_shell> shell_;
   wl::Object<zxdg_shell_v6> shell_v6_;
   wl::Object<wp_presentation> presentation_;
@@ -188,15 +205,13 @@ class WaylandConnection : public PlatformEventSource,
   std::unique_ptr<WaylandDataDevice> data_device_;
   std::unique_ptr<WaylandClipboard> clipboard_;
   std::unique_ptr<WaylandDataSource> dragdrop_data_source_;
-  std::unique_ptr<WaylandKeyboard> keyboard_;
   std::unique_ptr<WaylandOutputManager> wayland_output_manager_;
-  std::unique_ptr<WaylandPointer> pointer_;
-  std::unique_ptr<WaylandTouch> touch_;
-  std::unique_ptr<WaylandCursorPosition> wayland_cursor_position_;
   std::unique_ptr<WaylandZwpLinuxDmabuf> zwp_dmabuf_;
   std::unique_ptr<WaylandDrm> drm_;
   std::unique_ptr<WaylandShm> shm_;
   std::unique_ptr<WaylandBufferManagerHost> buffer_manager_host_;
+  std::unique_ptr<WaylandExtension> extension_;
+  std::unique_ptr<WaylandSeatManager> wayland_seat_manager_;
 
   std::unique_ptr<GtkPrimarySelectionDeviceManager>
       primary_selection_device_manager_;

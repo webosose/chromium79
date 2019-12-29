@@ -122,6 +122,10 @@
 #include "third_party/blink/public/mojom/serial/serial.mojom.h"
 #endif
 
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/frame_media_controller.mojom.h"
+#endif
+
 class GURL;
 struct AccessibilityHostMsg_EventBundleParams;
 struct AccessibilityHostMsg_FindInPageResultParams;
@@ -919,6 +923,20 @@ class CONTENT_EXPORT RenderFrameHostImpl
   blink::WebSandboxFlags active_sandbox_flags() {
     return active_sandbox_flags_;
   }
+
+#if defined(USE_NEVA_MEDIA)
+  void PermitMediaActivation(int player_id) override;
+  void SetSuppressed(bool is_suppressed) override;
+  void SuspendMedia(int player_id) override;
+  void NotifyMediaLayerCreated(int player_id,
+                               const MediaLayerInfo& info) override;
+  void NotifyMediaLayerWillDestroyed(int player_id) override;
+  void NotifyMediaLayerGeometryChanged(int player_id,
+                                       const gfx::Rect& rect) override;
+  void NotifyMediaLayerVisibilityChanged(int player_id,
+                                         bool visibility) override;
+  gfx::AcceleratedWidget GetAcceleratedWidget() override;
+#endif
 
   bool is_mhtml_document() { return is_mhtml_document_; }
 
@@ -1797,6 +1815,12 @@ class CONTENT_EXPORT RenderFrameHostImpl
   // wish to intercept outgoing navigation control messages.
   virtual mojom::FrameNavigationControl* GetNavigationControl();
 
+#if defined(USE_NEVA_MEDIA)
+  // Lazily initializes and returns the mojom::FrameMediaController
+  // interface for this frame.
+  mojom::FrameMediaController* GetFrameMediaController();
+#endif
+
   // Utility function used to validate potentially harmful parameters sent by
   // the renderer during the commit notification.
   // A return value of true means that the commit should proceed.
@@ -2387,6 +2411,10 @@ class CONTENT_EXPORT RenderFrameHostImpl
 
   viz::mojom::InputTargetClient* input_target_client_ = nullptr;
   mojo::Remote<mojom::FrameInputHandler> frame_input_handler_;
+
+#if defined(USE_NEVA_MEDIA)
+  mojo::AssociatedRemote<mojom::FrameMediaController> frame_media_controller_;
+#endif
 
   std::unique_ptr<KeepAliveHandleFactory> keep_alive_handle_factory_;
   base::TimeDelta keep_alive_timeout_;

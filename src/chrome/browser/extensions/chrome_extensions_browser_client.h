@@ -43,6 +43,10 @@ class ChromeExtensionsBrowserClient : public ExtensionsBrowserClient {
   ~ChromeExtensionsBrowserClient() override;
 
   // ExtensionsBrowserClient overrides:
+#if defined(USE_NEVA_EXTENSIONS)
+  virtual void InitWithBrowserContext(content::BrowserContext* context,
+                                      PrefService* pref_service) {}
+#endif
   bool IsShuttingDown() override;
   bool AreExtensionsDisabled(const base::CommandLine& command_line,
                              content::BrowserContext* context) override;

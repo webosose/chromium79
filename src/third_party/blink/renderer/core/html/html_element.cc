@@ -576,6 +576,18 @@ AttributeTriggers* HTMLElement::TriggersForAttributeName(
        nullptr},
       {kAutocapitalizeAttr, WebFeature::kAutocapitalizeAttribute, kNoEvent,
        nullptr},
+#if defined(USE_NEVA_MEDIA)
+    // It looks like second attribute only used for UseCounter
+    {kOnumsmediainfoAttr, kNoWebFeature, event_type_names::kUmsmediainfo, nullptr},
+    // TODO(neva): Doesn't need to add onwebosmediafocuschange at here?
+    {kOnbroadcasterrormsgAttr, kNoWebFeature, event_type_names::kBroadcasterrormsg,
+     nullptr},
+    {kOndvrerrormsgAttr, kNoWebFeature, event_type_names::kDvrerrormsg, nullptr},
+    {kOnupdatecamerastateAttr, kNoWebFeature, event_type_names::kUpdatecamerastate,
+     nullptr},
+    {kOnpipelinestartedAttr, kNoWebFeature, event_type_names::kPipelinestarted,
+     nullptr},
+#endif
   };
 
   using AttributeToTriggerIndexMap = HashMap<QualifiedName, uint32_t>;

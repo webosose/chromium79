@@ -549,6 +549,26 @@ RendererBlinkPlatformImpl::CreateRTCPeerConnectionHandler(
       client, rtc_dependency_factory, task_runner);
 }
 
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+void RendererBlinkPlatformImpl::AddSourceToAudioCapturerSourceManager(
+    media::AudioCapturerSource* source) {
+  RenderThreadImpl* render_thread = RenderThreadImpl::current();
+  DCHECK(render_thread);
+  if (!render_thread)
+    return;
+  render_thread->audio_capturer_source_manager()->AddSource(source);
+}
+
+void RendererBlinkPlatformImpl::RemoveSourceFromAudioCapturerSourceManager(
+    media::AudioCapturerSource* source) {
+  RenderThreadImpl* render_thread = RenderThreadImpl::current();
+  DCHECK(render_thread);
+  if (!render_thread)
+    return;
+  render_thread->audio_capturer_source_manager()->RemoveSource(source);
+}
+#endif
+
 //------------------------------------------------------------------------------
 
 scoped_refptr<base::SingleThreadTaskRunner>
