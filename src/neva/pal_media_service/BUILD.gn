@@ -51,7 +51,7 @@ component("pal_media_service") {
 
   defines = [ "PAL_MEDIA_SERVICE_IMPLEMENTATION" ]
 
-  if (is_webos) {
+  if (is_webos && use_neva_media) {
     import ("//neva/pal_media_service/webos/webos.gni")
     configs += webos.configs
     deps += webos.deps
