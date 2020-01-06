@@ -220,6 +220,11 @@ void BlinkView::DidSwapCompositorFrame() {
             << "(): Did swap window frame notification is delivered";
 }
 
+void BlinkView::DidErrorPageLoadedFromNetErrorHelper() {
+  LOG(INFO) << __func__
+            << "(): Did error page loaded from net error helper";
+
+}
 void BlinkView::RunCommand(const std::string& name,
                            const std::vector<std::string>& arguments) {
   if (observer_)
