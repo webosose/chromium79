@@ -206,7 +206,7 @@ class WebLocalFrame : public WebFrame {
   virtual void SendPings(const WebURL& destination_url) = 0;
 
 #if defined(USE_NEVA_APPRUNTIME)
-  virtual void ResetStateToMarkNextPaintForContainer() {}
+  virtual void ResetStateToMarkNextPaint() {}
 #endif
 
 #if defined(USE_NEVA_MEDIA)

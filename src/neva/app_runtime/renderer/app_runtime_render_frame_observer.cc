@@ -94,8 +94,8 @@ void AppRuntimeRenderFrameObserver::ResumeDOM() {
     interface->DidResumeDOM();
 }
 
-void AppRuntimeRenderFrameObserver::ResetStateToMarkNextPaintForContainer() {
-  render_frame()->ResetStateToMarkNextPaintForContainer();
+void AppRuntimeRenderFrameObserver::ResetStateToMarkNextPaint() {
+  render_frame()->ResetStateToMarkNextPaint();
 }
 
 void AppRuntimeRenderFrameObserver::SetVisibilityState(
@@ -151,21 +151,6 @@ void AppRuntimeRenderFrameObserver::GrantLoadLocalResources() {
 void AppRuntimeRenderFrameObserver::InsertStyleSheet(const std::string& css) {
   render_frame()->GetWebFrame()->GetDocument().InsertStyleSheet(
       blink::WebString::FromUTF8(css));
-}
-
-void AppRuntimeRenderFrameObserver::ReplaceBaseURL(const std::string& new_url) {
-  blink::LocalFrame* local_frame =
-      blink::To<blink::WebLocalFrameImpl>(render_frame()->GetWebFrame())
-          ->GetFrame();
-  if (!local_frame)
-    return;
-
-  local_frame->GetDocument()->Loader()->UpdateForSameDocumentNavigation(
-      blink::KURL(blink::KURL(),
-                  WTF::String::FromUTF8(new_url.data(), new_url.length())),
-      blink::kSameDocumentNavigationHistoryApi, nullptr,
-      blink::kScrollRestorationAuto,
-      blink::WebFrameLoadType::kReplaceCurrentItem, local_frame->GetDocument());
 }
 
 void AppRuntimeRenderFrameObserver::AddInjectionToLoad(

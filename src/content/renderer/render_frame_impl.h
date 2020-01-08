@@ -744,7 +744,7 @@ class CONTENT_EXPORT RenderFrameImpl
 
 #if defined(USE_NEVA_APPRUNTIME)
   // content::RenderFrame
-  void ResetStateToMarkNextPaintForContainer() override;
+  void ResetStateToMarkNextPaint() override;
 #endif
 
   void BeginNavigation(std::unique_ptr<blink::WebNavigationInfo> info) override;

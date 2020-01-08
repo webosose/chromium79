@@ -210,7 +210,6 @@ class WebOSSystemInjection : public gin::Wrappable<WebOSSystemInjection>,
   void EnableFullScreenMode(bool param);
   void StagePreparing();
   void StageReady();
-  void ContainerReady();
   void EditorFocused();
   void KeepAlive(bool param);
   void ApplyLaunchFeedback();
@@ -337,7 +336,6 @@ gin::ObjectTemplateBuilder WebOSSystemInjection::GetObjectTemplateBuilder(
                                   &WebOSSystemInjection::EnableFullScreenMode)
       .SetMethod("stagePreparing", &WebOSSystemInjection::StagePreparing)
       .SetMethod("stageReady", &WebOSSystemInjection::StageReady)
-      .SetMethod("containerReady", &WebOSSystemInjection::ContainerReady)
       .SetMethod("editorFocused", &WebOSSystemInjection::EditorFocused)
       .SetMethod("keepAlive", &WebOSSystemInjection::KeepAlive)
       .SetMethod("applyLaunchFeedback",
@@ -537,10 +535,6 @@ void WebOSSystemInjection::KeepAlive(bool param) {
 
 void WebOSSystemInjection::EditorFocused() {
   //NOTIMPLEMENTED();
-}
-
-void WebOSSystemInjection::ContainerReady() {
-  SendCommand("containerReady");
 }
 
 void WebOSSystemInjection::StageReady() {

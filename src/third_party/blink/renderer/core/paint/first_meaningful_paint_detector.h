@@ -40,7 +40,7 @@ class CORE_EXPORT FirstMeaningfulPaintDetector
   void NotifyInputEvent();
   void NotifyPaint();
 #if defined(USE_NEVA_APPRUNTIME)
-  void ResetStateToMarkNextPaintForContainer();
+  void ResetStateToMarkNextPaint();
 #endif
   void ReportSwapTime(PaintEvent, WebWidgetClient::SwapResult, base::TimeTicks);
   void NotifyFirstContentfulPaint(base::TimeTicks swap_stamp);

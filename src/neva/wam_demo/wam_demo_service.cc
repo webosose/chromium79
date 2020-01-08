@@ -90,7 +90,6 @@ char kLaunchApp[] = "launchApp";
 char kLaunchHiddenApp[] = "launchHiddenApp";
 char kLoadInjections[] = "loadInjections";
 char kReloadPage[] = "reloadPage";
-char kReplaceBaseURL[] = "replaceBaseURL";
 char kResetCompositorPainting[] = "resetCompositorPainting";
 char kResizeWindow[] = "resizeWindow";
 char kResumeDOM[] = "resumeDOM";
@@ -595,10 +594,6 @@ void WamDemoService::DataUpdated(const std::string& url,
       EmulatorSendData(response::kAppStarted, appid);
     } else if (cmd == command::kReloadPage) {
       webpage->Reload();
-    } else if (cmd == command::kReplaceBaseURL) {
-      webpage->ReplaceBaseURL(appurl, app_it->url_);
-      // Base URL is replaced now and we need to reload page
-      webpage->RunJavaScript("location.reload();");
     } else if (cmd == command::kStopLoading) {
       webpage->StopLoading();
     } else if (cmd == command::kLaunchApp ||
