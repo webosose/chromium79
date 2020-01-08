@@ -49,6 +49,7 @@ class AppRuntimeWebViewHostImpl : public mojom::AppRuntimeWebViewHost,
   void DidFirstImagePaint() override;
   void DidFirstMeaningfulPaint() override;
   void DidClearWindowObject() override;
+  void DidResumeDOM() override;
 
   // blink::mojom::AppRuntimeBlinkDelegate implementation.
   void IsBackHistoryKeyDisabled(

@@ -96,6 +96,7 @@ class BlinkView : public neva_app_runtime::WebViewBase {
   void DidClearWindowObject() override;
   void DidSwapCompositorFrame() override;
   void DidErrorPageLoadedFromNetErrorHelper() override;
+  void DidResumeDOM() override;
 
   // from WebViewControllerDelegate
   void RunCommand(

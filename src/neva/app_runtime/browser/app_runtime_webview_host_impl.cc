@@ -84,4 +84,8 @@ void AppRuntimeWebViewHostImpl::DidNonFirstMeaningPaintAfterLoad() {
     webview_delegate_->DidNonFirstMeaningfulPaint();
 }
 
+void AppRuntimeWebViewHostImpl::DidResumeDOM() {
+  if (webview_delegate_)
+    webview_delegate_->DidResumeDOM();
+}
 }  // namespace neva_app_runtime

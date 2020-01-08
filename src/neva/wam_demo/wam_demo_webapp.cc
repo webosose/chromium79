@@ -238,6 +238,10 @@ std::string BlinkView::RunFunction(const std::string& name,
       : std::string();
 }
 
+void BlinkView::DidResumeDOM() {
+  LOG(INFO) << __func__ << "(): Did ResumeDOM notification is delivered";
+}
+
 void WebAppWindowImpl::OnWindowClosing() {
   observer_->OnWindowClosing(this);
 }
