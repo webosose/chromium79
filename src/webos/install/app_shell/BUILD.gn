@@ -67,12 +67,6 @@ copy("app_shell") {
   deps = [
     "//extensions/shell:app_shell",
     "//v8:v8", # for snapshot_blob.bin
-    ":app_shell_cbe",
-    ":app_shell_manifest",
-    ":app_shell_legacy_roles",
-    ":app_shell_roles",
-    ":app_shell_services",
-    ":app_shell_container",
-    ":app_shell_permissions"
+    ":app_shell_cbe"
   ]
 }

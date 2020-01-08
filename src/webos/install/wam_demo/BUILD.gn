@@ -65,12 +65,6 @@ copy("wam_demo") {
 
   deps = [
     "//neva/wam_demo:wam_demo",
-    ":wam_demo_app10_perm",
-    ":wam_demo_app10_role",
-    ":wam_demo_container",
-    ":wam_demo_cursor",
-    ":wam_demo_manifest",
-    ":wam_demo_roles",
-    ":wam_demo_services"
+    ":wam_demo_cursor"
   ]
 }

@@ -57,9 +57,6 @@ copy("default_browser") {
     "//v8:v8",                              # for snapshot_blob.bin and natives_blob.bin
     "//third_party/icu:icudata",            # for icudtl.dat
     "//headless:pak",                       # for headless_lib.pak
-    ":browser_manifest",
-    ":browser_roles",
-    ":browser_services",
     ":locales"
   ]
 }
