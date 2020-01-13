@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "content/public/app/content_main.h"
 #include "neva/app_runtime/app/app_runtime_main_delegate.h"
 #include "webos/app/webos_content_main_delegate.h"
-#include "webos/browser/net/webos_network_delegate.h"
+#include "webos/browser/webos_file_access_delegate.h"
 #include "webos/public/runtime.h"
 
 namespace webos {
@@ -28,9 +28,7 @@ WebOSMain::WebOSMain(WebOSMainDelegate* delegate) : delegate_(delegate) {}
 
 int WebOSMain::Run(int argc, const char** argv) {
   webos::WebOSContentMainDelegate main_delegate;
-  auto webos_network_delegate = new WebOSNetworkDelegate();
-  neva_app_runtime::SetNetworkDelegate(webos_network_delegate);
-  neva_app_runtime::SetFileAccessDelegate(webos_network_delegate);
+  neva_app_runtime::SetFileAccessDelegate(new WebOSFileAccessDelegate());
   main_delegate.SetBrowserStartupCallback(
       base::Bind(&WebOSMainDelegate::AboutToCreateContentBrowserClient,
                  base::Unretained(delegate_)));

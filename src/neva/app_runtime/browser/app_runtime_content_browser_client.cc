@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -172,10 +172,9 @@ void LoadAppsFromCommandLine(extensions::ShellExtensionSystem* extension_system,
 }  // namespace
 
 AppRuntimeContentBrowserClient::AppRuntimeContentBrowserClient(
-    net::NetworkDelegate* delegate,
     AppRuntimeQuotaPermissionDelegate* quota_permission_delegate,
     AppRuntimeFileAccessDelegate* file_access_delegate)
-    : url_request_context_factory_(new URLRequestContextFactory(delegate)),
+    : url_request_context_factory_(new URLRequestContextFactory()),
       quota_permission_delegate_(quota_permission_delegate),
       file_access_delegate_(file_access_delegate) {}
 

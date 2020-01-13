@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,28 +14,20 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef WEBOS_BROWSER_NET_WEBOS_NETWORK_DELEGATE_H_
-#define WEBOS_BROWSER_NET_WEBOS_NETWORK_DELEGATE_H_
+#ifndef WEBOS_BROWSER_FILE_ACCESS_DELEGATE_H_
+#define WEBOS_BROWSER_FILE_ACCESS_DELEGATE_H_
 
-#include <map>
+#include <string>
+#include <vector>
 
-#include "net/base/completion_once_callback.h"
-#include "net/base/network_delegate_impl.h"
 #include "neva/app_runtime/browser/app_runtime_file_access_delegate.h"
 
 namespace webos {
 
-// FIXME(neva): Refactor WebOSNetworkDelegate to WebOSFileAccessDelegate
-class WebOSNetworkDelegate
-    : public net::NetworkDelegateImpl,
-      public neva_app_runtime::AppRuntimeFileAccessDelegate {
+class WebOSFileAccessDelegate
+    : public neva_app_runtime::AppRuntimeFileAccessDelegate {
  public:
-  WebOSNetworkDelegate();
-
-  void append_extra_socket_header(const std::string& key,
-                                  const std::string& value) {
-    extra_websocket_headers_.insert(std::make_pair(key, value));
-  }
+  WebOSFileAccessDelegate();
 
   // neva_app_runtime::AppRuntimeFileAccessDelegate implementation
   bool IsAccessAllowed(const base::FilePath& path,
@@ -45,14 +37,13 @@ class WebOSNetworkDelegate
 
  private:
   void ParsePathsFromSettings(std::vector<std::string>& paths,
-                              std::istringstream& stream);
+                              std::istringstream& stream) const;
 
   std::vector<std::string> allowed_target_paths_;
   std::vector<std::string> allowed_trusted_target_paths_;
-  std::map<std::string, std::string> extra_websocket_headers_;
-  bool allow_all_access_;
+  bool allow_all_access_ = true;
 };
 
 }  // namespace webos
 
-#endif  // WEBOS_BROWSER_NET_WEBOS_NETWORK_DELEGATE_H_
+#endif  // WEBOS_BROWSER_FILE_ACCESS_DELEGATE_H_

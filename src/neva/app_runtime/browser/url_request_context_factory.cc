@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -170,15 +170,12 @@ class URLRequestContextFactory::MainURLRequestContextGetter
   DISALLOW_COPY_AND_ASSIGN(MainURLRequestContextGetter);
 };
 
-URLRequestContextFactory::URLRequestContextFactory(
-    net::NetworkDelegate* delegate)
-    : app_network_delegate_(delegate),
+URLRequestContextFactory::URLRequestContextFactory()
+    : app_network_delegate_(std::make_unique<net::NetworkDelegateImpl>()),
+      system_network_delegate_(std::make_unique<net::NetworkDelegateImpl>()),
       system_dependencies_initialized_(false),
       main_dependencies_initialized_(false),
-      media_dependencies_initialized_(false) {
-  if (!system_network_delegate_)
-    system_network_delegate_.reset(new net::NetworkDelegateImpl());
-}
+      media_dependencies_initialized_(false) {}
 
 URLRequestContextFactory::~URLRequestContextFactory() {
 }
@@ -227,10 +224,6 @@ void URLRequestContextFactory::InitializeSystemContextDependencies() {
   if (system_dependencies_initialized_)
     return;
 
-  if (!app_network_delegate_)
-    app_network_delegate_.reset(new net::NetworkDelegateImpl());
-  if (!system_network_delegate_)
-    system_network_delegate_.reset(new net::NetworkDelegateImpl());
   host_resolver_manager_ = std::make_unique<net::HostResolverManager>(
       net::HostResolver::ManagerOptions(),
       net::NetworkChangeNotifier::GetSystemDnsConfigNotifier(),

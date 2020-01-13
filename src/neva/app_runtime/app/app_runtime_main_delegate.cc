@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ bool SubprocessNeedsResourceBundle(const std::string& process_type) {
          process_type == switches::kUtilityProcess;
 }
 
-static net::NetworkDelegate* g_network_delegate = nullptr;
 static neva_app_runtime::AppRuntimeQuotaPermissionDelegate*
     g_quota_permission_delegate = nullptr;
 static neva_app_runtime::AppRuntimeFileAccessDelegate* g_file_access_delegate =
@@ -53,8 +52,7 @@ struct BrowserClientTraits
           neva_app_runtime::AppRuntimeContentBrowserClient> {
   static neva_app_runtime::AppRuntimeContentBrowserClient* New(void* instance) {
     return new neva_app_runtime::AppRuntimeContentBrowserClient(
-        g_network_delegate, g_quota_permission_delegate,
-        g_file_access_delegate);
+        g_quota_permission_delegate, g_file_access_delegate);
   }
 };
 
@@ -72,10 +70,6 @@ namespace neva_app_runtime {
 
 AppRuntimeContentBrowserClient* GetAppRuntimeContentBrowserClient() {
   return g_app_runtime_content_browser_client.Pointer();
-}
-
-void SetNetworkDelegate(net::NetworkDelegate* p) {
-  g_network_delegate = p;
 }
 
 void SetQuotaPermissionDelegate(AppRuntimeQuotaPermissionDelegate* p) {

@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "webos/browser/net/webos_network_delegate.h"
+#include "webos/browser/webos_file_access_delegate.h"
 
 #include "base/files/file_util.h"
 #include "net/base/net_errors.h"
@@ -24,7 +24,7 @@
 
 namespace webos {
 
-WebOSNetworkDelegate::WebOSNetworkDelegate() : allow_all_access_(true) {
+WebOSFileAccessDelegate::WebOSFileAccessDelegate() {
   // Hardcoded path for hotfix
   std::string securityPolicySettings;
   if (!base::ReadFileToString(base::FilePath("/etc/wam/security_policy.conf"),
@@ -43,9 +43,9 @@ WebOSNetworkDelegate::WebOSNetworkDelegate() : allow_all_access_(true) {
   allow_all_access_ = !allowed_target_paths_.size();
 }
 
-void WebOSNetworkDelegate::ParsePathsFromSettings(
+void WebOSFileAccessDelegate::ParsePathsFromSettings(
     std::vector<std::string>& paths,
-    std::istringstream& stream) {
+    std::istringstream& stream) const {
   std::string str;
   do {
     std::getline(stream, str);
@@ -58,10 +58,10 @@ void WebOSNetworkDelegate::ParsePathsFromSettings(
   } while (str != "");
 }
 
-bool WebOSNetworkDelegate::IsAccessAllowed(const base::FilePath& path,
-                                           int process_id,
-                                           int route_id,
-                                           int frame_tree_node_id) const {
+bool WebOSFileAccessDelegate::IsAccessAllowed(const base::FilePath& path,
+                                              int process_id,
+                                              int route_id,
+                                              int frame_tree_node_id) const {
   if (allow_all_access_)
     return true;
 
