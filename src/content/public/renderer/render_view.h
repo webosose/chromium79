@@ -84,6 +84,12 @@ class CONTENT_EXPORT RenderView : public IPC::Sender {
   // Returns |renderer_preferences_.accept_languages| value.
   virtual const std::string& GetAcceptLanguages() = 0;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Set WebSettingsImpl::m_keepAliveWebApp to meet timing.
+  // The injection calls this function directly
+  virtual void SetKeepAliveWebApp(bool keepAlive) = 0;
+#endif
+
  protected:
   ~RenderView() override {}
 

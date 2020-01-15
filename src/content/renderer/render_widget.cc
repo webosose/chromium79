@@ -1973,6 +1973,11 @@ void RenderWidget::SetIsUndead(bool is_undead) {
 
 // static
 void RenderWidget::DoDeferredClose(int widget_routing_id) {
+#if defined(USE_NEVA_APPRUNTIME)
+  RenderWidget* w = RenderWidget::FromRoutingID(widget_routing_id);
+  if (w)
+    w->delegate()->WillDoDeferredClose();
+#endif // USE_NEVA_APPRUNTIME
   // DoDeferredClose() was a posted task, which means the RenderWidget may have
   // become undead in the meantime. Undead RenderWidgets do not send messages,
   // so break the dependency on RenderWidget here, by making this method static

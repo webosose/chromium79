@@ -2217,6 +2217,22 @@ void RenderViewImpl::SetFocusAndActivateForTesting(bool enable) {
   }
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderViewImpl::WillDoDeferredClose() {
+  if (!webkit_preferences_.keep_alive_webapp) {
+    blink::WebWidget* widget = GetWidget()->GetWebWidget();
+    if (widget)
+      widget->Close();
+  }
+}
+
+void RenderViewImpl::SetKeepAliveWebApp(bool keepAlive) {
+  webkit_preferences_.keep_alive_webapp = keepAlive;
+  if (webview() && webview()->GetSettings())
+    webview()->GetSettings()->SetKeepAliveWebApp(keepAlive);
+}
+#endif // USE_NEVA_APPRUNTIME
+
 void RenderViewImpl::OnAnimateDoubleTapZoomInMainFrame(
     const blink::WebPoint& point,
     const blink::WebRect& bound) {

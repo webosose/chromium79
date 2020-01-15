@@ -88,6 +88,10 @@ class CONTENT_EXPORT RenderWidgetDelegate {
   // scaled to account for DeviceScaleFactor.
   virtual void ResizeVisualViewportForWidget(
       const gfx::Size& scaled_viewport_size) = 0;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void WillDoDeferredClose() = 0;
+#endif  // defined(USE_NEVA_APPRUNTIME)
 };
 
 }  // namespace content
