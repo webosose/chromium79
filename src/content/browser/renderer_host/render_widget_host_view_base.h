@@ -570,6 +570,7 @@ class CONTENT_EXPORT RenderWidgetHostViewBase
 #endif
 
 #if defined(USE_NEVA_MEDIA)
+  void SetAdditionalContentsScale(float scale_x, float scale_y);
   virtual gfx::AcceleratedWidget GetAcceleratedWidget();
 #endif  // defined(USE_NEVA_MEDIA)
 
@@ -685,7 +686,11 @@ class CONTENT_EXPORT RenderWidgetHostViewBase
   gfx::Rect current_display_area_;
 
 #if defined(USE_NEVA_APPRUNTIME)
-   gfx::Size hardware_resolution_;
+  gfx::Size hardware_resolution_;
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+  gfx::PointF additional_contents_scale_;
 #endif
 
   uint32_t renderer_frame_number_ = 0;
@@ -702,7 +707,6 @@ class CONTENT_EXPORT RenderWidgetHostViewBase
 
   // True when StopFlingingIfNecessary() calls StopFling().
   bool view_stopped_flinging_for_test_ = false;
-
   bool is_evicted_ = false;
 
   base::WeakPtrFactory<RenderWidgetHostViewBase> weak_factory_{this};

@@ -104,6 +104,7 @@ class APP_RUNTIME_EXPORT WebViewBase : public WebViewDelegate,
   bool CanGoBack() const;
   void GoBack();
   void RequestGetCookies(const std::string& url);
+  void SetAdditionalContentsScale(float scale_x, float scale_y);
   void SetHardwareResolution(int width, int height);
   void SetEnableHtmlSystemKeyboardAttr(bool enabled);
   void RequestInjectionLoading(const std::string& injection_name);

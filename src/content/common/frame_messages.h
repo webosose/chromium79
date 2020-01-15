@@ -363,6 +363,7 @@ IPC_STRUCT_TRAITS_BEGIN(content::ScreenInfo)
   IPC_STRUCT_TRAITS_MEMBER(orientation_angle)
 #if defined(USE_NEVA_MEDIA)
   IPC_STRUCT_TRAITS_MEMBER(additional_contents_scale)
+  IPC_STRUCT_TRAITS_MEMBER(hardware_resolution)
 #endif
 IPC_STRUCT_TRAITS_END()
 

@@ -582,7 +582,18 @@ void RenderWidgetHostViewBase::GetScreenInfo(ScreenInfo* screen_info) {
   if (!hardware_resolution_.IsEmpty())
     screen_info->hardware_resolution = hardware_resolution_;
 #endif
+#if defined(USE_NEVA_MEDIA)
+  if (!additional_contents_scale_.IsOrigin())
+    screen_info->additional_contents_scale = additional_contents_scale_;
+#endif
 }
+
+#if defined(USE_NEVA_MEDIA)
+void RenderWidgetHostViewBase::SetAdditionalContentsScale(float scale_x,
+                                                          float scale_y) {
+  additional_contents_scale_ = gfx::PointF(scale_x, scale_y);
+}
+#endif
 
 float RenderWidgetHostViewBase::GetDeviceScaleFactor() {
   ScreenInfo screen_info;

@@ -82,20 +82,19 @@ WebAppWindowBase::~WebAppWindowBase() {
 }
 
 void WebAppWindowBase::InitWindow(int width, int height) {
-  // TODO: This is workaround for running some applications (e.g.
-  // Viewster), in some reason this function is called twice.
+  // We may call InitWindow again when the web app window size has changed.
+  // I.e. this happens when we launch an application with a custom window size.
+  // In this case we just destroy the previous window and create a new one.
   if (webapp_window_) {
-    LOG(INFO) << __func__ << "(): WebAppWindowBase::InitWindow is called but "
-                             "it's already initialized, something goes wrong. ";
-    return;
+    webapp_window_->SetDelegate(nullptr);
+    webapp_window_->Close();
   }
 
   neva_app_runtime::WebAppWindowBase::CreateParams params;
   params.width = width;
   params.height = height;
-  params.show_state =
-      neva_app_runtime::WebAppWindowBase::CreateParams::WindowShowState
-          ::kFullscreen;
+  params.show_state = neva_app_runtime::WebAppWindowBase::CreateParams::
+      WindowShowState::kDefault;
   params.type =
       neva_app_runtime::WebAppWindowBase::CreateParams::WidgetType
           ::kWindowFrameless;
