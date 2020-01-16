@@ -1,4 +1,4 @@
-# Copyright 2018-2019 LG Electronics, Inc.
+# Copyright 2018-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,17 @@ webos = {
   sources = [
       "$_dir/neva_mime_util_internal_webos.cc",
   ]
-  sources += [
-    "$_dir/media_platform_api_webos_stub.cc",
-    "$_dir/media_platform_api_webos_stub.h",
-  ]
+  if (use_gst_media) {
+    configs += [ "//media/base/neva/webos:media_base_gst_config" ]
+    deps += [ "//base/neva/webos" ]
+    sources += [
+      "$_dir/media_platform_api_webos_gmp.cc",
+      "$_dir/media_platform_api_webos_gmp.h",
+    ]
+  } else {
+    sources += [
+      "$_dir/media_platform_api_webos_stub.cc",
+      "$_dir/media_platform_api_webos_stub.h",
+    ]
+  }
 }

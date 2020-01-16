@@ -108,7 +108,10 @@ class MEDIA_EXPORT MediaPlatformAPI
 
   base::TimeDelta GetCurrentTime();
 
-  std::string get_media_id() { return media_layer_id_; }
+  // Note: Returning reference is important. Some downstream implementations
+  // may use get_media_id().c_str() without copying the memory. So we should
+  // ensure this value will not be freed.
+  std::string& get_media_id() { return media_layer_id_; }
 
   virtual void SetPlayerEventCb(const PlayerEventCB& cb) {}
   virtual void SetStatisticsCb(const StatisticsCB& cb) {}
