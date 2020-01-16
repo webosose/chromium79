@@ -243,7 +243,7 @@ void UMediaClientImpl::SetPlaybackVolume(double volume, bool forced) {
   uMediaServer::uMediaClient::setVolume(volume_level, duration, type);
 }
 
-bool UMediaClientImpl::SelectTrack(const mojom::MediaTrackType type,
+bool UMediaClientImpl::SelectTrack(const media::MediaTrackType type,
                                    const std::string& id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   NOTIMPLEMENTED();
@@ -897,7 +897,7 @@ void UMediaClientImpl::DispatchSourceInfo(
       }
     }
 
-    std::vector<MediaTrackInfo> audio_track_info;
+    std::vector<media::MediaTrackInfo> audio_track_info;
 
     for (int i = 0; i < sourceInfo.programInfo[0].numAudioTracks; i++) {
       std::string id, kind;
@@ -922,8 +922,8 @@ void UMediaClientImpl::DispatchSourceInfo(
       std::string language =
           sourceInfo.programInfo[0].audioTrackInfo[i].language.c_str();
 
-      MediaTrackInfo info;
-      info.type = mojom::MediaTrackType::kAudio;
+      media::MediaTrackInfo info;
+      info.type = media::MediaTrackType::kAudio;
       info.id = id;
       info.kind = kind;
       info.language = language;

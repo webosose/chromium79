@@ -70,7 +70,7 @@ double WebOSMediaClientStub::GetPlaybackVolume() const {
 
 void WebOSMediaClientStub::SetPlaybackVolume(double volume, bool forced) {}
 
-bool WebOSMediaClientStub::SelectTrack(const mojom::MediaTrackType type,
+bool WebOSMediaClientStub::SelectTrack(const media::MediaTrackType type,
                                        const std::string& id) {
   return false;
 }

@@ -48,6 +48,10 @@ mojom("mojom") {
     ]
   }
 
+  if (use_neva_media) {
+    sources += [ "neva/media_track_info.mojom" ]
+  }
+
   if (is_chromecast) {
     sources += [ "cast_application_media_info_manager.mojom" ]
   }

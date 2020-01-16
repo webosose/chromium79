@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef NEVA_PAL_MEDIA_SERVICE_NEVA_MEDIA_TRACK_INFO_H_
-#define NEVA_PAL_MEDIA_SERVICE_NEVA_MEDIA_TRACK_INFO_H_
+module media.mojom;
 
-#include <string>
-#include "neva/pal_media_service/public/mojom/media_player.mojom.h"
+[Native]
+enum MediaTrackType;
 
-namespace pal_media {
-
-typedef struct {
-  mojom::MediaTrackType type;
-  std::string id;
-  std::string kind;
-  std::string language;
+struct MediaTrackInfo {
+  MediaTrackType type;
+  string id;
+  string kind;
+  string language;
   bool enabled;
-} MediaTrackInfo;
-
-}  // namespace pal_media
-
-#endif  // NEVA_PAL_MEDIA_SERVICE_NEVA_MEDIA_TRACK_INFO_H_
+};

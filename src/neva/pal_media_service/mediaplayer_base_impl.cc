@@ -196,8 +196,11 @@ void MediaPlayerBaseImpl::UpdateUMSInfo(const std::string& detail) {
 }
 
 void MediaPlayerBaseImpl::OnAddAudioTrack(
-    const std::vector<MediaTrackInfo>& audio_track_info) {
-  NOTIMPLEMENTED();
+    const std::vector<media::MediaTrackInfo>& audio_track_info) {
+  listeners_.ForAllPtrs(
+      [&audio_track_info](mojom::MediaPlayerListener* listener) {
+        listener->OnAudioTracksUpdated(audio_track_info);
+      });
 }
 
 void MediaPlayerBaseImpl::OnAddVideoTrack(const std::string& id,

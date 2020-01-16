@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,29 +14,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEDIA_BASE_NEVA_MEDIA_TRACK_INFO_H_
-#define MEDIA_BASE_NEVA_MEDIA_TRACK_INFO_H_
-
-#include <string>
-
-#include "media/base/media_export.h"
+#include "media/base/neva/media_track_info.h"
 
 namespace media {
 
-enum class MediaTrackType { kAudio, kVideo, kMaxValue = kVideo };
-
-struct MEDIA_EXPORT MediaTrackInfo {
- public:
-  MediaTrackInfo();
-  ~MediaTrackInfo();
-
-  MediaTrackType type;
-  std::string id;
-  std::string kind;
-  std::string language;
-  bool enabled;
-};
+MediaTrackInfo::MediaTrackInfo() = default;
+MediaTrackInfo::~MediaTrackInfo() = default;
 
 }  // namespace media
-
-#endif  // MEDIA_BASE_NEVA_MEDIA_TRACK_INFO_H_

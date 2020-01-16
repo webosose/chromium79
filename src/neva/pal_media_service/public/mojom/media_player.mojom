@@ -16,6 +16,7 @@
 
 module pal_media.mojom;
 
+import "media/mojo/mojom/neva/media_track_info.mojom";
 import "mojo/public/mojom/base/time.mojom";
 import "ui/gfx/geometry/mojom/geometry.mojom";
 import "url/mojom/url.mojom";
@@ -30,11 +31,6 @@ enum Preload {
   kPreloadNone,
   kPreloadMetaData,
   kPreloadAuto,
-};
-
-enum MediaTrackType {
-  kAudio,
-  kVideo,
 };
 
 enum SuspendReason {
@@ -81,6 +77,7 @@ interface MediaPlayerListener {
   OnVideoSizeChanged(uint32 width, uint32 height);
   OnCustomMessage(MediaEventType media_event_type, string detail);
   OnTimeUpdate(mojo_base.mojom.TimeDelta current_timestamp, mojo_base.mojom.TimeTicks current_time_ticks);
+  OnAudioTracksUpdated(array<media.mojom.MediaTrackInfo> audio_track_info);
   OnAudioFocusChanged();
   OnActiveRegionChanged(gfx.mojom.Rect rect);
 };
@@ -106,7 +103,7 @@ interface MediaPlayer {
   [Sync] IsPreloadable(string content_media_option) => (bool result);
   [Sync] HasVideo() => (bool result);
   [Sync] HasAudio() => (bool result);
-  SelectTrack(MediaTrackType type, string id);
+  SelectTrack(media.mojom.MediaTrackType type, string id);
   SwitchToAutoLayout();
   SetDisplayWindow(gfx.mojom.Rect out_rect,
                    gfx.mojom.Rect in_rect,

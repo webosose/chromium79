@@ -118,6 +118,8 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
                        const std::string& detail) override;
   void OnTimeUpdate(base::TimeDelta current_timestamp,
                     base::TimeTicks current_time_ticks) override;
+  void OnAudioTracksUpdated(
+      const std::vector<media::MediaTrackInfo>& audio_track_info) override;
   void OnAudioFocusChanged() override;
   void OnActiveRegionChanged(const gfx::Rect&) override;
   // end of pal_media::mojom::MediaPlayerListener

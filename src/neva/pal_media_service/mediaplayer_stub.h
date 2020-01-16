@@ -22,11 +22,11 @@
 #include "base/memory/ref_counted.h"
 #include "base/time/time.h"
 #include "base/memory/weak_ptr.h"
+#include "media/base/neva/media_track_info.h"
 #include "mojo/public/cpp/bindings/binding_set.h"
 #include "mojo/public/cpp/bindings/interface_ptr_set.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "neva/pal_media_service/mediaplayer_base_impl.h"
-#include "neva/pal_media_service/media_track_info.h"
 #include "neva/pal_media_service/public/mojom/media_player.mojom.h"
 #include "url/gurl.h"
 
@@ -85,7 +85,7 @@ class MediaPlayerStub : public base::SupportsWeakPtr<MediaPlayerStub>,
                      IsPreloadableCallback callback) override {}
   void HasVideo(HasVideoCallback callback) override {}
   void HasAudio(HasAudioCallback callback) override {}
-  void SelectTrack(const mojom::MediaTrackType type,
+  void SelectTrack(const media::MediaTrackType type,
                    const std::string& id) override {}
   // gfx::Size NaturalVideoSize() override;
   // double Duration() override;

@@ -215,7 +215,7 @@ void MediaPlayerUMS::HasAudio(HasAudioCallback callback) {
   std::move(callback).Run(umedia_client_->HasAudio());
 }
 
-void MediaPlayerUMS::SelectTrack(const mojom::MediaTrackType type,
+void MediaPlayerUMS::SelectTrack(const media::MediaTrackType type,
                                  const std::string& id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1);

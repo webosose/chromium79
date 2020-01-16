@@ -31,10 +31,10 @@
 #include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "content/public/browser/browser_task_traits.h"
+#include "media/base/neva/media_track_info.h"
 #include "mojo/public/cpp/bindings/binding_set.h"
 #include "mojo/public/cpp/bindings/interface_ptr_set.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
-#include "neva/pal_media_service/media_track_info.h"
 #include "neva/pal_media_service/public/mojom/media_player.mojom.h"
 #include "neva/pal_media_service/webos/webos_mediaclient.h"
 #include "url/gurl.h"
@@ -92,7 +92,7 @@ class MediaPlayerBaseImpl : public mojom::MediaPlayer {
                      IsPreloadableCallback callback) override = 0;
   void HasVideo(HasVideoCallback callback) override = 0;
   void HasAudio(HasAudioCallback callback) override = 0;
-  void SelectTrack(const mojom::MediaTrackType type,
+  void SelectTrack(const media::MediaTrackType type,
                    const std::string& id) override = 0;
   void SwitchToAutoLayout() override = 0;
   void SetDisplayWindow(const gfx::Rect&,
@@ -124,7 +124,8 @@ class MediaPlayerBaseImpl : public mojom::MediaPlayer {
                         const gfx::Size& natural_video_size);
   void OnDurationChange();
   void OnVideoSizeChange(const gfx::Size& natural_video_size);
-  void OnAddAudioTrack(const std::vector<MediaTrackInfo>& audio_track_info);
+  void OnAddAudioTrack(
+      const std::vector<media::MediaTrackInfo>& audio_track_info);
   void OnAddVideoTrack(const std::string& id,
                        const std::string& kind,
                        const std::string& language,

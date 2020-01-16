@@ -1,4 +1,4 @@
-# Copyright 2019 LG Electronics, Inc.
+# Copyright 2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,19 +14,24 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import("//mojo/public/tools/bindings/mojom.gni")
+mojom = "//media/mojo/mojom/neva/media_track_info.mojom"
 
-mojom("mojom") {
-  sources = [
-    "constants.mojom",
-  ]
-  public_deps = [
-    "//media/mojo/mojom",
-    "//mojo/public/mojom/base",
-    "//ui/gfx/geometry/mojom",
-    "//url/mojom:url_mojom_gurl",
-  ]
-  sources += [
-    "media_player.mojom",
-  ]
-}
+public_headers = [ "//media/base/neva/media_track_info.h" ]
+
+sources = [
+  "//media/mojo/mojom/neva/media_track_info_mojom_traits.cc",
+]
+
+traits_headers = [
+  "//media/base/ipc/media_param_traits_macros.h",
+  "//media/mojo/mojom/neva/media_track_info_mojom_traits.h",
+]
+
+deps = [
+  "//media",
+]
+
+type_mappings = [
+  "media.mojom.MediaTrackInfo=::media::MediaTrackInfo",
+  "media.mojom.MediaTrackType=::media::MediaTrackType",
+]

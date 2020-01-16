@@ -125,7 +125,7 @@ void MediaPlayerCamera::HasAudio(HasAudioCallback callback) {
   std::move(callback).Run(umedia_client_->HasAudio());
 }
 
-void MediaPlayerCamera::SelectTrack(const mojom::MediaTrackType type,
+void MediaPlayerCamera::SelectTrack(const media::MediaTrackType type,
                                     const std::string& id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   NOTIMPLEMENTED();

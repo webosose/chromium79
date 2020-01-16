@@ -31,11 +31,11 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/renderer/render_frame_observer.h"
+#include "media/base/neva/media_track_info.h"
 #include "mojo/public/cpp/bindings/binding_set.h"
 #include "mojo/public/cpp/bindings/interface_ptr_set.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "neva/pal_media_service/mediaplayer_base_impl.h"
-#include "neva/pal_media_service/media_track_info.h"
 #include "neva/pal_media_service/webos/webos_mediaclient.h"
 #include "neva/pal_media_service/public/mojom/media_player.mojom.h"
 #include "url/gurl.h"
@@ -90,7 +90,7 @@ class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
                      IsPreloadableCallback callback) override;
   void HasVideo(HasVideoCallback callback) override;
   void HasAudio(HasAudioCallback callback) override;
-  void SelectTrack(const mojom::MediaTrackType type,
+  void SelectTrack(const media::MediaTrackType type,
                    const std::string& id) override;
   void SwitchToAutoLayout() override;
   void SetDisplayWindow(const gfx::Rect&,

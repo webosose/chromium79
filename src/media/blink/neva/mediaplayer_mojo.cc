@@ -220,16 +220,7 @@ bool MediaPlayerMojo::SelectTrack(const MediaTrackType type,
   DVLOG(1) << __func__;
   if (!media_player_)
     return false;
-  switch (type) {
-    case MediaTrackType::kAudio:
-      media_player_->SelectTrack(pal_media::mojom::MediaTrackType::kAudio, id);
-      break;
-    case MediaTrackType::kVideo:
-      media_player_->SelectTrack(pal_media::mojom::MediaTrackType::kVideo, id);
-      break;
-    default:
-      break;
-  }
+  media_player_->SelectTrack(type, id);
   return true;
 }
 
@@ -401,6 +392,12 @@ void MediaPlayerMojo::OnTimeUpdate(base::TimeDelta current_timestamp,
                                    base::TimeTicks current_time_ticks) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnTimeUpdate(current_timestamp, current_time_ticks);
+}
+
+void MediaPlayerMojo::OnAudioTracksUpdated(
+    const std::vector<media::MediaTrackInfo>& audio_track_info) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  client_->OnAudioTracksUpdated(audio_track_info);
 }
 
 void MediaPlayerMojo::OnAudioFocusChanged() {

@@ -69,7 +69,7 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
                      IsPreloadableCallback callback) override;
   void HasVideo(HasVideoCallback callback) override;
   void HasAudio(HasAudioCallback callback) override;
-  void SelectTrack(const mojom::MediaTrackType type,
+  void SelectTrack(const media::MediaTrackType type,
                    const std::string& id) override;
   void SwitchToAutoLayout() override;
   void SetDisplayWindow(const gfx::Rect& out_rect,

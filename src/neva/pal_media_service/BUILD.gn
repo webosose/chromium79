@@ -36,6 +36,7 @@ component("pal_media_service") {
 
   deps = [
     "//base",
+    "//media/base",
     "//neva/emulator",
  ]
 

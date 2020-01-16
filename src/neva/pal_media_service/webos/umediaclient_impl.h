@@ -80,7 +80,7 @@ class UMediaClientImpl : public WebOSMediaClient,
   void SetPlaybackRate(float playback_rate) override;
   double GetPlaybackVolume() const override { return volume_; }
   void SetPlaybackVolume(double volume, bool forced = false) override;
-  bool SelectTrack(const mojom::MediaTrackType type,
+  bool SelectTrack(const media::MediaTrackType type,
                    const std::string& id) override;
   void Suspend(mojom::SuspendReason reason) override;
   void Resume() override;

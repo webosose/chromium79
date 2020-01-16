@@ -335,6 +335,9 @@ jumbo_source_set("base") {
   ]
 
   if (use_neva_media) {
+    # PAL media service uses types in media/base.
+    visibility += [ "//neva/pal_media_service" ]
+
     import ("//media/base/neva/build.gni")
     configs += neva.configs
     if (!defined(public_configs)) {

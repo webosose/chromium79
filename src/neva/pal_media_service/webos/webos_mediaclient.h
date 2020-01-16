@@ -25,8 +25,9 @@
 #include "base/threading/thread.h"
 #include "base/time/time.h"
 #include "media/base/neva/media_constants.h"
-#include "neva/pal_media_service/media_track_info.h"
+#include "media/base/neva/media_track_info.h"
 #include "media/base/pipeline.h"
+#include "neva/pal_media_service/public/mojom/media_player.mojom.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -60,7 +61,7 @@ class WebOSMediaClient {
   typedef base::Callback<void(const gfx::Rect&)> ActiveRegionCB;
 
   typedef base::Callback<void(
-      const std::vector<MediaTrackInfo>& audio_track_info)>
+      const std::vector<media::MediaTrackInfo>& audio_track_info)>
       AddAudioTrackCB;
   typedef base::Callback<void(const std::string& id,
                               const std::string& kind,
@@ -107,7 +108,7 @@ class WebOSMediaClient {
   virtual void SetPlaybackRate(float playback_rate) = 0;
   virtual double GetPlaybackVolume() const = 0;
   virtual void SetPlaybackVolume(double volume, bool forced = false) = 0;
-  virtual bool SelectTrack(const mojom::MediaTrackType type,
+  virtual bool SelectTrack(const media::MediaTrackType type,
                            const std::string& id) = 0;
   virtual void Suspend(pal_media::mojom::SuspendReason reason) = 0;
   virtual void Resume() = 0;

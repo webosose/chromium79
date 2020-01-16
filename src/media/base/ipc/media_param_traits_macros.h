@@ -49,6 +49,10 @@
 
 // Enum traits.
 
+#if defined(USE_NEVA_MEDIA)
+#include "media/base/neva/media_track_info.h"
+#endif
+
 IPC_ENUM_TRAITS_MAX_VALUE(media::AudioCodec, media::AudioCodec::kAudioCodecMax)
 
 IPC_ENUM_TRAITS_MAX_VALUE(media::AudioLatency::LatencyType,
@@ -219,5 +223,10 @@ IPC_STRUCT_TRAITS_BEGIN(media::OverlayInfo)
   IPC_STRUCT_TRAITS_MEMBER(is_fullscreen)
   IPC_STRUCT_TRAITS_MEMBER(is_persistent_video)
 IPC_STRUCT_TRAITS_END()
+
+#if defined(USE_NEVA_MEDIA)
+IPC_ENUM_TRAITS_MAX_VALUE(media::MediaTrackType,
+                          media::MediaTrackType::kMaxValue)
+#endif  // USE_NEVA_MEDIA
 
 #endif  // MEDIA_BASE_IPC_MEDIA_PARAM_TRAITS_MACROS_H_
