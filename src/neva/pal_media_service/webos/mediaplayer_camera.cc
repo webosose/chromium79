@@ -32,7 +32,7 @@ namespace pal_media {
   (DCHECK(main_task_runner_->BelongsToCurrentThread()), \
    media::BindToCurrentLoop(base::Bind(function, AsWeakPtr())))
 
-MediaPlayerCamera::MediaPlayerCamera()
+MediaPlayerCamera::MediaPlayerCamera(const std::string& app_id)
     : playback_rate_(1.0f),
       is_video_offscreen_(false),
       fullscreen_(false),
@@ -40,7 +40,7 @@ MediaPlayerCamera::MediaPlayerCamera()
           base::CreateSingleThreadTaskRunner({base::ThreadPool()})),
       weak_factory_(this) {
   LOG(INFO) << __func__;
-  umedia_client_ = WebOSMediaClient::Create(main_task_runner_);
+  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
 }
 
 MediaPlayerCamera::~MediaPlayerCamera() {

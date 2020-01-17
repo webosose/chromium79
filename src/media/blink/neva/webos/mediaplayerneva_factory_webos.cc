@@ -50,9 +50,10 @@ MediaPlayerNeva* MediaPlayerNevaFactory::CreateMediaPlayerNeva(
     const pal_media::mojom::MediaPlayerType media_type,
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
     const std::string& app_id) {
-    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kEnablePalMediaService))
-    return new MediaPlayerMojo(client, media_type, main_task_runner);
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kEnablePalMediaService)) {
+    return new MediaPlayerMojo(client, media_type, main_task_runner, app_id);
+  }
   switch (media_type) {
 #if defined(USE_GST_MEDIA)
     case pal_media::mojom::MediaPlayerType::kMediaPlayerTypeCamera:

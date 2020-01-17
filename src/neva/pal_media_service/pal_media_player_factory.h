@@ -28,7 +28,8 @@ class PalMediaPlayerFactory {
   static PalMediaPlayerFactory* Get();
 
   std::unique_ptr<pal_media::mojom::MediaPlayer> CreateMediaPlayer(
-      mojom::MediaPlayerType media_player_type);
+      mojom::MediaPlayerType media_player_type,
+      const std::string& app_id);
 
  private:
   PalMediaPlayerFactory();

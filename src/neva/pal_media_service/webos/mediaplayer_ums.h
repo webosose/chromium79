@@ -53,7 +53,7 @@ namespace pal_media {
 class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
                        public MediaPlayerBaseImpl {
  public:
-  MediaPlayerUMS();
+  MediaPlayerUMS(const std::string& app_id);
   ~MediaPlayerUMS() override;
 
   void Initialize(const bool is_video,

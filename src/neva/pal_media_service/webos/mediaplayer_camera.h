@@ -37,7 +37,7 @@ namespace pal_media {
 class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
                           public MediaPlayerBaseImpl {
  public:
-  explicit MediaPlayerCamera();
+  explicit MediaPlayerCamera(const std::string& app_id);
   ~MediaPlayerCamera() override;
 
   // media::MediaPlayerNeva implementation

@@ -40,7 +40,8 @@ PalMediaPlayerFactory* PalMediaPlayerFactory::Get() {
 #if !defined(OS_WEBOS)
 std::unique_ptr<pal_media::mojom::MediaPlayer>
 PalMediaPlayerFactory::CreateMediaPlayer(
-    mojom::MediaPlayerType media_player_type) {
+    mojom::MediaPlayerType media_player_type,
+    const std::string& app_id) {
   return std::make_unique<MediaPlayerStub>();
 }
 #endif

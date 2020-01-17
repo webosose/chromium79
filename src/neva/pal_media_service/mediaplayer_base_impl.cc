@@ -274,10 +274,11 @@ MediaPlayerProviderImpl::~MediaPlayerProviderImpl() {}
 
 void MediaPlayerProviderImpl::GetMediaPlayer(
     mojom::MediaPlayerType media_player_type,
+    const std::string& app_id,
     mojom::MediaPlayerRequest request) {
-  mojo::MakeStrongBinding(
-      PalMediaPlayerFactory::Get()->CreateMediaPlayer(media_player_type),
-      std::move(request));
+  mojo::MakeStrongBinding(PalMediaPlayerFactory::Get()->CreateMediaPlayer(
+                              media_player_type, app_id),
+                          std::move(request));
 }
 
 }  // namespace pal_media

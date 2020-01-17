@@ -84,7 +84,6 @@ UMediaClientImpl::UMediaClientImpl(
       playback_rate_on_paused_(1.0f),
       volume_(1.0),
       main_task_runner_(main_task_runner),
-      luna_service_client_(app_id),
       system_media_manager_(
           SystemMediaManager::Create(AsWeakPtr(), main_task_runner)),
       preload_(PreloadNone),
@@ -1460,20 +1459,7 @@ bool UMediaClientImpl::IsSupportedSeekableRanges() {
 
 void UMediaClientImpl::EnableSubtitle(bool enable) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  if (MediaId().empty())
-    return;
-
-  Json::Value root;
-  root["pipelineId"] = MediaId().c_str();
-
-  Json::FastWriter writer;
-  std::string parameter = writer.write(root);
-
-  std::string uri = base::LunaServiceClient::GetServiceURI(
-      base::LunaServiceClient::URIType::SUBTITLE,
-      enable ? "enableSubtitle" : "disableSubtitle");
-
-  luna_service_client_.CallAsync(uri, parameter);
+  NOTIMPLEMENTED();
 }
 
 bool UMediaClientImpl::CheckAudioOutput(float playback_rate) {

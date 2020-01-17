@@ -20,7 +20,8 @@ namespace pal_media {
 
 // static
 std::unique_ptr<WebOSMediaClient> WebOSMediaClient::Create(
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner) {
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id) {
   return std::make_unique<WebOSMediaClientStub>();
 }
 

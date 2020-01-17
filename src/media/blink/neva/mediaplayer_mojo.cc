@@ -80,7 +80,8 @@ static blink::WebMediaPlayer::MediaEventType ConvertPalMediaEventType(
 MediaPlayerMojo::MediaPlayerMojo(
     MediaPlayerNevaClient* client,
     pal_media::mojom::MediaPlayerType media_player_type,
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner)
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const std::string& app_id)
     : client_(client),
       main_task_runner_(main_task_runner),
       listener_binding_(this) {
@@ -96,7 +97,7 @@ MediaPlayerMojo::MediaPlayerMojo(
   connector->Connect(pal_media::mojom::kServiceName,
                      provider.BindNewPipeAndPassReceiver());
 
-  provider->GetMediaPlayer(media_player_type,
+  provider->GetMediaPlayer(media_player_type, app_id,
                            mojo::MakeRequest(&media_player_));
   media_player_->Subscribe(base::BindOnce(&MediaPlayerMojo::OnSubscribeRespond,
                                           base::Unretained(this)));

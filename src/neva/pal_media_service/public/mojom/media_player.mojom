@@ -63,7 +63,7 @@ enum MediaError {
 };
 
 interface MediaPlayerProvider {
-  GetMediaPlayer(MediaPlayerType type, MediaPlayer& request);
+  GetMediaPlayer(MediaPlayerType type, string app_id, MediaPlayer& request);
 };
 
 interface MediaPlayerListener {

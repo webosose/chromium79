@@ -24,7 +24,6 @@
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
-#include "base/neva/webos/luna_service_client.h"
 #include "media/base/pipeline.h"
 #include "media/base/ranges.h"
 #include "neva/pal_media_service/webos/webos_mediaclient.h"
@@ -37,7 +36,6 @@ class TaskRunner;
 }  // namespace base
 
 namespace pal_media {
-class LunaServiceClient;
 class SystemMediaManager;
 
 class UMediaClientImpl : public WebOSMediaClient,
@@ -45,7 +43,8 @@ class UMediaClientImpl : public WebOSMediaClient,
                          public base::SupportsWeakPtr<UMediaClientImpl> {
  public:
   UMediaClientImpl(
-      const scoped_refptr<base::SingleThreadTaskRunner>& task_runner);
+      const scoped_refptr<base::SingleThreadTaskRunner>& task_runner,
+      const std::string& app_id);
   ~UMediaClientImpl();
 
   // WebOSMediaClient implementations
@@ -281,7 +280,6 @@ class UMediaClientImpl : public WebOSMediaClient,
   float playback_rate_on_paused_;
   double volume_;
   const scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
-  base::LunaServiceClient luna_service_client_;
   std::string app_id_;
   std::string url_;
   std::string mime_type_;

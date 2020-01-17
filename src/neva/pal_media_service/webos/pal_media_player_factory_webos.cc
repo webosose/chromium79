@@ -27,15 +27,16 @@ namespace pal_media {
 
 std::unique_ptr<pal_media::mojom::MediaPlayer>
 PalMediaPlayerFactory::CreateMediaPlayer(
-    mojom::MediaPlayerType media_player_type) {
+    mojom::MediaPlayerType media_player_type,
+    const std::string& app_id) {
   switch (media_player_type) {
 #if defined(USE_GST_MEDIA)
     case mojom::MediaPlayerType::kMediaPlayerTypeCamera:
-      return std::make_unique<MediaPlayerCamera>();
+      return std::make_unique<MediaPlayerCamera>(app_id);
       break;
 #endif
     case mojom::MediaPlayerType::kMediaPlayerTypeUMS:
-      return std::make_unique<MediaPlayerUMS>();
+      return std::make_unique<MediaPlayerUMS>(app_id);
       break;
     default:
       break;

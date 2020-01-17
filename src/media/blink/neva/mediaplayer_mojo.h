@@ -49,7 +49,8 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
  public:
   explicit MediaPlayerMojo(MediaPlayerNevaClient*,
                            pal_media::mojom::MediaPlayerType,
-                           const scoped_refptr<base::SingleThreadTaskRunner>&);
+                           const scoped_refptr<base::SingleThreadTaskRunner>&,
+                           const std::string&);
   ~MediaPlayerMojo() override;
 
   void Initialize(const bool is_video,

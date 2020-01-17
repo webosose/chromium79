@@ -80,7 +80,7 @@ static mojom::MediaError convertToMediaError(media::PipelineStatus status) {
   return mojom::MediaError::kMediaErrorNone;
 }
 
-MediaPlayerUMS::MediaPlayerUMS()
+MediaPlayerUMS::MediaPlayerUMS(const std::string& app_id)
     : paused_(true),
       playback_rate_(1.0f),
       is_suspended_(false),
@@ -91,7 +91,7 @@ MediaPlayerUMS::MediaPlayerUMS()
           base::CreateSingleThreadTaskRunner({base::ThreadPool()})),
       weak_factory_(this) {
   LOG(ERROR) << __func__;
-  umedia_client_ = WebOSMediaClient::Create(main_task_runner_);
+  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
 }
 
 MediaPlayerUMS::~MediaPlayerUMS() {

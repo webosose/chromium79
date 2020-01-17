@@ -167,6 +167,7 @@ class MediaPlayerProviderImpl : public mojom::MediaPlayerProvider {
   }
 
   void GetMediaPlayer(mojom::MediaPlayerType media_player_type,
+                      const std::string& app_id,
                       mojom::MediaPlayerRequest request) override;
 
  private:
