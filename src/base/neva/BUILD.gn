@@ -18,5 +18,11 @@ static_library("neva") {
   sources = [
     "base_switches.cc",
     "base_switches.h",
+    "neva_paths.cc",
+    "neva_paths.h",
+  ]
+
+  public_deps = [
+    "//base:logging_buildflags",
   ]
 }
