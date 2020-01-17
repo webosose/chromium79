@@ -801,6 +801,7 @@ jumbo_component("views") {
           ]
         }
       }
+      sources += [ "widget/desktop_aura/neva/views_delegate_stub.cc" ]
       #neva}
     }
   }

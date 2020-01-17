@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,11 @@ class ExtensionsClient;
 class ShellExtensionSystem;
 }
 #endif
+
+namespace views {
+class ViewsDelegateStub;
+}
+
 namespace neva_app_runtime {
 
 class AppRuntimeBrowserMainExtraParts;
@@ -103,6 +108,7 @@ class AppRuntimeBrowserMainParts : public content::BrowserMainParts {
 #endif
   std::vector<AppRuntimeBrowserMainExtraParts*> app_runtime_extra_parts_;
   std::unique_ptr<AppRuntimeSharedMemoryManager> app_runtime_mem_manager_;
+  std::unique_ptr<views::ViewsDelegateStub> views_delegate_;
 };
 
 }  // namespace neva_app_runtime

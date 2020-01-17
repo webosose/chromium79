@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "neva/app_runtime/browser/net/app_runtime_network_change_notifier.h"
 #include "neva/app_runtime/browser/url_request_context_factory.h"
 #include "ui/base/material_design/material_design_controller.h"
+#include "ui/views/widget/desktop_aura/neva/views_delegate_stub.h"
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/plugin_service.h"
@@ -131,6 +132,8 @@ void AppRuntimeBrowserMainParts::ToolkitInitialized() {
 #if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
   views::LinuxUI::instance()->Initialize();
 #endif
+  if (!views::ViewsDelegate::GetInstance())
+    views_delegate_ = std::make_unique<views::ViewsDelegateStub>();
 }
 
 void AppRuntimeBrowserMainParts::PreMainMessageLoopStart() {
