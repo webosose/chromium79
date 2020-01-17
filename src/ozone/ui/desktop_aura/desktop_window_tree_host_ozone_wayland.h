@@ -1,6 +1,6 @@
 // Copyright 2013 The Chromium Authors. All rights reserved.
 // Copyright 2013 Intel Corporation. All rights reserved.
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ class Tooltip;
 }
 
 class DesktopDragDropClientWayland;
+#if defined(OS_WEBOS)
+class WebosDragDropClientWayland;
+#endif
 
 class VIEWS_EXPORT DesktopWindowTreeHostOzone
     : public DesktopWindowTreeHost,
@@ -282,7 +285,11 @@ class VIEWS_EXPORT DesktopWindowTreeHostOzone
   base::string16 title_;
 
   // Owned by DesktopNativeWidgetAura.
+#if defined(OS_WEBOS)
+  WebosDragDropClientWayland* drag_drop_client_;
+#else
   DesktopDragDropClientWayland* drag_drop_client_;
+#endif
   views::internal::NativeWidgetDelegate* native_widget_delegate_;
   aura::Window* content_window_;
 
