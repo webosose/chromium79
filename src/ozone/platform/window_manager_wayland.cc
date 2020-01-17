@@ -1,5 +1,5 @@
 // Copyright 2014 Intel Corporation. All rights reserved.
-// Copyright 2016-2018 LG Electronics, Inc.
+// Copyright 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -357,10 +357,16 @@ void WindowManagerWayland::KeyNotify(EventType type,
 void WindowManagerWayland::VirtualKeyNotify(EventType type,
                                             uint32_t key,
                                             int device_id) {
-  keyboard_->OnKeyChange(key,
-                         type != ET_KEY_RELEASED,
-                         false,
-                         EventTimeForNow(),
+  base::ThreadTaskRunnerHandle::Get()->PostTask(
+      FROM_HERE,
+      base::Bind(&WindowManagerWayland::OnVirtualKeyNotify,
+                 weak_ptr_factory_.GetWeakPtr(), type, key, device_id));
+}
+
+void WindowManagerWayland::OnVirtualKeyNotify(EventType type,
+                                              uint32_t key,
+                                              int device_id) {
+  keyboard_->OnKeyChange(key, type != ET_KEY_RELEASED, false, EventTimeForNow(),
                          device_id);
 }
 
