@@ -50,13 +50,22 @@ source_set("ozone_wayland") {
 
   if (use_neva_media) {
     sources += [
-      "media/pseudo_video_window_provider.cc",
-      "media/pseudo_video_window_provider.h",
       "media/video_window_controller_host_impl.cc",
       "media/video_window_controller_host_impl.h",
       "media/video_window_controller_impl.cc",
       "media/video_window_controller_impl.h",
       "media/video_window_provider.h",
     ]
+    if (use_gav) {
+      sources += [
+        "media/foreign_video_window_provider.cc",
+        "media/foreign_video_window_provider.h",
+      ]
+    } else {
+      sources += [
+        "media/pseudo_video_window_provider.cc",
+        "media/pseudo_video_window_provider.h",
+      ]
+   }
   }
 }

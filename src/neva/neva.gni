@@ -53,6 +53,8 @@ declare_args() {
 
   enable_webm_video_codecs = true
 
+  use_gav = false
+
   # Use memory trace feature
   use_memory_trace = false
 

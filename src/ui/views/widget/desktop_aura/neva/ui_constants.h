@@ -44,6 +44,9 @@ enum class WidgetType {
   TOOLTIP = 4
 };
 
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+enum class ForeignWindowType { INVALID = -1, VIDEO = 0, SUBTITLE = 1 };
+#endif  // defined(USE_NEVA_MEDIA) && defined(USE_GAV)
 enum class KeyMask : std::uint32_t {
   kHome = 1,
   kBack = 1 << 1,

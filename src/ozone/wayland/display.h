@@ -71,6 +71,9 @@ struct wl_webos_input_manager;
 struct wl_webos_seat;
 struct wl_webos_xinput;
 struct wl_webos_xinput_extension;
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+struct wl_webos_foreign;
+#endif  // defined(USE_NEVA_MEDIA) && defined(USE_GAV)
 #else
 struct wl_text_input_manager;
 #endif
@@ -136,6 +139,9 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
 #if defined(OS_WEBOS)
   text_model_factory* GetTextModelFactory() const;
   WebOSSurfaceGroupCompositor* GetGroupCompositor() const;
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+  struct wl_webos_foreign* GetWebosForeign() const;
+#endif  // defined(USE_NEVA_MEDIA) && defined(USE_GAV)
 #else
   struct wl_text_input_manager* GetTextInputManager() const;
 #endif
@@ -375,6 +381,9 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   std::unique_ptr<WebOSSurfaceGroupCompositor> group_compositor_;
   wl_webos_input_manager* webos_input_manager_ = nullptr;
   bool pointer_visible_ = false;
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+  struct wl_webos_foreign* webos_foreign_ = nullptr;
+#endif  // defined(USE_NEVA_MEDIA) && defined(USE_GAV)
 #else
   struct wl_text_input_manager* text_input_manager_;
 #endif

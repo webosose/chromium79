@@ -62,6 +62,9 @@
 #include "wayland-text-client-protocol.h"
 #include "wayland-webos-extension-client-protocol.h"
 #include "wayland-webos-input-manager-client-protocol.h"
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+#include "wayland-webos-foreign-client-protocol.h"
+#endif  // defined(USE_NEVA_MEDIA)
 #else
 #include "ozone/wayland/protocol/text-client-protocol.h"
 #endif
@@ -674,6 +677,13 @@ void WaylandDisplay::DetachWindowGroup(unsigned w) {
 }
 
 #if defined(USE_NEVA_MEDIA)
+
+#if defined(USE_GAV)
+struct wl_webos_foreign* WaylandDisplay::GetWebosForeign() const {
+  return webos_foreign_;
+}
+#endif  // defiend(USE_GAV)
+
 void WaylandDisplay::CreateVideoWindow(
     unsigned w,
     const base::UnguessableToken& window_id) {
@@ -1041,7 +1051,14 @@ void WaylandDisplay::DisplayHandleGlobal(void *data,
   } else if (strcmp(interface, "wl_webos_surface_group_compositor") == 0) {
     disp->group_compositor_.reset(
         new WebOSSurfaceGroupCompositor(registry, name));
+#if defined(USE_NEVA_MEDIA) && defined(USE_GAV)
+  } else if (strcmp(interface, "wl_webos_foreign") == 0) {
+    disp->webos_foreign_ = static_cast<struct wl_webos_foreign*>(
+        wl_registry_bind(registry, name, &wl_webos_foreign_interface, 1));
   }
+#else
+  }
+#endif  // defined(USE_NEVA_MEDIA) && defined(USE_GAV)
 #else
   else if (strcmp(interface, "wl_text_input_manager") == 0) {
     disp->text_input_manager_ = static_cast<wl_text_input_manager*>(

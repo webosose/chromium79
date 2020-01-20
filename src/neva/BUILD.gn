@@ -74,6 +74,9 @@ config("config") {
 
   if (use_neva_media) {
     defines += [ "USE_NEVA_MEDIA=1" ]
+    if (use_gav) {
+      defines += [ "USE_GAV=1" ]
+    }
   }
 
   if (use_neva_punch_hole) {
