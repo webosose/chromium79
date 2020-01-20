@@ -24,10 +24,21 @@
 
 namespace base {
 
-// Order must be same with URIType.
+// Needs to match the definition of URIType in the header
 static const char* const luna_service_uris[] = {
-    "luna://com.webos.audio",                      // AUDIO
-    "luna://com.webos.settingsservice",            // SETTING
+    "",                                  // VSM
+    "",                                  // DISPLAY
+    "",                                  // AVBLOCK
+    "luna://com.webos.audio",            // AUDIO
+    "",                                  // BROADCAST
+    "",                                  // CHANNEL
+    "",                                  // EXTERNALDEVICE
+    "",                                  // DVR
+    "",                                  // SOUND
+    "",                                  // SUBTITLE
+    "",                                  // DRM
+    "luna://com.webos.settingsservice",  // SETTING
+    "",                                  // PHOTORENDERER
 };
 
 // static
