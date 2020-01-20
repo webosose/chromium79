@@ -33,6 +33,11 @@ class COMPONENT_EXPORT(UI_BASE_IME_LINUX) InputMethodAuraLinuxNeva
 
   // Overriden from ui::LinuxInputMethodContextDelegate
   void OnCommit(const base::string16& text) override;
+  void OnPreeditChanged(const CompositionText& composition_text) override;
+  void OnPreeditEnd() override;
+
+ private:
+  EventDispatchDetails SendFakeReleaseKeyEvent() const;
 };
 
 }  // namespace ui

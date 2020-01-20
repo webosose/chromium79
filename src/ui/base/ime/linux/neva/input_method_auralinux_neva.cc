@@ -58,6 +58,52 @@ void InputMethodAuraLinuxNeva::OnCommit(const base::string16& text) {
   suppress_non_key_input_until_ = base::TimeTicks::UnixEpoch();
 #endif
   InputMethodAuraLinux::OnCommit(text);
+
+#if defined(OS_WEBOS)
+  if (IgnoringNonKeyInput() || IsTextInputTypeNone() || is_sync_mode_ ||
+      !GetTextInputClient())
+    return;
+  EventDispatchDetails details = SendFakeReleaseKeyEvent();
+  if (details.dispatcher_destroyed)
+    return;
+#endif
+}
+
+void InputMethodAuraLinuxNeva::OnPreeditChanged(const CompositionText&
+    composition_text) {
+#if defined(OS_WEBOS)
+  if (IgnoringNonKeyInput() || IsTextInputTypeNone() || is_sync_mode_ ||
+      (composition_.text.empty() && composition_text.text.empty()))
+    return;
+  InputMethodAuraLinux::OnPreeditChanged(composition_text);
+  EventDispatchDetails details = SendFakeReleaseKeyEvent();
+  if (details.dispatcher_destroyed)
+    return;
+#else
+  InputMethodAuraLinux::OnPreeditChanged(composition_text);
+#endif
+}
+
+void InputMethodAuraLinuxNeva::OnPreeditEnd() {
+  InputMethodAuraLinux::OnPreeditEnd();
+
+#if defined(OS_WEBOS)
+  TextInputClient* client = GetTextInputClient();
+  if (IgnoringNonKeyInput() || IsTextInputTypeNone() || is_sync_mode_ ||
+      !client || !client->HasCompositionText())
+    return;
+  EventDispatchDetails details = SendFakeReleaseKeyEvent();
+  if (details.dispatcher_destroyed)
+    return;
+#endif
+}
+
+EventDispatchDetails InputMethodAuraLinuxNeva::SendFakeReleaseKeyEvent() const {
+  KeyEvent key_event(ET_KEY_RELEASED, VKEY_PROCESSKEY, 0);
+  EventDispatchDetails details = DispatchKeyEventPostIME(&key_event);
+  if (key_event.stopped_propagation())
+    key_event.StopPropagation();
+  return details;
 }
 
 }  // namespace ui
