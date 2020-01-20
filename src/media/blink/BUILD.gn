@@ -101,6 +101,7 @@ component("blink") {
   if (use_neva_media) {
     import ("//media/blink/neva/build.gni")
     configs += neva.configs
+    defines += neva.defines
     if (!defined(public_configs)) {
       public_configs = []
     }

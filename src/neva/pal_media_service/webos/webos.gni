@@ -1,4 +1,4 @@
-# Copyright 2019 LG Electronics, Inc.
+# Copyright 2019-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import("//neva/neva.gni")
 
 webos = {
   configs = []
+  defines = []
   public_configs = []
   deps = []
   public_deps = [ "//base", ]
@@ -26,12 +27,37 @@ webos = {
     "$_dir/mediaplayer_ums.cc",
     "$_dir/mediaplayer_ums.h",
     "$_dir/pal_media_player_factory_webos.cc",
-    "$_dir/umedia_info_util_webos.cc",
-    "$_dir/umedia_info_util_webos.h",
     "$_dir/webos_mediaclient.h",
   ]
-  sources += [
-    "$_dir/webos_mediaclient_stub.cc",
-    "$_dir/webos_mediaclient_stub.h",
-  ]
+
+  if (use_gst_media) {
+    sources += [
+      "$_dir/media_util.cc",
+      "$_dir/media_util.h",
+      "$_dir/system_media_manager.h",
+      "$_dir/umedia_info_util_webos.cc",
+      "$_dir/umedia_info_util_webos.h",
+      "$_dir/umediaclient_impl.cc",
+      "$_dir/umediaclient_impl.h",
+    ]
+  }
+
+  if (use_gst_media) {
+    configs += [ "//media/base/neva/webos:media_base_gst_config" ]
+    deps += [ "//base/neva/webos" ]
+    sources += [
+      "$_dir/mediaplayer_camera.cc",
+      "$_dir/mediaplayer_camera.h",
+      "$_dir/system_media_manager_gmp.cc",
+      "$_dir/system_media_manager_gmp.h",
+      "$_dir/umedia_info_util_webos_gmp.cc",
+      "$_dir/umedia_info_util_webos_gmp.h",
+    ]
+    defines += [ "UMS_INTERNAL_API_VERSION=2" ]
+  } else {
+    sources += [
+      "$_dir/webos_mediaclient_stub.cc",
+      "$_dir/webos_mediaclient_stub.h",
+    ]
+  }
 }

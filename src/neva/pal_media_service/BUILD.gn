@@ -1,4 +1,4 @@
-# Copyright 2019 LG Electronics, Inc.
+# Copyright 2019-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ component("pal_media_service") {
   if (is_webos && use_neva_media) {
     import ("//neva/pal_media_service/webos/webos.gni")
     configs += webos.configs
+    defines += webos.defines
     deps += webos.deps
     public_deps += webos.public_deps
     sources += webos.sources
