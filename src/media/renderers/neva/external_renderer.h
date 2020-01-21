@@ -289,7 +289,7 @@ class MEDIA_EXPORT ExternalRenderer : public Renderer,
 
   RenderState render_state_ = RenderState::kUninitialized;
 
-  MediaResource* media_resource_;
+  MediaResource* media_resource_ = nullptr;
   RendererClient* client_ = nullptr;
 
   // TODO(servolk): Consider using DecoderFactory here instead of the
