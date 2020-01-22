@@ -126,6 +126,7 @@ const InterpolationTypes& CSSInterpolationTypesMap::Get(
       case CSSPropertyID::kBorderRightWidth:
       case CSSPropertyID::kBorderTopWidth:
       case CSSPropertyID::kBottom:
+      case CSSPropertyID::kCaretWidth:
       case CSSPropertyID::kCx:
       case CSSPropertyID::kCy:
       case CSSPropertyID::kFlexBasis:

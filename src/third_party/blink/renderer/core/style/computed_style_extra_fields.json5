@@ -350,6 +350,15 @@
       computed_style_custom_functions: ["getter", "setter"],
     },
     {
+      name: "CaretWidthIsAuto",
+      inherited: true,
+      field_template: "primitive",
+      type_name: "bool",
+      default_value: "true",
+      field_group: "*",
+      computed_style_custom_functions: ["getter", "setter"],
+    },
+    {
       name: "InternalVisitedTextStrokeColorIsCurrentColor",
       inherited: true,
       field_template: "primitive",

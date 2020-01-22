@@ -70,6 +70,8 @@ class CORE_EXPORT CaretDisplayItemClient final : public DisplayItemClient {
   IntRect VisualRect() const final;
   String DebugName() const final;
 
+  float CaretWidth() const { return caret_width_; }
+
  private:
   friend class CaretDisplayItemClientTest;
   friend class ParameterizedComputeCaretRectTest;
@@ -89,6 +91,7 @@ class CORE_EXPORT CaretDisplayItemClient final : public DisplayItemClient {
 
   // These are updated by updateStyleAndLayoutIfNeeded().
   Color color_;
+  float caret_width_ = 1.f;
   PhysicalRect local_rect_;
   LayoutBlock* layout_block_ = nullptr;
 
