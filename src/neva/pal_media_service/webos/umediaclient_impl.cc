@@ -35,16 +35,18 @@
 
 #define THIS_DVLOG(x) DVLOG(x) << "[" << this << "]" << __func__
 
+namespace {
 const char kUdpUrl[] = "udp://";
 const char kRtpUrl[] = "rtp://";
 const char kRtspUrl[] = "rtsp://";
+}  // namespace
 
 namespace pal_media {
 
 // static
-WebOSMediaClient* WebOSMediaClient::Create(
+std::unique_ptr<WebOSMediaClient> WebOSMediaClient::Create(
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner) {
-  return new UMediaClientImpl(main_task_runner);
+  return std::make_unique<UMediaClientImpl>(main_task_runner);
 }
 
 UMediaClientImpl::UMediaClientImpl(
@@ -191,7 +193,7 @@ void UMediaClientImpl::SetPlaybackRate(float playback_rate) {
   }
 
   if (playback_rate == 0.0f) {
-    // * -> puased
+    // * -> paused
     requests_pause_ = true;
     playback_rate_on_paused_ = playback_rate_;
     uMediaServer::uMediaClient::pause();
@@ -469,7 +471,7 @@ void UMediaClientImpl::DispatchPlaying() {
   DVLOG(2);
 
   // SystemMediaManager needs this call to connect audio sink right before
-  // playing
+  // playing.
   SetPlaybackVolume(volume_, true);
 
   system_media_manager_->PlayStateChanged(
@@ -595,11 +597,10 @@ void UMediaClientImpl::DispatchLoadCompleted() {
 
   pending_loading_action_ = LOADING_ACTION_NONE;
 
-  // TODO(neva) if we need to callback only when re-loading after unloaded
+  // TODO(neva): if we need to callback only when re-loading after unloaded
   // add flag to check.
-  if (!video_display_window_change_cb_.is_null()) {
+  if (!video_display_window_change_cb_.is_null())
     video_display_window_change_cb_.Run();
-  }
 
   if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
     update_ums_info_cb_.Run(PlaybackNotificationToJson(
@@ -646,7 +647,7 @@ void UMediaClientImpl::DispatchPreloadCompleted() {
   if (is_loaded())
     return;
 
-  // If don't use pipeline preload, Skip preloadCompleted event
+  // If don't use pipeline preload, skip preloadCompleted event
   if (!use_pipeline_preload_)
     return;
 
@@ -1327,9 +1328,9 @@ std::string UMediaClientImpl::UpdateMediaOption(const std::string& mediaOption,
 
     if (url_.find(kUdpUrl) != std::string::npos)
       media_transport_type_ = "UDP";
-    if (url_.find(kRtpUrl) != std::string::npos)
+    else if (url_.find(kRtpUrl) != std::string::npos)
       media_transport_type_ = "RTP";
-    if (url_.find(kRtspUrl) != std::string::npos)
+    else if (url_.find(kRtspUrl) != std::string::npos)
       media_transport_type_ = "RTSP";
     VLOG(2) << "media_transport_type_ : " << media_transport_type_;
 
@@ -1404,7 +1405,7 @@ bool UMediaClientImpl::Is2kVideoAndOver() {
       ceilf(static_cast<float>(natural_video_size_.width()) / 16.0) *
       ceilf(static_cast<float>(natural_video_size_.height()) / 16.0);
 
-  DVLOG(1) << __func__ << "macro_blocks_of_2k=" << macro_blocks_of_2k
+  DVLOG(1) << __func__ << " macro_blocks_of_2k=" << macro_blocks_of_2k
            << " macro_blocks_of_video=" << macro_blocks_of_video;
 
   if (macro_blocks_of_video >= macro_blocks_of_2k)

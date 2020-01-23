@@ -96,7 +96,7 @@ MediaPlayerUMS::MediaPlayerUMS(
       is_video_offscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(ERROR) << __func__;
-  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_, app_id));
+  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
 }
 
 MediaPlayerUMS::~MediaPlayerUMS() {

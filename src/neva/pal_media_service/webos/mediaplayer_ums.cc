@@ -91,7 +91,7 @@ MediaPlayerUMS::MediaPlayerUMS()
           base::CreateSingleThreadTaskRunner({base::ThreadPool()})),
       weak_factory_(this) {
   LOG(ERROR) << __func__;
-  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_));
+  umedia_client_ = WebOSMediaClient::Create(main_task_runner_);
 }
 
 MediaPlayerUMS::~MediaPlayerUMS() {

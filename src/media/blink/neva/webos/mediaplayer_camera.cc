@@ -43,7 +43,7 @@ MediaPlayerCamera::MediaPlayerCamera(
       fullscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(INFO) << __func__;
-  umedia_client_.reset(WebOSMediaClient::Create(main_task_runner_, app_id));
+  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
 }
 
 MediaPlayerCamera::~MediaPlayerCamera() {

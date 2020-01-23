@@ -70,7 +70,7 @@ class WebOSMediaClient {
 
   virtual ~WebOSMediaClient() {}
 
-  static WebOSMediaClient* Create(
+  static std::unique_ptr<WebOSMediaClient> Create(
       const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
       const std::string& app_id);
 
