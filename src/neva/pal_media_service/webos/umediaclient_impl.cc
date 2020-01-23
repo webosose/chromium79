@@ -449,6 +449,11 @@ void UMediaClientImpl::SetDisableAudio(bool disable) {
   audio_disabled_ = disable;
 }
 
+void UMediaClientImpl::SetMediaLayerId(const std::string& media_layer_id) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  media_layer_id_ = media_layer_id;
+}
+
 bool UMediaClientImpl::onPlaying() {
   main_task_runner_->PostTask(
       FROM_HERE, base::Bind(&UMediaClientImpl::DispatchPlaying, weak_ptr_));
@@ -1286,6 +1291,12 @@ std::string UMediaClientImpl::UpdateMediaOption(const std::string& mediaOption,
   media_option["option"]["transmission"]["httpHeader"] = http_header;
   media_option["option"]["bufferControl"]["userBufferCtrl"] = false;
   media_option["option"]["appId"] = app_id_;
+
+#if defined(USE_GAV)
+  media_option["option"]["windowId"] = media_layer_id_;
+  media_option["option"]["videoDisplayMode"] = "Textured";
+#endif
+
   media_option["option"]["preload"] =
       (use_pipeline_preload_) ? "true" : "false";
   media_option["option"]["needAudio"] = !audio_disabled_;

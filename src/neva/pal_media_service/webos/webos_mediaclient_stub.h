@@ -95,6 +95,7 @@ class WebOSMediaClientStub
   bool IsSupportedPreload() override;
   bool CheckUseMediaPlayerManager(const std::string& media_option) override;
   void SetDisableAudio(bool disable) override;
+  void SetMediaLayerId(const std::string& media_layer_id) override;
 };
 
 }  // namespace pal_media

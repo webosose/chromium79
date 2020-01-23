@@ -87,6 +87,7 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
   void SetVisibility(bool) override;
   void RequireMediaResource(RequireMediaResourceCallback callback) override;
   void SetDisableAudio(bool) override {}
+  void SetMediaLayerId(const std::string& media_layer_id) override;
 
  private:
   void OnPlaybackStateChanged(bool playing);

@@ -170,4 +170,6 @@ bool WebOSMediaClientStub::CheckUseMediaPlayerManager(
 
 void WebOSMediaClientStub::SetDisableAudio(bool disable) {}
 
+void WebOSMediaClientStub::SetMediaLayerId(const std::string& media_layer_id) {}
+
 }  // namespace media

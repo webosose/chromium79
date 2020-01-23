@@ -305,6 +305,11 @@ void MediaPlayerUMS::RequireMediaResource(
   std::move(callback).Run(true);
 }
 
+void MediaPlayerUMS::SetMediaLayerId(const std::string& media_layer_id) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  umedia_client_->SetMediaLayerId(media_layer_id);
+}
+
 void MediaPlayerUMS::IsRecoverableOnResume(
     IsRecoverableOnResumeCallback callback) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());

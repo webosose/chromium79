@@ -338,6 +338,12 @@ void MediaPlayerMojo::SetDisableAudio(bool disable) {
     media_player_->SetDisableAudio(disable);
 }
 
+void MediaPlayerMojo::SetMediaLayerId(const std::string& media_layer_id) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  if (media_player_)
+    media_player_->SetMediaLayerId(media_layer_id);
+}
+
 void MediaPlayerMojo::OnMediaPlayerPlay() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnMediaPlayerPlay();

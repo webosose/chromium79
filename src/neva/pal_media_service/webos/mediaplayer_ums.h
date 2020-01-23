@@ -108,6 +108,7 @@ class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
   void RequireMediaResource(RequireMediaResourceCallback callbck) override;
   void IsRecoverableOnResume(IsRecoverableOnResumeCallback callback) override;
   void SetDisableAudio(bool) override;
+  void SetMediaLayerId(const std::string& media_layer_id) override;
   //-----------------------------------------------------------------
 
  private:

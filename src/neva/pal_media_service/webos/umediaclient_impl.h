@@ -118,6 +118,7 @@ class UMediaClientImpl : public WebOSMediaClient,
   bool IsSupportedPreload() override;
   bool CheckUseMediaPlayerManager(const std::string& mediaOption) override;
   void SetDisableAudio(bool disable) override;
+  void SetMediaLayerId(const std::string& media_layer_id) override;
 
   // uMediaServer::uMediaClient implementations
   bool onPlaying() override;
@@ -305,6 +306,7 @@ class UMediaClientImpl : public WebOSMediaClient,
 
   base::WeakPtr<UMediaClientImpl> weak_ptr_;
   bool audio_disabled_;
+  std::string media_layer_id_;
 
   DISALLOW_COPY_AND_ASSIGN(UMediaClientImpl);
 };

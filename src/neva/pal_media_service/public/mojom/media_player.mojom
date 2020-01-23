@@ -120,6 +120,7 @@ interface MediaPlayer {
   SetVisibility(bool visible);
   [Sync] RequireMediaResource() => (bool result);
   SetDisableAudio(bool disable);
+  SetMediaLayerId(string media_layer_id);
 
   Subscribe() => (associated MediaPlayerListener& listener);
 };

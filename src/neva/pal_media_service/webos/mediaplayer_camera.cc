@@ -184,6 +184,11 @@ void MediaPlayerCamera::RequireMediaResource(
   std::move(callback).Run(true);
 }
 
+void MediaPlayerCamera::SetMediaLayerId(const std::string& media_layer_id) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  umedia_client_->SetMediaLayerId(media_layer_id);
+}
+
 void MediaPlayerCamera::OnPlaybackStateChanged(bool playing) {
   DVLOG(1);
 
