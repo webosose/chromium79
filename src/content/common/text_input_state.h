@@ -10,6 +10,7 @@
 #include "ui/base/ime/text_input_action.h"
 #include "ui/base/ime/text_input_mode.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/gfx/geometry/rect.h"
 
 namespace content {
 
@@ -62,6 +63,9 @@ struct CONTENT_EXPORT TextInputState {
 
   // Whether or not this is a reply to a request from IME.
   bool reply_to_request = false;
+
+  // Bounds for text input
+  gfx::Rect bounds;
 };
 
 }  // namespace content

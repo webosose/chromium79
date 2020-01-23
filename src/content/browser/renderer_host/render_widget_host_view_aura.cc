@@ -2551,6 +2551,15 @@ bool RenderWidgetHostViewAura::IsKeepAliveWebApp() const {
     return rvh->GetWebkitPreferences().keep_alive_webapp;
   return false;
 }
+
+gfx::Rect RenderWidgetHostViewAura::GetTextInputBounds() const {
+  if (!text_input_manager_ || !text_input_manager_->GetActiveWidget())
+    return gfx::Rect();
+
+  const TextInputState* state = text_input_manager_->GetTextInputState();
+
+  return ConvertRectToScreen(state->bounds);
+}
 #endif
 
 #if defined(USE_NEVA_MEDIA)
