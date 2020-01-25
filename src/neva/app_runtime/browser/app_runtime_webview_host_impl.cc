@@ -36,10 +36,8 @@ void AppRuntimeWebViewHostImpl::DidLoadingEnd() {
 }
 
 void AppRuntimeWebViewHostImpl::DidFirstPaint() {
-  if (webview_delegate_) {
+  if (webview_delegate_)
     webview_delegate_->DidFirstPaint();
-    webview_delegate_->DidSwapCompositorFrame();
-  }
 }
 
 void AppRuntimeWebViewHostImpl::DidFirstContentfulPaint() {

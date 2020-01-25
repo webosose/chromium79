@@ -3075,6 +3075,10 @@ void RenderWidgetHostImpl::SubmitCompositorFrame(
         viz::TransferableResource::ReturnResources(frame.resource_list);
     renderer_compositor_frame_sink_->DidReceiveCompositorFrameAck(resources);
   }
+#if defined(USE_NEVA_APPRUNTIME)
+  if (delegate_)
+    delegate_->DidReceiveCompositorFrame();
+#endif
 }
 
 void RenderWidgetHostImpl::DidProcessFrame(uint32_t frame_token) {

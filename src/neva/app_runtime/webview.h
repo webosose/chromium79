@@ -228,6 +228,7 @@ class WebView : public content::WebContentsDelegate,
   void DOMContentLoaded(content::RenderFrameHost* frame_host) override;
   void DidDropAllPeerConnections(
       content::mojom::DropPeerConnectionReason reason) override;
+  void DidReceiveCompositorFrame() override;
 
   void SetSSLCertErrorPolicy(SSLCertErrorPolicy policy) {
     ssl_cert_error_policy_ = policy;

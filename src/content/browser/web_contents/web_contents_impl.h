@@ -316,6 +316,9 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   void SetInspectablePage(bool inspectable) override;
   void DropAllPeerConnections(mojom::DropPeerConnectionReason reason) override;
   void OverrideWebkitPrefs(WebPreferences* prefs) override;
+
+  // RenderWidgetHostDelegate
+  void DidReceiveCompositorFrame() override;
 #endif
 
   BrowserContext* GetBrowserContext() override;

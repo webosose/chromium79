@@ -134,6 +134,9 @@ class CONTENT_EXPORT WebContentsObserver : public IPC::Listener {
 #if defined(USE_NEVA_APPRUNTIME)
   // This method is invoked when the process for the current RenderView created.
   virtual void RenderProcessCreated(base::ProcessHandle) {}
+
+  // Notifes that a CompositorFrame was received from the renderer.
+  virtual void DidReceiveCompositorFrame() {}
 #endif
 
   // This method is invoked when the process for the current main

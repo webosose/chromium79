@@ -7472,6 +7472,11 @@ void WebContentsImpl::OverrideWebkitPrefs(WebPreferences* prefs) {
   if (delegate_)
     delegate_->OverrideWebkitPrefs(prefs);
 }
+
+void WebContentsImpl::DidReceiveCompositorFrame() {
+  for (auto& observer : observers_)
+    observer.DidReceiveCompositorFrame();
+}
 #endif
 
 void WebContentsImpl::OnNativeThemeUpdated(ui::NativeTheme* observed_theme) {

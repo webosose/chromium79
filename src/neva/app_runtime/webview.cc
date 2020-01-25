@@ -1084,6 +1084,11 @@ void WebView::DidDropAllPeerConnections(
   }
 }
 
+void WebView::DidReceiveCompositorFrame() {
+  if (webview_delegate_)
+    webview_delegate_->DidSwapCompositorFrame();
+}
+
 void WebView::DidFrameFocused() {
   if (webview_delegate_)
     webview_delegate_->DidFirstFrameFocused();

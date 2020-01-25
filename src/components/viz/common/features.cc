@@ -16,7 +16,8 @@ namespace features {
 // (OOP-D).
 // TODO(dnicoara): Look at enabling Chromecast support when ChromeOS support is
 // ready.
-#if defined(IS_CHROMECAST) && !defined(OS_ANDROID)
+#if (defined(IS_CHROMECAST) && !defined(OS_ANDROID)) || \
+    (defined(USE_NEVA_APPRUNTIME) && !defined(OZONE_PLATFORM_WAYLAND))
 const base::Feature kVizDisplayCompositor{"VizDisplayCompositor",
                                           base::FEATURE_DISABLED_BY_DEFAULT};
 #else

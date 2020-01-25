@@ -315,6 +315,10 @@ class CONTENT_EXPORT RenderWidgetHostDelegate {
   // not a WebContents, returns nullptr.
   virtual WebContents* GetAsWebContents();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void DidReceiveCompositorFrame() {}
+#endif
+
   // Gets the size set by a top-level frame with auto-resize enabled.
   virtual gfx::Size GetAutoResizeSize();
 
