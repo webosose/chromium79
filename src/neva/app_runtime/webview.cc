@@ -1,4 +1,4 @@
-// Copyright 2016-2019 LG Electronics, Inc.
+// Copyright 2016 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -552,7 +552,7 @@ void WebView::UpdatePreferencesAttributeForPrefs(
       preferences->supports_multiple_windows = enable;
       break;
     case Attribute::CSSNavigationEnabled:
-      NOTIMPLEMENTED() << "Attribute::CSSNavigationEnabled is not supported";
+      preferences->css_navigation_enabled = enable;
       break;
     case Attribute::AllowLocalResourceLoad:
       preferences->allow_local_resource_load = enable;

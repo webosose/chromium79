@@ -780,6 +780,8 @@ void RenderView::ApplyWebPreferences(const WebPreferences& prefs,
 
   settings->SetCaretBrowsingEnabled(prefs.caret_browsing_enabled);
 
+  WebRuntimeFeatures::EnableCSSNavigation(prefs.css_navigation_enabled);
+
   settings->SetSelectionIncludesAltImageText(true);
 
   settings->SetV8CacheOptions(

@@ -570,6 +570,9 @@ const WebPreferences RenderViewHostImpl::ComputeWebPreferences() {
   prefs.caret_browsing_enabled =
       command_line.HasSwitch(switches::kEnableCaretBrowsing);
 
+  prefs.css_navigation_enabled =
+      command_line.HasSwitch(switches::kEnableCSSNavigation);
+
   prefs.disable_reading_from_canvas = command_line.HasSwitch(
       switches::kDisableReadingFromCanvas);
 

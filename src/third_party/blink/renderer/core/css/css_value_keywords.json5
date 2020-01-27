@@ -1022,6 +1022,10 @@
     "revert",
     "unset",
 
+    // nav-*
+    "current",
+    "root",
+
     // background-image, etc.
     "linear-gradient",
     "radial-gradient",

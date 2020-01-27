@@ -365,6 +365,11 @@ struct CONTENT_EXPORT WebPreferences {
       lazy_image_loading_distance_thresholds_px;
   std::map<net::EffectiveConnectionType, int> lazy_image_first_k_fully_load;
 
+  // CSS3 UI keyboard control properties (‘nav-index’, ‘nav-up’, ‘nav-down’,
+  // ‘nav-right’, ‘nav-left’) support.
+  // See https://www.w3.org/TR/2012/WD-css3-ui-20120117/#keyboard
+  bool css_navigation_enabled = false;
+
   // We try to keep the default values the same as the default values in
   // chrome, except for the cases where it would require lots of extra work for
   // the embedder to use the same default value.

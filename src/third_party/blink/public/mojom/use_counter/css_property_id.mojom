@@ -690,7 +690,12 @@ enum CSSSampleId {
     kOverscrollBehaviorBlock = 645,
     kContentSize = 646,
     kFontOpticalSizing = 647,
-    kCaretWidth = 648
+    kCaretWidth = 648,
+    kNavRight = 649,
+    kNavLeft = 650,
+    kNavUp = 651,
+    kNavDown = 652,
+    kNavIndex = 653
     // 1. Add new features above this line (don't change the assigned numbers of
     // the existing items).
     // 2. Run the update_use_counter_css.py script in

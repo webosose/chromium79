@@ -216,6 +216,9 @@ class ComputedStyleUtils {
   static CSSValue* ValueForGapLength(const GapLength&, const ComputedStyle&);
   static std::unique_ptr<CrossThreadStyleValue>
   CrossThreadStyleValueFromCSSStyleValue(CSSStyleValue* style_value);
+  static CSSValue* ValueForNavigationDataList(const ComputedStyle&,
+                                              CSSPropertyID);
+  static CSSValue* ValueForNavigationIndex(const ComputedStyle&, CSSPropertyID);
 };
 
 }  // namespace blink
