@@ -26,9 +26,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/shell/browser/shell_download_manager_delegate.h"
 #include "content/shell/browser/shell_permission_manager.h"
-#include "content/shell/browser/web_test/web_test_content_index_provider.h"
 #include "content/shell/common/shell_switches.h"
-#include "content/test/mock_background_sync_controller.h"
 
 #if defined(OS_WIN)
 #include "base/base_paths_win.h"
@@ -42,6 +40,11 @@
 
 #if defined(USE_NEVA_APPRUNTIME)
 #include "content/shell/common/shell_neva_switches.h"
+#endif
+
+#if !defined(USE_CBE)
+#include "content/shell/browser/web_test/web_test_content_index_provider.h"
+#include "content/test/mock_background_sync_controller.h"
 #endif
 
 namespace content {
@@ -214,9 +217,13 @@ BackgroundFetchDelegate* ShellBrowserContext::GetBackgroundFetchDelegate() {
 }
 
 BackgroundSyncController* ShellBrowserContext::GetBackgroundSyncController() {
+#if !defined(USE_CBE)
   if (!background_sync_controller_)
     background_sync_controller_.reset(new MockBackgroundSyncController());
   return background_sync_controller_.get();
+#else
+  return nullptr;
+#endif
 }
 
 BrowsingDataRemoverDelegate*
@@ -225,9 +232,13 @@ ShellBrowserContext::GetBrowsingDataRemoverDelegate() {
 }
 
 ContentIndexProvider* ShellBrowserContext::GetContentIndexProvider() {
+#if !defined(USE_CBE)
   if (!content_index_provider_)
     content_index_provider_ = std::make_unique<WebTestContentIndexProvider>();
   return content_index_provider_.get();
+#else
+  return nullptr;
+#endif
 }
 
 }  // namespace content

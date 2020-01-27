@@ -42,9 +42,11 @@ class ShellPlatformDataAura {
   std::unique_ptr<display::Screen> screen_;
 
   std::unique_ptr<aura::WindowTreeHost> host_;
-  std::unique_ptr<aura::client::FocusClient> focus_client_;
   std::unique_ptr<aura::client::DefaultCaptureClient> capture_client_;
+#if !defined(USE_CBE)
+  std::unique_ptr<aura::client::FocusClient> focus_client_;
   std::unique_ptr<aura::client::WindowParentingClient> window_parenting_client_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(ShellPlatformDataAura);
 };
