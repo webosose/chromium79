@@ -36,7 +36,6 @@ class WebOSWebViewRendererState {
     std::string app_path;
     std::string trust_level;
     std::string accept_language;
-    bool web_security_enabled;
   };
 
   static WebOSWebViewRendererState* GetInstance();

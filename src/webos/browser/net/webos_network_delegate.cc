@@ -124,10 +124,6 @@ bool WebOSNetworkDelegate::IsAccessAllowed(const base::FilePath& path,
     }
   }
 
-  // 4. Resources for app with web security disabled
-  if (!web_view_info.web_security_enabled)
-    return true;  // allow access???
-
   return false;
 }
 

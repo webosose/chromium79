@@ -696,9 +696,6 @@ void WebViewBase::PushStateToIOThread() {
   web_view_info.app_path = app_path_;
   web_view_info.trust_level = trust_level_;
   web_view_info.accept_language = accept_language_;
-  content::WebPreferences prefs =
-      GetWebContents()->GetRenderViewHost()->GetWebkitPreferences();
-  web_view_info.web_security_enabled = prefs.web_security_enabled;
 
   base::PostTask(
       FROM_HERE, {content::BrowserThread::IO},
