@@ -1,6 +1,6 @@
 // Copyright 2013 The Chromium Authors. All rights reserved.
 // Copyright 2013 Intel Corporation. All rights reserved.
-// Copyright 2016-2018 LG Electronics, Inc.
+// Copyright 2016-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 
 #include "base/strings/string16.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/location_hint.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 struct wl_egl_window;
@@ -72,6 +73,7 @@ class WaylandWindow {
   void SetGroupKeyMask(ui::KeyMask key_mask);
   void SetKeyMask(ui::KeyMask key_mask, bool set);
   void SetWindowProperty(const std::string& name, const std::string& value);
+  void SetLocationHint(gfx::LocationHint value);
   void CreateGroup(const ui::WindowGroupConfiguration& config);
   void AttachToGroup(const std::string& group, const std::string& layer);
   void FocusGroupOwner();

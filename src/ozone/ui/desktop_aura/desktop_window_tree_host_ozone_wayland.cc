@@ -1,6 +1,6 @@
 // Copyright 2013 The Chromium Authors. All rights reserved.
 // Copyright 2013 Intel Corporation. All rights reserved.
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2017-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1250,6 +1250,10 @@ void DesktopWindowTreeHostOzone::SetCustomCursor(
 void DesktopWindowTreeHostOzone::SetWindowProperty(const std::string& name,
                                                    const std::string& value) {
   platform_window_->SetWindowProperty(name, value);
+}
+
+void DesktopWindowTreeHostOzone::SetLocationHint(gfx::LocationHint value) {
+  platform_window_->SetLocationHint(value);
 }
 
 void DesktopWindowTreeHostOzone::SetUseVirtualKeyboard(bool enable) {

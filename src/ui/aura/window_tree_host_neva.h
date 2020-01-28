@@ -1,4 +1,4 @@
-// Copyright 2018 LG Electronics, Inc.
+// Copyright 2018-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "neva/app_runtime/public/app_runtime_constants.h"
 #include "ui/aura/aura_export.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/location_hint.h"
 #include "ui/platform_window/neva/xinput_types.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
@@ -48,6 +49,7 @@ class AURA_EXPORT WindowTreeHostNeva {
   virtual void SetUseVirtualKeyboard(bool enable) {}
   virtual void SetWindowProperty(const std::string& name,
                                  const std::string& value) {}
+  virtual void SetLocationHint(gfx::LocationHint value) {}
   virtual void ToggleFullscreen() {}
   virtual void XInputActivate(const std::string& type) {}
   virtual void XInputDeactivate() {}
