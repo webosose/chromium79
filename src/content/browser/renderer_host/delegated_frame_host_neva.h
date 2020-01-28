@@ -21,8 +21,6 @@
 
 namespace content {
 
-class ClosedKeepAliveWebAppTrigger;
-
 // The DelegatedFrameHostClient is the interface from the DelegatedFrameHost,
 // which manages delegated frames, and the ui::Compositor being used to
 // display them.
@@ -30,7 +28,6 @@ class CONTENT_EXPORT DelegatedFrameHostClient
     : public neva_wrapped::DelegatedFrameHostClient {
  public:
   ~DelegatedFrameHostClient() override {}
-  virtual bool DelegatedFrameHostIsKeepAliveWebApp() const = 0;
 };
 
 // The DelegatedFrameHost is used to host all of the RenderWidgetHostView state
@@ -49,17 +46,11 @@ class CONTENT_EXPORT DelegatedFrameHost
                      bool should_register_frame_sink_id);
   ~DelegatedFrameHost() override;
 
-  void SubmitCompositorFrame(
-      const viz::LocalSurfaceId& local_surface_id,
-      viz::CompositorFrame frame,
-      base::Optional<viz::HitTestRegionList> hit_test_region_list);
-
   void WasHidden(HiddenCause cause);
   void WasShown(const viz::LocalSurfaceId& local_surface_id,
                 const gfx::Size& dip_size,
                 const base::Optional<RecordTabSwitchTimeRequest>&
                     record_tab_switch_time_request);
-  void AttachToCompositor(ui::Compositor* compositor);
   base::WeakPtr<DelegatedFrameHost> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
@@ -69,7 +60,6 @@ class CONTENT_EXPORT DelegatedFrameHost
   bool use_aggressive_release_policy_ = false;
   base::CancelableOnceClosure background_cleanup_task_;
 
-  std::unique_ptr<ClosedKeepAliveWebAppTrigger> keep_alive_trigger_;
   base::WeakPtrFactory<DelegatedFrameHost> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(DelegatedFrameHost);

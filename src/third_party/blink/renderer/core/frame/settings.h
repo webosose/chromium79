@@ -42,7 +42,6 @@
 #include "third_party/blink/renderer/core/dom/events/add_event_listener_options_defaults.h"
 #include "third_party/blink/renderer/core/editing/editing_behavior_types.h"
 #include "third_party/blink/renderer/core/editing/selection_strategy.h"
-#include "third_party/blink/renderer/core/frame/neva/settings_neva.h"
 #include "third_party/blink/renderer/core/frame/settings_delegate.h"
 #include "third_party/blink/renderer/core/html/media/autoplay_policy.h"
 #include "third_party/blink/renderer/core/html/track/text_track_kind_user_preference.h"
@@ -57,7 +56,7 @@
 
 namespace blink {
 
-class CORE_EXPORT Settings : public SettingsNeva {
+class CORE_EXPORT Settings {
   USING_FAST_MALLOC(Settings);
 
  public:

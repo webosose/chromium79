@@ -33,7 +33,6 @@
 
 #include "third_party/blink/public/web/web_settings.h"
 #include "third_party/blink/renderer/core/core_export.h"
-#include "third_party/blink/renderer/core/exported/neva/web_settings_impl_neva.h"
 #include "third_party/blink/renderer/platform/heap/handle.h"
 
 namespace blink {
@@ -41,7 +40,7 @@ namespace blink {
 class DevToolsEmulator;
 class Settings;
 
-class CORE_EXPORT WebSettingsImpl final : public WebSettingsImplNeva {
+class CORE_EXPORT WebSettingsImpl final : public WebSettings {
  public:
   WebSettingsImpl(Settings*, DevToolsEmulator*);
   virtual ~WebSettingsImpl() = default;

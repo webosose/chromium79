@@ -17,11 +17,7 @@
 #include "content/browser/renderer_host/delegated_frame_host_neva.h"
 
 #include "base/command_line.h"
-#include "base/task/post_task.h"
 #include "cc/base/switches.h"
-#include "components/viz/service/frame_sinks/compositor_frame_sink_support.h"
-#include "content/public/browser/browser_task_traits.h"
-#include "content/public/browser/browser_thread.h"
 
 namespace content {
 
@@ -30,33 +26,6 @@ namespace {
 const int kBackgroundCleanupDelayMs = 1000;
 
 }  // namespace
-
-class ClosedKeepAliveWebAppTrigger : public viz::BeginFrameObserverBase {
- public:
-  ClosedKeepAliveWebAppTrigger(DelegatedFrameHost* host) : host_(host) {
-    task_runner_ = base::CreateSingleThreadTaskRunner(
-        {content::BrowserThread::UI});
-    begin_frame_source_ = std::make_unique<viz::DelayBasedBeginFrameSource>(
-        std::make_unique<viz::DelayBasedTimeSource>(task_runner_.get()),
-        viz::BeginFrameSource::kNotRestartableId);
-    begin_frame_source_->AddObserver(this);
-  }
-
-  ~ClosedKeepAliveWebAppTrigger() override = default;
-
-  // viz::BeginFrameObserverBase
-  bool OnBeginFrameDerivedImpl(const viz::BeginFrameArgs& args) override {
-    host_->OnBeginFrame(args, viz::FrameTimingDetailsMap());
-    return true;
-  }
-
-  void OnBeginFrameSourcePausedChanged(bool paused) override {}
-
- private:
-  DelegatedFrameHost* host_;
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
-  std::unique_ptr<viz::SyntheticBeginFrameSource> begin_frame_source_;
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 // DelegatedFrameHost
@@ -75,18 +44,6 @@ DelegatedFrameHost::DelegatedFrameHost(const viz::FrameSinkId& frame_sink_id,
 
 DelegatedFrameHost::~DelegatedFrameHost() {}
 
-void DelegatedFrameHost::SubmitCompositorFrame(
-    const viz::LocalSurfaceId& local_surface_id,
-    viz::CompositorFrame frame,
-    base::Optional<viz::HitTestRegionList> hit_test_region_list) {
-  // Calling origin procedure
-  neva_wrapped::DelegatedFrameHost::SubmitCompositorFrame(
-      local_surface_id, std::move(frame), std::move(hit_test_region_list));
-
-  if (keep_alive_trigger_)
-    keep_alive_trigger_.reset();
-}
-
 void DelegatedFrameHost::WasShown(
     const viz::LocalSurfaceId& new_local_surface_id,
     const gfx::Size& new_dip_size,
@@ -100,11 +57,6 @@ void DelegatedFrameHost::WasShown(
     if (compositor_)
       compositor_->ResumeDrawing();
   }
-
-  DelegatedFrameHostClient* client =
-      static_cast<DelegatedFrameHostClient*>(client_);
-  if (!compositor_ && client->DelegatedFrameHostIsKeepAliveWebApp())
-    keep_alive_trigger_ = std::make_unique<ClosedKeepAliveWebAppTrigger>(this);
 }
 
 void DelegatedFrameHost::WasHidden(HiddenCause cause) {
@@ -126,16 +78,6 @@ void DelegatedFrameHost::WasHidden(HiddenCause cause) {
 
 void DelegatedFrameHost::DoBackgroundCleanup() {
   viz::FrameEvictionManager::GetInstance()->PurgeAllUnlockedFrames();
-}
-
-void DelegatedFrameHost::AttachToCompositor(ui::Compositor* compositor) {
-  if (!compositor)
-    return;
-
-  if (keep_alive_trigger_)
-    keep_alive_trigger_.reset();
-
-  neva_wrapped::DelegatedFrameHost::AttachToCompositor(compositor);
 }
 
 }  // namespace content

@@ -338,7 +338,6 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
   void SetEnableHtmlSystemKeyboardAttr(bool enable);
   bool SystemKeyboardDisabled() const override;
   gfx::Size GetCompositorViewportPixelSize() override;
-  bool IsKeepAliveWebApp() const;
 #endif
 
 #if defined(USE_NEVA_MEDIA)

@@ -570,7 +570,7 @@ void WebView::UpdatePreferencesAttributeForPrefs(
       }
       break;
     case Attribute::KeepAliveWebApp:
-      preferences->keep_alive_webapp = enable;
+      NOTIMPLEMENTED() << "patches not ported";
       break;
     case Attribute::RequestQuotaEnabled:
     case Attribute::DisallowScrollingInMainFrame:

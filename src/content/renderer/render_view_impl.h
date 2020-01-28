@@ -216,11 +216,6 @@ class CONTENT_EXPORT RenderViewImpl : public blink::WebViewClient,
   void RegisterRendererPreferenceWatcher(
       mojo::PendingRemote<blink::mojom::RendererPreferenceWatcher> watcher);
 
-#if defined(USE_NEVA_APPRUNTIME)
-  // NEVA app runtime specific ------------------------------------------------
-  void SetKeepAliveWebApp(bool keepAlive) override;
-#endif  // defined(USE_NEVA_APPRUNTIME)
-
   // IPC::Listener implementation (via RenderWidget inheritance).
   bool OnMessageReceived(const IPC::Message& msg) override;
 
@@ -417,11 +412,6 @@ class CONTENT_EXPORT RenderViewImpl : public blink::WebViewClient,
       const blink::WebDeviceEmulationParams& params) override;
   void ResizeVisualViewportForWidget(
       const gfx::Size& scaled_viewport_size) override;
-
-#if defined(USE_NEVA_APPRUNTIME)
-  // NEVA app runtime specific ------------------------------------------------
-  void WillDoDeferredClose() override;
-#endif  // defined(USE_NEVA_APPRUNTIME)
 
   // Old WebLocalFrameClient implementations
   // ----------------------------------------
