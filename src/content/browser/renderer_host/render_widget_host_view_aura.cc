@@ -51,6 +51,7 @@
 #include "content/public/browser/content_browser_client.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_features.h"
+#include "content/public/common/content_switches.h"
 #include "content/public/common/use_zoom_for_dsf_policy.h"
 #include "gpu/ipc/common/gpu_messages.h"
 #include "services/service_manager/public/cpp/interface_provider.h"
