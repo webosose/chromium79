@@ -470,10 +470,8 @@ void WebView::SetBlockWriteDiskcache(bool blocked) {
 }
 
 void WebView::SetTransparentBackground(bool enable) {
-  content::RenderWidgetHostView* const host_view =
-      web_contents_->GetRenderWidgetHostView();
-  if (host_view)
-    host_view->SetBackgroundColor(enable ? SK_ColorTRANSPARENT : SK_ColorBLACK);
+  if (enable)
+    SetBackgroundColor(0, 0, 0, 0);
 }
 
 void WebView::SetBoardType(const std::string& board_type) {
