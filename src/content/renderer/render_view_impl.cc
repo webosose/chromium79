@@ -933,6 +933,7 @@ void RenderView::ApplyWebPreferences(const WebPreferences& prefs,
 #endif
 #if defined(USE_NEVA_APPRUNTIME)
   settings->SetAllowLocalResourceLoad(prefs.allow_local_resource_load);
+  settings->SetKeepAliveWebApp(prefs.keep_alive_webapp);
 #endif
 
   settings->SetLowPriorityIframesThreshold(
@@ -2218,6 +2219,14 @@ void RenderViewImpl::SetFocusAndActivateForTesting(bool enable) {
     SetActiveForWidget(false);
   }
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderViewImpl::SetKeepAliveWebApp(bool keepAlive) {
+  webkit_preferences_.keep_alive_webapp = keepAlive;
+  if (webview() && webview()->GetSettings())
+    webview()->GetSettings()->SetKeepAliveWebApp(keepAlive);
+}
+#endif // USE_NEVA_APPRUNTIME
 
 void RenderViewImpl::OnAnimateDoubleTapZoomInMainFrame(
     const blink::WebPoint& point,

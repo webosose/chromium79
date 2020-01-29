@@ -216,6 +216,11 @@ class CONTENT_EXPORT RenderViewImpl : public blink::WebViewClient,
   void RegisterRendererPreferenceWatcher(
       mojo::PendingRemote<blink::mojom::RendererPreferenceWatcher> watcher);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // NEVA app runtime specific ------------------------------------------------
+  void SetKeepAliveWebApp(bool keepAlive) override;
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
   // IPC::Listener implementation (via RenderWidget inheritance).
   bool OnMessageReceived(const IPC::Message& msg) override;
 

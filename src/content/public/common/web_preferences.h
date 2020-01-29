@@ -13,6 +13,7 @@
 #include "base/time/time.h"
 #include "build/build_config.h"
 #include "content/common/content_export.h"
+#include "content/public/common/neva/web_preferences_neva.h"
 #include "net/nqe/effective_connection_type.h"
 #include "third_party/blink/public/common/css/preferred_color_scheme.h"
 #include "third_party/blink/public/mojom/v8_cache_options.mojom.h"
@@ -68,7 +69,7 @@ CONTENT_EXPORT extern const char kCommonScript[];
 // blink::WebSettings, content/common/view_messages.h,
 // browser/profiles/profile.cc, and
 // content/public/common/common_param_traits_macros.h
-struct CONTENT_EXPORT WebPreferences {
+struct CONTENT_EXPORT WebPreferences : public WebPreferencesNeva {
   ScriptFontFamilyMap standard_font_family_map;
   ScriptFontFamilyMap fixed_font_family_map;
   ScriptFontFamilyMap serif_font_family_map;
