@@ -142,7 +142,7 @@ MediaPlatformAPIWebOSGmp::MediaPlatformAPIWebOSGmp(
     const base::Closure& suspend_done_cb,
     const ActiveRegionCB& active_region_cb,
     const PipelineStatusCB& error_cb)
-    : ls_client_(base::LunaServiceClient::PrivateBus),
+    : ls_client_(app_id),
       main_task_runner_(main_task_runner),
       media_task_runner_(media_task_runner),
       app_id_(app_id),
