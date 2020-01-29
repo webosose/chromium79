@@ -532,15 +532,14 @@ void WamDemoService::Launch(const std::string& appid, const std::string& appurl,
     params.width = kDefaultFullscreenWidth;
     params.height = kDefaultFullscreenHeight;
 
-    params.show_state = neva_app_runtime::WebAppWindowBase::CreateParams::
-        WindowShowState::kFullscreen;
+    params.show_state = neva_app_runtime::WebAppWindowBase::WindowShowState::kFullscreen;
 
     frameless = true;
   }
 
   params.type = frameless
-              ? app_runtime::WebAppWindowBase::WidgetType::kWindowFrameless
-              : app_runtime::WebAppWindowBase::WidgetType::kWindow;
+              ? neva_app_runtime::WebAppWindowBase::WidgetType::kWindowFrameless
+              : neva_app_runtime::WebAppWindowBase::WidgetType::kWindow;
 
   neva_app_runtime::WebViewProfile* profile = profile_name_.empty() ? nullptr :
     new neva_app_runtime::WebViewProfile(profile_name_);
@@ -1251,7 +1250,7 @@ void WamDemoService::LaunchApp(const std::string& value,
     LOG(INFO) << __func__ << "(): no valid \'" << argument::kFullScreen << "\'";
 
   if (is_fullscreen)
-    params.show_state = app_runtime::WebAppWindowBase::WindowShowState::kFullscreen;
+    params.show_state = neva_app_runtime::WebAppWindowBase::WindowShowState::kFullscreen;
   else {
     UnpackLayoutParams(
         value, params.pos_x, params.pos_y, params.width, params.height);
@@ -1273,8 +1272,8 @@ void WamDemoService::LaunchApp(const std::string& value,
   }
 
   params.type = is_frameless
-              ? app_runtime::WebAppWindowBase::WidgetType::kWindowFrameless
-              : app_runtime::WebAppWindowBase::WidgetType::kWindow;
+              ? neva_app_runtime::WebAppWindowBase::WidgetType::kWindowFrameless
+              : neva_app_runtime::WebAppWindowBase::WidgetType::kWindow;
 
   neva_app_runtime::WebViewProfile* profile = profile_name_.empty() ? nullptr :
     new neva_app_runtime::WebViewProfile(profile_name_);
