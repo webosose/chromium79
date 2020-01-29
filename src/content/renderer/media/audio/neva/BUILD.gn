@@ -19,4 +19,8 @@ source_set("neva") {
     "audio_capturer_source_manager.cc",
     "audio_capturer_source_manager.h"
   ]
+
+  deps = [
+    "//base:logging_buildflags"
+  ]
 }
