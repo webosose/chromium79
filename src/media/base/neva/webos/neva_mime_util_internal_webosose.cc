@@ -33,15 +33,15 @@ void NevaMimeUtil::AddSupportedMediaFormats() {
   CodecSet webos_codecs;
   webos_codecs.insert(VALID_CODEC);
 
-  AddContainerWithCodecs("application/vnd.apple.mpegurl", webos_codecs, true);
-  AddContainerWithCodecs("application/mpegurl", webos_codecs, true);
-  AddContainerWithCodecs("application/x-mpegurl", webos_codecs, true);
-  AddContainerWithCodecs("audio/mpegurl", webos_codecs, true);
-  AddContainerWithCodecs("audio/x-mpegurl", webos_codecs, true);
+  AddContainerWithCodecs("application/vnd.apple.mpegurl", webos_codecs);
+  AddContainerWithCodecs("application/mpegurl", webos_codecs);
+  AddContainerWithCodecs("application/x-mpegurl", webos_codecs);
+  AddContainerWithCodecs("audio/mpegurl", webos_codecs);
+  AddContainerWithCodecs("audio/x-mpegurl", webos_codecs);
 
   // webOS specific media types
-  AddContainerWithCodecs("service/webos-camera", webos_codecs, true);
-  AddContainerWithCodecs("service/webos-photo-camera", webos_codecs, true);
+  AddContainerWithCodecs("service/webos-camera", webos_codecs);
+  AddContainerWithCodecs("service/webos-photo-camera", webos_codecs);
 }
 
 } // namespace internal
