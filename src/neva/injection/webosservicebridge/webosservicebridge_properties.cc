@@ -21,10 +21,11 @@ namespace injections {
 WebOSServiceBridgeProperties::WebOSServiceBridgeProperties(
         blink::WebLocalFrame* frame)
     : InjectionBrowserControlBase(frame) {
-  cached_identifier_ = CallFunction("identifier");
 }
 
-std::string WebOSServiceBridgeProperties::GetIdentifier() const {
+std::string WebOSServiceBridgeProperties::GetIdentifier() {
+  if (cached_identifier_.empty())
+    cached_identifier_ = CallFunction("identifier");
   return cached_identifier_;
 }
 

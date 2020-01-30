@@ -30,7 +30,7 @@ namespace injections {
 class WebOSServiceBridgeProperties : public InjectionBrowserControlBase {
  public:
   WebOSServiceBridgeProperties(blink::WebLocalFrame* frame);
-  std::string GetIdentifier() const;
+  std::string GetIdentifier();
 
  private:
   std::string cached_identifier_;
