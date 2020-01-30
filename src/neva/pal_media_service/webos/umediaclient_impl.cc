@@ -56,7 +56,6 @@ UMediaClientImpl::UMediaClientImpl(
     : uMediaClient(app_id),
       duration_(0.0f),
       current_time_(0.0f),
-      buffer_end_(0.0f),
       buffer_end_at_last_didLoadingProgress_(0.0f),
       buffer_remaining_(0),
       start_date_(std::numeric_limits<double>::quiet_NaN()),
@@ -347,6 +346,14 @@ bool UMediaClientImpl::SetDisplayWindow(const gfx::Rect& outRect,
 
   previous_display_window_ = outRect;
   return system_media_manager_->SetDisplayWindow(outRect, inRect, fullscreen);
+}
+
+media::Ranges<base::TimeDelta> UMediaClientImpl::GetBufferedTimeRanges() const {
+  // We support only one range.
+  media::Ranges<base::TimeDelta> ranges;
+  ranges.Add(base::TimeDelta::FromSecondsD(buffer_start_),
+             base::TimeDelta::FromSecondsD(buffer_end_));
+  return ranges;
 }
 
 void UMediaClientImpl::SetVisibility(bool visible) {

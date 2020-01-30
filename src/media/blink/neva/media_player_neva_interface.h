@@ -22,6 +22,7 @@
 #include "base/time/time.h"
 #include "media/base/neva/media_constants.h"
 #include "media/base/neva/media_track_info.h"
+#include "media/base/ranges.h"
 #include "third_party/blink/public/platform/media/webmediaplayer_delegate.h"
 #include "third_party/blink/public/platform/web_rect.h"
 #include "ui/gfx/geometry/rect_f.h"
@@ -132,6 +133,8 @@ class MediaPlayerNeva {
   // Disable audio decoding and out
   virtual void SetDisableAudio(bool) = 0;
   virtual void SetMediaLayerId(const std::string& media_layer_id) {}
+
+  virtual Ranges<base::TimeDelta> GetBufferedTimeRanges() const;
 
   virtual ~MediaPlayerNeva() {}
 };

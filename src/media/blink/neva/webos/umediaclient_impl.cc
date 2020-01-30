@@ -55,7 +55,6 @@ UMediaClientImpl::UMediaClientImpl(
     : uMediaClient(app_id),
       duration_(0.0f),
       current_time_(0.0f),
-      buffer_end_(0.0f),
       buffer_end_at_last_didLoadingProgress_(0.0f),
       buffer_remaining_(0),
       start_date_(std::numeric_limits<double>::quiet_NaN()),
@@ -377,6 +376,14 @@ bool UMediaClientImpl::SetDisplayWindow(const gfx::Rect& outRect,
 
   previous_display_window_ = outRect;
   return system_media_manager_->SetDisplayWindow(outRect, inRect, fullscreen);
+}
+
+media::Ranges<base::TimeDelta> UMediaClientImpl::GetBufferedTimeRanges() const {
+  // We support only one range.
+  media::Ranges<base::TimeDelta> ranges;
+  ranges.Add(base::TimeDelta::FromSecondsD(buffer_start_),
+             base::TimeDelta::FromSecondsD(buffer_end_));
+  return ranges;
 }
 
 void UMediaClientImpl::SetVisibility(bool visible) {
@@ -768,6 +775,15 @@ void UMediaClientImpl::DispatchBufferRange(
     if (bufferRange.remainingTime == -1 || buffer_end_ > duration_)
       buffer_end_ = duration_;
   }
+
+#if defined(USE_GST_MEDIA)
+  // In gst media, unlike bufferRange.endTime, beginTime has milliseconds.
+  // So divide the value by 1000.
+  buffer_start_ = static_cast<double>(bufferRange.beginTime) / 1000.0;
+#else
+  buffer_start_ = static_cast<double>(bufferRange.beginTime);
+#endif
+  buffer_start_ = std::max(0.0, std::min(current_time_, buffer_start_));
 
   if (buffer_remaining_ != bufferRange.remainingTime &&
       !buffering_state_cb_.is_null()) {

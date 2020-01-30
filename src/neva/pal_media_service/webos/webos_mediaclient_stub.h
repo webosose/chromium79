@@ -73,7 +73,7 @@ class WebOSMediaClientStub
   double GetCurrentTime() override;
   void SetCurrentTime(double time) override;
 
-  double BufferEnd() const override;
+  media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
   bool HasAudio() override;
   bool HasVideo() override;
   gfx::Size GetNaturalVideoSize() override;

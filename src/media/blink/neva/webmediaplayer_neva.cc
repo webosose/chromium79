@@ -184,7 +184,6 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
       delegate_(delegate),
       delegate_id_(0),
       defer_load_cb_(params->defer_load_cb()),
-      buffered_(static_cast<size_t>(1)),
       pending_seek_(false),
       seeking_(false),
       did_loading_progress_(false),
@@ -606,7 +605,13 @@ bool WebMediaPlayerNeva::WouldTaintOrigin() const {
 
 blink::WebTimeRanges WebMediaPlayerNeva::Buffered() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  return buffered_;
+
+  if (!player_api_)
+    return blink::WebTimeRanges();
+
+  media::Ranges<base::TimeDelta> ranges = player_api_->GetBufferedTimeRanges();
+
+  return blink::ConvertToWebTimeRanges(ranges);
 }
 
 blink::WebTimeRanges WebMediaPlayerNeva::Seekable() const {
@@ -744,8 +749,6 @@ void WebMediaPlayerNeva::OnPlaybackComplete() {
 
 void WebMediaPlayerNeva::OnBufferingUpdate(int percentage) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  buffered_[0].end = Duration() * percentage / 100;
-  did_loading_progress_ = true;
   did_loading_progress_ = true;
 
   if (percentage == 100 && network_state_ < WebMediaPlayer::kNetworkStateLoaded)

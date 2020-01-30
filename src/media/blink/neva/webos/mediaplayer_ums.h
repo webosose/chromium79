@@ -27,6 +27,7 @@
 #include "base/time/time.h"
 #include "base/timer/timer.h"
 #include "content/public/renderer/render_frame_observer.h"
+#include "media/base/ranges.h"
 #include "media/blink/neva/media_player_neva_interface.h"
 #include "media/blink/neva/webos/webos_mediaclient.h"
 #include "url/gurl.h"
@@ -106,6 +107,7 @@ class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
   bool RequireMediaResource() const override;
   bool IsRecoverableOnResume() const override;
   void SetDisableAudio(bool) override;
+  Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
   void SetMediaLayerId(const std::string& media_layer_id) override;
   // end of media::RendererMediaBuiltinPlayerManagerInterface
   //-----------------------------------------------------------------

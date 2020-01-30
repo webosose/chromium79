@@ -119,7 +119,7 @@ class WebOSMediaClient {
   virtual double GetCurrentTime() = 0;
   virtual void SetCurrentTime(double time) = 0;
 
-  virtual double BufferEnd() const = 0;
+  virtual media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const = 0;
   virtual bool HasAudio() = 0;
   virtual bool HasVideo() = 0;
   virtual gfx::Size GetNaturalVideoSize() = 0;

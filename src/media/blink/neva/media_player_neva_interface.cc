@@ -23,4 +23,8 @@ bool MediaPlayerNeva::SelectTrack(const MediaTrackType type,
   return false;
 }
 
+Ranges<base::TimeDelta> MediaPlayerNeva::GetBufferedTimeRanges() const {
+  return Ranges<base::TimeDelta>();
+}
+
 }  // namespace media

@@ -27,6 +27,7 @@
 #include "media/base/neva/media_constants.h"
 #include "media/base/neva/media_track_info.h"
 #include "media/base/pipeline.h"
+#include "media/base/ranges.h"
 #include "neva/pal_media_service/public/mojom/media_player.mojom.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -123,7 +124,7 @@ class WebOSMediaClient {
   virtual double GetCurrentTime() = 0;
   virtual void SetCurrentTime(double time) = 0;
 
-  virtual double BufferEnd() const = 0;
+  virtual media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const = 0;
   virtual bool HasAudio() = 0;
   virtual bool HasVideo() = 0;
   virtual gfx::Size GetNaturalVideoSize() = 0;

@@ -105,8 +105,8 @@ double WebOSMediaClientStub::GetCurrentTime() {
 
 void WebOSMediaClientStub::SetCurrentTime(double time) {}
 
-double WebOSMediaClientStub::BufferEnd() const {
-  return 0.0f;
+Ranges<base::TimeDelta> WebOSMediaClientStub::GetBufferedTimeRanges() const {
+  return Ranges<base::TimeDelta>();
 }
 
 bool WebOSMediaClientStub::HasAudio() {

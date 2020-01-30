@@ -92,7 +92,7 @@ class UMediaClientImpl : public WebOSMediaClient,
   double GetCurrentTime() override { return current_time_; }
   void SetCurrentTime(double time) override { current_time_ = time; }
 
-  double BufferEnd() const override { return buffer_end_; }
+  media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
   bool HasAudio() override { return has_audio_; }
   bool HasVideo() override { return has_video_; }
   gfx::Size GetNaturalVideoSize() override { return natural_video_size_; }
@@ -245,7 +245,8 @@ class UMediaClientImpl : public WebOSMediaClient,
   EncryptedCB encrypted_cb_;
   double duration_;
   double current_time_;
-  double buffer_end_;
+  double buffer_start_ = 0.0f;
+  double buffer_end_ = 0.0f;
   double buffer_end_at_last_didLoadingProgress_;
   int64_t buffer_remaining_;
   double start_date_;

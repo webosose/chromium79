@@ -310,6 +310,11 @@ void MediaPlayerUMS::SetDisableAudio(bool disable) {
   umedia_client_->SetDisableAudio(disable);
 }
 
+Ranges<base::TimeDelta> MediaPlayerUMS::GetBufferedTimeRanges() const {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  return umedia_client_->GetBufferedTimeRanges();
+}
+
 void MediaPlayerUMS::SetMediaLayerId(const std::string& media_layer_id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   umedia_client_->SetMediaLayerId(media_layer_id);
