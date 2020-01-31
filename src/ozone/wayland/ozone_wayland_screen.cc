@@ -82,7 +82,7 @@ void OzoneWaylandScreen::DisplayHandleOutputOnly(void *data,
                                                  uint32_t version) {
   OzoneWaylandScreen* disp = static_cast<OzoneWaylandScreen*>(data);
 
-  if (strcmp(interface, "wl_output") == 0) {
+  if (!disp->look_ahead_screen_ && strcmp(interface, "wl_output") == 0) {
     WaylandScreen* screen = new WaylandScreen(registry, name);
     disp->look_ahead_screen_ = screen;
   }
