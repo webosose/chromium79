@@ -103,6 +103,7 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
   bool IsRecoverableOnResume() const override;
   void SetDisableAudio(bool) override;
   void SetMediaLayerId(const std::string& media_layer_id) override;
+  media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
 
   // pal_media::mojom::MediaPlayerListener
   void OnMediaPlayerPlay() override;

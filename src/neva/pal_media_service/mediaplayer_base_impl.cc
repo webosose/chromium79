@@ -91,6 +91,11 @@ void MediaPlayerBaseImpl::Subscribe(SubscribeCallback callback) {
   std::move(callback).Run(std::move(request));
 }
 
+void MediaPlayerBaseImpl::GetBufferedTimeRanges(
+    GetBufferedTimeRangesCallback callback) {
+  std::move(callback).Run({});
+}
+
 void MediaPlayerBaseImpl::OnPlaybackStateChanged(bool playing) {
   DVLOG(1);
   if (playing) {

@@ -109,6 +109,7 @@ class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
   void IsRecoverableOnResume(IsRecoverableOnResumeCallback callback) override;
   void SetDisableAudio(bool) override;
   void SetMediaLayerId(const std::string& media_layer_id) override;
+  void GetBufferedTimeRanges(GetBufferedTimeRangesCallback callback) override;
   //-----------------------------------------------------------------
 
  private:
@@ -120,6 +121,7 @@ class MediaPlayerUMS : public base::SupportsWeakPtr<MediaPlayerUMS>,
   void OnVideoDisplayWindowChange();
 
   base::TimeDelta GetCurrentTime();
+  std::vector<pal_media::mojom::TimeDeltaPairPtr> GetBufferedTimeRanges();
   void OnTimeUpdateTimerFired();
 
   std::unique_ptr<WebOSMediaClient> umedia_client_;

@@ -82,6 +82,11 @@ interface MediaPlayerListener {
   OnActiveRegionChanged(gfx.mojom.Rect rect);
 };
 
+struct TimeDeltaPair {
+  mojo_base.mojom.TimeDelta start;
+  mojo_base.mojom.TimeDelta end;
+};
+
 interface MediaPlayer {
   Initialize(bool is_video,
              double current_time,
@@ -121,6 +126,7 @@ interface MediaPlayer {
   [Sync] RequireMediaResource() => (bool result);
   SetDisableAudio(bool disable);
   SetMediaLayerId(string media_layer_id);
+  [Sync] GetBufferedTimeRanges() => (array<TimeDeltaPair> result);
 
   Subscribe() => (associated MediaPlayerListener& listener);
 };

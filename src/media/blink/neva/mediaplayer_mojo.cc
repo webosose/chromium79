@@ -333,6 +333,19 @@ bool MediaPlayerMojo::IsRecoverableOnResume() const {
   return false;
 }
 
+media::Ranges<base::TimeDelta> MediaPlayerMojo::GetBufferedTimeRanges() const {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  std::vector<pal_media::mojom::TimeDeltaPairPtr> vector_ranges;
+  media::Ranges<base::TimeDelta> ranges;
+  if (media_player_) {
+    media_player_->GetBufferedTimeRanges(&vector_ranges);
+    for (const auto& r : vector_ranges) {
+      ranges.Add(r->start, r->end);
+    }
+  }
+  return ranges;
+}
+
 void MediaPlayerMojo::SetDisableAudio(bool disable) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   if (media_player_)

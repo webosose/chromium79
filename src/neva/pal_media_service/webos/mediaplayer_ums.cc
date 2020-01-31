@@ -321,6 +321,19 @@ void MediaPlayerUMS::SetDisableAudio(bool disable) {
   umedia_client_->SetDisableAudio(disable);
 }
 
+std::vector<pal_media::mojom::TimeDeltaPairPtr>
+MediaPlayerUMS::GetBufferedTimeRanges() {
+  std::vector<pal_media::mojom::TimeDeltaPairPtr> vector_ranges;
+  media::Ranges<base::TimeDelta> ranges =
+      umedia_client_->GetBufferedTimeRanges();
+
+  for (size_t i = 0; i < ranges.size(); i++)
+    vector_ranges.push_back(
+        mojom::TimeDeltaPair(ranges.start(i), ranges.end(i)).Clone());
+
+  return vector_ranges;
+}
+
 void MediaPlayerUMS::OnStreamEnded() {
   DVLOG(1);
   time_update_timer_.Stop();
@@ -365,6 +378,13 @@ base::TimeDelta MediaPlayerUMS::GetCurrentTime() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(2);
   return base::TimeDelta::FromSecondsD(umedia_client_->GetCurrentTime());
+}
+
+void MediaPlayerUMS::GetBufferedTimeRanges(
+    GetBufferedTimeRangesCallback callback) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+
+  std::move(callback).Run(GetBufferedTimeRanges());
 }
 
 void MediaPlayerUMS::OnTimeUpdateTimerFired() {

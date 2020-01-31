@@ -112,6 +112,7 @@ class MediaPlayerBaseImpl : public mojom::MediaPlayer {
   void SetDisableAudio(bool) override = 0;
   void SetMediaLayerId(const std::string& media_layer_id) override = 0;
   void RequireMediaResource(RequireMediaResourceCallback callback) override = 0;
+  void GetBufferedTimeRanges(GetBufferedTimeRangesCallback callback) override;
 
   //-----------------------------------------------------------------
   // umediaclient callbacks
