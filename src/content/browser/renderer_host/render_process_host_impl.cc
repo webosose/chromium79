@@ -1852,9 +1852,11 @@ void RenderProcessHostImpl::CreateMessageFilters() {
 #endif
       GetBrowserContext(), storage_partition_impl_, widget_helper_.get());
   AddFilter(render_frame_message_filter_.get());
+#if defined(USE_NEVA_APPRUNTIME)
   // TODO: remove the below line after upatream migration of
   // https://chromium-review.googlesource.com/c/chromium/src/+/1831197/31/content/browser/renderer_host/render_process_host_impl.cc#b1852
   AddFilter(GetPeerConnectionTrackerHost());
+#endif
 #if BUILDFLAG(ENABLE_PLUGINS)
   AddFilter(new PepperRendererConnection(GetID()));
 #endif
@@ -1983,6 +1985,7 @@ void RenderProcessHostImpl::AddCorbExceptionForPlugin(int process_id) {
   AddCorbExceptionForPluginOnIOThread(process_id);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
 // TODO : Use upstream's implementation of
 // RenderProcessHostImpl::GetPeerConnectionTrackerHost()
 // after https://chromium-review.googlesource.com/c/chromium/src/+/1831197
@@ -1993,6 +1996,7 @@ RenderProcessHostImpl::GetPeerConnectionTrackerHost() {
   }
   return peer_connection_tracker_host_.get();
 }
+#endif
 
 void RenderProcessHostImpl::CleanupCorbExceptionForPluginUponDestruction() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
@@ -3718,10 +3722,12 @@ IPC::ChannelProxy* RenderProcessHostImpl::GetChannel() {
   return channel_.get();
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
 void RenderProcessHostImpl::BindPeerConnectionTrackerHost(
     mojo::PendingReceiver<mojom::PeerConnectionTrackerHost> receiver) {
   GetPeerConnectionTrackerHost()->BindReceiver(std::move(receiver));
 }
+#endif
 
 void RenderProcessHostImpl::AddFilter(BrowserMessageFilter* filter) {
   filter->RegisterAssociatedInterfaces(channel_.get());

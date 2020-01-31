@@ -569,7 +569,9 @@ class CONTENT_EXPORT RenderProcessHostImpl
 
   size_t keep_alive_ref_count() const { return keep_alive_ref_count_; }
 
+#if defined(USE_NEVA_APPRUNTIME)
   PeerConnectionTrackerHost* GetPeerConnectionTrackerHost();
+#endif
 
  protected:
   // A proxy for our IPC::Channel that lives on the IO thread.
