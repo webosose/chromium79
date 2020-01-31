@@ -14,13 +14,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "media/blink/neva/mediaplayerneva_factory.h"
-
 #include "base/command_line.h"
 #include "media/base/media_switches_neva.h"
+#include "media/blink/neva/mediaplayerneva_factory.h"
+#include "media/blink/neva/remote_mediaplayer_client.h"
 #include "media/blink/neva/webos/mediaplayer_ums.h"
 #include "net/base/mime_util.h"
-#include "media/blink/neva/mediaplayer_mojo.h"
 
 #if defined(USE_GST_MEDIA)
 #include "media/blink/neva/webos/mediaplayer_camera.h"
@@ -49,11 +48,15 @@ MediaPlayerNeva* MediaPlayerNevaFactory::CreateMediaPlayerNeva(
     MediaPlayerNevaClient* client,
     const pal_media::mojom::MediaPlayerType media_type,
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
-    const std::string& app_id) {
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+    const std::string& app_id,
+    const bool requested_by_remote_service) {
+  if (!requested_by_remote_service &&
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnablePalMediaService)) {
-    return new MediaPlayerMojo(client, media_type, main_task_runner, app_id);
+    return new RemoteMediaPlayerClient(client, media_type, main_task_runner,
+                                       app_id);
   }
+
   switch (media_type) {
 #if defined(USE_GST_MEDIA)
     case pal_media::mojom::MediaPlayerType::kMediaPlayerTypeCamera:

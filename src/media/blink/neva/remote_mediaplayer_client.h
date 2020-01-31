@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEDIA_BLINK_NEVA_MEDIAPLAYER_MOJO_H_
-#define MEDIA_BLINK_NEVA_MEDIAPLAYER_MOJO_H_
+#ifndef MEDIA_BLINK_NEVA_REMOTE_MEDIAPLAYER_CLIENT_H_
+#define MEDIA_BLINK_NEVA_REMOTE_MEDIAPLAYER_CLIENT_H_
 
 #include <map>
 #include <string>
@@ -43,15 +43,17 @@ class RectF;
 
 namespace media {
 
-class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
-                        public pal_media::mojom::MediaPlayerListener,
-                        public MediaPlayerNeva {
+class RemoteMediaPlayerClient
+    : public base::SupportsWeakPtr<RemoteMediaPlayerClient>,
+      public pal_media::mojom::MediaPlayerListener,
+      public MediaPlayerNeva {
  public:
-  explicit MediaPlayerMojo(MediaPlayerNevaClient*,
-                           pal_media::mojom::MediaPlayerType,
-                           const scoped_refptr<base::SingleThreadTaskRunner>&,
-                           const std::string&);
-  ~MediaPlayerMojo() override;
+  explicit RemoteMediaPlayerClient(
+      MediaPlayerNevaClient*,
+      pal_media::mojom::MediaPlayerType,
+      const scoped_refptr<base::SingleThreadTaskRunner>&,
+      const std::string&);
+  ~RemoteMediaPlayerClient() override;
 
   void Initialize(const bool is_video,
                   const double current_time,
@@ -109,7 +111,7 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
   void OnMediaPlayerPlay() override;
   void OnMediaPlayerPause() override;
   void OnPlaybackComplete() override;
-  void OnMediaError(pal_media::mojom::MediaError error_type) override;
+  void OnMediaError(int error) override;
   void OnSeekComplete(base::TimeDelta current_time) override;
   void OnMediaMetadataChanged(base::TimeDelta duration,
                               uint32_t width,
@@ -119,6 +121,7 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
   void OnVideoSizeChanged(uint32_t width, uint32_t height) override;
   void OnCustomMessage(const pal_media::mojom::MediaEventType,
                        const std::string& detail) override;
+  void OnBufferingUpdate(int percentage) override;
   void OnTimeUpdate(base::TimeDelta current_timestamp,
                     base::TimeTicks current_time_ticks) override;
   void OnAudioTracksUpdated(
@@ -154,9 +157,9 @@ class MediaPlayerMojo : public base::SupportsWeakPtr<MediaPlayerMojo>,
   base::Optional<bool> has_audio_focus_;
   base::Optional<bool> has_visibility_;
 
-  DISALLOW_COPY_AND_ASSIGN(MediaPlayerMojo);
+  DISALLOW_COPY_AND_ASSIGN(RemoteMediaPlayerClient);
 };
 
 }  // namespace media
 
-#endif  // MEDIA_BLINK_NEVA_MEDIAPLAYER_MOJO_H_
+#endif  // MEDIA_BLINK_NEVA_REMOTE_MEDIAPLAYER_CLIENT_H_

@@ -54,28 +54,21 @@ enum MediaPlayerType {
   kMediaPlayerTypeStub,
 };
 
-enum MediaError {
-  kMediaErrorNone,
-  kMediaErrorFormat,
-  kMediaErrorDecode,
-  kMediaNotValidForProgressivePlayback,
-  kMediaErrorInvalidCode,
-};
-
 interface MediaPlayerProvider {
-  GetMediaPlayer(MediaPlayerType type, string app_id, MediaPlayer& request);
+  CreateMediaPlayer(MediaPlayerType type, string app_id, MediaPlayer& request);
 };
 
 interface MediaPlayerListener {
   OnMediaPlayerPlay();
   OnMediaPlayerPause();
   OnPlaybackComplete();
-  OnMediaError(MediaError status);
+  OnMediaError(int32 status);
   OnSeekComplete(mojo_base.mojom.TimeDelta time);
   OnMediaMetadataChanged(mojo_base.mojom.TimeDelta time, uint32 width, uint32 height, bool success);
   OnLoadComplete();
   OnVideoSizeChanged(uint32 width, uint32 height);
   OnCustomMessage(MediaEventType media_event_type, string detail);
+  OnBufferingUpdate(int32 percentage);
   OnTimeUpdate(mojo_base.mojom.TimeDelta current_timestamp, mojo_base.mojom.TimeTicks current_time_ticks);
   OnAudioTracksUpdated(array<media.mojom.MediaTrackInfo> audio_track_info);
   OnAudioFocusChanged();

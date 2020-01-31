@@ -14,8 +14,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "neva/pal_media_service/mediaplayer_base_impl.h"
 #include "neva/pal_media_service/pal_media_service.h"
+
+#include "neva/pal_media_service/remote_mediaplayer.h"
 
 namespace pal_media {
 

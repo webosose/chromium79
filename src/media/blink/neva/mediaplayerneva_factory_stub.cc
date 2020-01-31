@@ -26,7 +26,8 @@ pal_media::mojom::MediaPlayerType MediaPlayerNevaFactory::GetMediaPlayerType(
 MediaPlayerNeva* MediaPlayerNevaFactory::CreateMediaPlayerNeva(
     MediaPlayerNevaClient* client,
     const pal_media::mojom::MediaPlayerType media_player_type,
-    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner) {
+    const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
+    const bool requested_by_remote_service) {
   return nullptr;
 }
 

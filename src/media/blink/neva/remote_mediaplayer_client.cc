@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "media/blink/neva/mediaplayer_mojo.h"
+#include "media/blink/neva/remote_mediaplayer_client.h"
 
 #include "base/bind.h"
 #include "base/callback.h"
@@ -37,28 +37,6 @@ namespace media {
   (DCHECK(main_task_runner_->BelongsToCurrentThread()), \
    media::BindToCurrentLoop(base::Bind(function, AsWeakPtr())))
 
-static MediaPlayerNeva::MediaError ConvertPalMediaError(
-    pal_media::mojom::MediaError error_type) {
-  switch (error_type) {
-    case pal_media::mojom::MediaError::kMediaErrorNone:
-      return MediaPlayerNeva::MEDIA_ERROR_NONE;
-
-    case pal_media::mojom::MediaError::kMediaErrorFormat:
-      return MediaPlayerNeva::MEDIA_ERROR_FORMAT;
-
-    case pal_media::mojom::MediaError::kMediaErrorDecode:
-      return MediaPlayerNeva::MEDIA_ERROR_DECODE;
-
-    case pal_media::mojom::MediaError::kMediaNotValidForProgressivePlayback:
-      return MediaPlayerNeva::MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK;
-
-    case pal_media::mojom::MediaError::kMediaErrorInvalidCode:
-    default:
-      return MediaPlayerNeva::MEDIA_ERROR_INVALID_CODE;
-  }
-  return MediaPlayerNeva::MEDIA_ERROR_NONE;
-}
-
 static blink::WebMediaPlayer::MediaEventType ConvertPalMediaEventType(
     pal_media::mojom::MediaEventType event_type) {
   switch (event_type) {
@@ -77,7 +55,7 @@ static blink::WebMediaPlayer::MediaEventType ConvertPalMediaEventType(
   }
 }
 
-MediaPlayerMojo::MediaPlayerMojo(
+RemoteMediaPlayerClient::RemoteMediaPlayerClient(
     MediaPlayerNevaClient* client,
     pal_media::mojom::MediaPlayerType media_player_type,
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
@@ -97,26 +75,26 @@ MediaPlayerMojo::MediaPlayerMojo(
   connector->Connect(pal_media::mojom::kServiceName,
                      provider.BindNewPipeAndPassReceiver());
 
-  provider->GetMediaPlayer(media_player_type, app_id,
-                           mojo::MakeRequest(&media_player_));
-  media_player_->Subscribe(base::BindOnce(&MediaPlayerMojo::OnSubscribeRespond,
-                                          base::Unretained(this)));
+  provider->CreateMediaPlayer(media_player_type, app_id,
+                              mojo::MakeRequest(&media_player_));
+  media_player_->Subscribe(base::BindOnce(
+      &RemoteMediaPlayerClient::OnSubscribeRespond, base::Unretained(this)));
 }
 
-MediaPlayerMojo::~MediaPlayerMojo() {
+RemoteMediaPlayerClient::~RemoteMediaPlayerClient() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
 }
 
-void MediaPlayerMojo::Initialize(const bool is_video,
-                                 const double current_time,
-                                 const std::string& app_id,
-                                 const std::string& url,
-                                 const std::string& mime_type,
-                                 const std::string& referrer,
-                                 const std::string& user_agent,
-                                 const std::string& cookies,
-                                 const std::string& media_option,
-                                 const std::string& custom_option) {
+void RemoteMediaPlayerClient::Initialize(const bool is_video,
+                                         const double current_time,
+                                         const std::string& app_id,
+                                         const std::string& url,
+                                         const std::string& mime_type,
+                                         const std::string& referrer,
+                                         const std::string& user_agent,
+                                         const std::string& cookies,
+                                         const std::string& media_option,
+                                         const std::string& custom_option) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__ << " app_id: " << app_id << " / url: " << url
            << " / media_option: " << media_option;
@@ -127,47 +105,47 @@ void MediaPlayerMojo::Initialize(const bool is_video,
                               custom_option);
 }
 
-void MediaPlayerMojo::Start() {
+void RemoteMediaPlayerClient::Start() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->Start();
 }
 
-void MediaPlayerMojo::Pause() {
+void RemoteMediaPlayerClient::Pause() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->Pause();
 }
 
-void MediaPlayerMojo::Seek(const base::TimeDelta& time) {
+void RemoteMediaPlayerClient::Seek(const base::TimeDelta& time) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->Seek(time);
 }
 
-void MediaPlayerMojo::SetVolume(double volume) {
+void RemoteMediaPlayerClient::SetVolume(double volume) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->SetVolume(volume);
 }
 
-void MediaPlayerMojo::SetPoster(const GURL& poster) {
+void RemoteMediaPlayerClient::SetPoster(const GURL& poster) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
 }
 
-void MediaPlayerMojo::SetRate(double rate) {
+void RemoteMediaPlayerClient::SetRate(double rate) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->SetRate(rate);
 }
 
-void MediaPlayerMojo::SetPreload(MediaPlayerNeva::Preload preload) {
+void RemoteMediaPlayerClient::SetPreload(MediaPlayerNeva::Preload preload) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (!media_player_)
@@ -187,7 +165,8 @@ void MediaPlayerMojo::SetPreload(MediaPlayerNeva::Preload preload) {
   }
 }
 
-bool MediaPlayerMojo::IsPreloadable(const std::string& content_media_option) {
+bool RemoteMediaPlayerClient::IsPreloadable(
+    const std::string& content_media_option) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   bool result;
@@ -197,7 +176,7 @@ bool MediaPlayerMojo::IsPreloadable(const std::string& content_media_option) {
   return false;
 }
 
-bool MediaPlayerMojo::HasVideo() {
+bool RemoteMediaPlayerClient::HasVideo() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   bool result;
@@ -206,7 +185,7 @@ bool MediaPlayerMojo::HasVideo() {
   return false;
 }
 
-bool MediaPlayerMojo::HasAudio() {
+bool RemoteMediaPlayerClient::HasAudio() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   bool result;
@@ -215,8 +194,8 @@ bool MediaPlayerMojo::HasAudio() {
   return false;
 }
 
-bool MediaPlayerMojo::SelectTrack(const MediaTrackType type,
-                                  const std::string& id) {
+bool RemoteMediaPlayerClient::SelectTrack(const MediaTrackType type,
+                                          const std::string& id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (!media_player_)
@@ -225,17 +204,17 @@ bool MediaPlayerMojo::SelectTrack(const MediaTrackType type,
   return true;
 }
 
-void MediaPlayerMojo::SwitchToAutoLayout() {
+void RemoteMediaPlayerClient::SwitchToAutoLayout() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->SwitchToAutoLayout();
 }
 
-void MediaPlayerMojo::SetDisplayWindow(const gfx::Rect& out_rect,
-                                       const gfx::Rect& in_rect,
-                                       bool fullscreen,
-                                       bool forced) {
+void RemoteMediaPlayerClient::SetDisplayWindow(const gfx::Rect& out_rect,
+                                               const gfx::Rect& in_rect,
+                                               bool fullscreen,
+                                               bool forced) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__ << "out_rect:" << out_rect.ToString()
            << " in_rect:" << in_rect.ToString();
@@ -243,7 +222,7 @@ void MediaPlayerMojo::SetDisplayWindow(const gfx::Rect& out_rect,
     media_player_->SetDisplayWindow(out_rect, in_rect, fullscreen, forced);
 }
 
-bool MediaPlayerMojo::UsesIntrinsicSize() const {
+bool RemoteMediaPlayerClient::UsesIntrinsicSize() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   bool result;
   if (media_player_ && media_player_->UsesIntrinsicSize(&result))
@@ -251,7 +230,7 @@ bool MediaPlayerMojo::UsesIntrinsicSize() const {
   return false;
 }
 
-std::string MediaPlayerMojo::MediaId() const {
+std::string RemoteMediaPlayerClient::MediaId() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   std::string result = "";
@@ -260,7 +239,7 @@ std::string MediaPlayerMojo::MediaId() const {
   return result;
 }
 
-bool MediaPlayerMojo::HasAudioFocus() const {
+bool RemoteMediaPlayerClient::HasAudioFocus() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   bool result;
@@ -269,14 +248,14 @@ bool MediaPlayerMojo::HasAudioFocus() const {
   return false;
 }
 
-void MediaPlayerMojo::SetAudioFocus(bool focus) {
+void RemoteMediaPlayerClient::SetAudioFocus(bool focus) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->SetAudioFocus(focus);
 }
 
-bool MediaPlayerMojo::HasVisibility() const {
+bool RemoteMediaPlayerClient::HasVisibility() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   bool result;
@@ -285,14 +264,14 @@ bool MediaPlayerMojo::HasVisibility() const {
   return false;
 }
 
-void MediaPlayerMojo::SetVisibility(bool visibility) {
+void RemoteMediaPlayerClient::SetVisibility(bool visibility) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__ << " visibility=" << visibility;
   if (media_player_)
     media_player_->SetVisibility(visibility);
 }
 
-void MediaPlayerMojo::Suspend(SuspendReason reason) {
+void RemoteMediaPlayerClient::Suspend(SuspendReason reason) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (!media_player_)
@@ -310,14 +289,14 @@ void MediaPlayerMojo::Suspend(SuspendReason reason) {
   }
 }
 
-void MediaPlayerMojo::Resume() {
+void RemoteMediaPlayerClient::Resume() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   DVLOG(1) << __func__;
   if (media_player_)
     media_player_->Resume();
 }
 
-bool MediaPlayerMojo::RequireMediaResource() const {
+bool RemoteMediaPlayerClient::RequireMediaResource() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   bool result;
   if (media_player_ && media_player_->RequireMediaResource(&result))
@@ -325,7 +304,7 @@ bool MediaPlayerMojo::RequireMediaResource() const {
   return false;
 }
 
-bool MediaPlayerMojo::IsRecoverableOnResume() const {
+bool RemoteMediaPlayerClient::IsRecoverableOnResume() const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   bool result;
   if (media_player_ && media_player_->IsRecoverableOnResume(&result))
@@ -333,7 +312,8 @@ bool MediaPlayerMojo::IsRecoverableOnResume() const {
   return false;
 }
 
-media::Ranges<base::TimeDelta> MediaPlayerMojo::GetBufferedTimeRanges() const {
+media::Ranges<base::TimeDelta> RemoteMediaPlayerClient::GetBufferedTimeRanges()
+    const {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   std::vector<pal_media::mojom::TimeDeltaPairPtr> vector_ranges;
   media::Ranges<base::TimeDelta> ranges;
@@ -346,91 +326,99 @@ media::Ranges<base::TimeDelta> MediaPlayerMojo::GetBufferedTimeRanges() const {
   return ranges;
 }
 
-void MediaPlayerMojo::SetDisableAudio(bool disable) {
+void RemoteMediaPlayerClient::SetDisableAudio(bool disable) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   if (media_player_)
     media_player_->SetDisableAudio(disable);
 }
 
-void MediaPlayerMojo::SetMediaLayerId(const std::string& media_layer_id) {
+void RemoteMediaPlayerClient::SetMediaLayerId(
+    const std::string& media_layer_id) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   if (media_player_)
     media_player_->SetMediaLayerId(media_layer_id);
 }
 
-void MediaPlayerMojo::OnMediaPlayerPlay() {
+void RemoteMediaPlayerClient::OnMediaPlayerPlay() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnMediaPlayerPlay();
 }
 
-void MediaPlayerMojo::OnMediaPlayerPause() {
+void RemoteMediaPlayerClient::OnMediaPlayerPause() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnMediaPlayerPause();
 }
 
-void MediaPlayerMojo::OnPlaybackComplete() {
+void RemoteMediaPlayerClient::OnPlaybackComplete() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnPlaybackComplete();
 }
 
-void MediaPlayerMojo::OnMediaError(pal_media::mojom::MediaError error_type) {
+void RemoteMediaPlayerClient::OnMediaError(int error) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  client_->OnMediaError(ConvertPalMediaError(error_type));
+  client_->OnMediaError(error);
 }
 
-void MediaPlayerMojo::OnSeekComplete(base::TimeDelta current_time) {
+void RemoteMediaPlayerClient::OnSeekComplete(base::TimeDelta current_time) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnSeekComplete(current_time);
 }
 
-void MediaPlayerMojo::OnMediaMetadataChanged(base::TimeDelta duration,
-                                             uint32_t width,
-                                             uint32_t height,
-                                             bool success) {
+void RemoteMediaPlayerClient::OnMediaMetadataChanged(base::TimeDelta duration,
+                                                     uint32_t width,
+                                                     uint32_t height,
+                                                     bool success) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnMediaMetadataChanged(duration, width, height, success);
 }
 
-void MediaPlayerMojo::OnLoadComplete() {
+void RemoteMediaPlayerClient::OnLoadComplete() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnLoadComplete();
 }
 
-void MediaPlayerMojo::OnVideoSizeChanged(uint32_t width, uint32_t height) {
+void RemoteMediaPlayerClient::OnVideoSizeChanged(uint32_t width,
+                                                 uint32_t height) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnVideoSizeChanged(width, height);
 }
 
-void MediaPlayerMojo::OnCustomMessage(
+void RemoteMediaPlayerClient::OnCustomMessage(
     const pal_media::mojom::MediaEventType media_event_type,
     const std::string& detail) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnCustomMessage(ConvertPalMediaEventType(media_event_type), detail);
 }
 
-void MediaPlayerMojo::OnTimeUpdate(base::TimeDelta current_timestamp,
-                                   base::TimeTicks current_time_ticks) {
+void RemoteMediaPlayerClient::OnBufferingUpdate(int percentage) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  client_->OnBufferingUpdate(percentage);
+}
+
+void RemoteMediaPlayerClient::OnTimeUpdate(base::TimeDelta current_timestamp,
+                                           base::TimeTicks current_time_ticks) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnTimeUpdate(current_timestamp, current_time_ticks);
 }
 
-void MediaPlayerMojo::OnAudioTracksUpdated(
+void RemoteMediaPlayerClient::OnAudioTracksUpdated(
     const std::vector<media::MediaTrackInfo>& audio_track_info) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnAudioTracksUpdated(audio_track_info);
 }
 
-void MediaPlayerMojo::OnAudioFocusChanged() {
+void RemoteMediaPlayerClient::OnAudioFocusChanged() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnAudioFocusChanged();
 }
 
-void MediaPlayerMojo::OnActiveRegionChanged(const gfx::Rect& active_region) {
+void RemoteMediaPlayerClient::OnActiveRegionChanged(
+    const gfx::Rect& active_region) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   client_->OnActiveRegionChanged(active_region);
 }
 
-void MediaPlayerMojo::OnSubscribeRespond(
+void RemoteMediaPlayerClient::OnSubscribeRespond(
     pal_media::mojom::MediaPlayerListenerAssociatedRequest request) {
   listener_binding_.Bind(std::move(request));
 }

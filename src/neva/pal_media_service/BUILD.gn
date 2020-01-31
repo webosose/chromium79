@@ -19,18 +19,15 @@ import("//services/service_manager/public/cpp/service_executable.gni")
 
 component("pal_media_service") {
   sources = [
-    "media_track_info.h",
-    "mediaplayer_base_impl.cc",
-    "mediaplayer_base_impl.h",
     "neva_pal_media_manifest.cc",
     "neva_pal_media_manifest.h",
-    "pal_media_player_factory.cc",
-    "pal_media_player_factory.h",
+    "pal_media_service.cc",
+    "pal_media_service.h",
     "pal_media_service_export.h",
     "pal_media_service_factory.cc",
     "pal_media_service_factory.h",
-    "pal_media_service.cc",
-    "pal_media_service.h",
+    "remote_mediaplayer.cc",
+    "remote_mediaplayer.h",
     "weak_function.h",
   ]
 
@@ -38,7 +35,7 @@ component("pal_media_service") {
     "//base",
     "//media/base",
     "//neva/emulator",
- ]
+  ]
 
   public_deps = [
     "//mojo/public/cpp/bindings",
@@ -51,17 +48,4 @@ component("pal_media_service") {
   ]
 
   defines = [ "PAL_MEDIA_SERVICE_IMPLEMENTATION" ]
-
-  if (is_webos && use_neva_media) {
-    import ("//neva/pal_media_service/webos/webos.gni")
-    configs += webos.configs
-    defines += webos.defines
-    deps += webos.deps
-    public_deps += webos.public_deps
-    sources += webos.sources
-  } else {
-    sources += [
-      "mediaplayer_stub.h",
-    ]
-  }
 }
