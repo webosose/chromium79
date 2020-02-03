@@ -25,6 +25,8 @@
 
 namespace neva_app_runtime {
 
+class AppRuntimeRenderViewObserver;
+
 class AppRuntimeRenderFrameObserver : public content::RenderFrameObserver,
                                       public mojom::AppRuntimeWebViewClient {
  public:
@@ -58,6 +60,8 @@ class AppRuntimeRenderFrameObserver : public content::RenderFrameObserver,
   bool dom_suspended_ = false;
   InjectionLoader injection_loader_;
   std::unique_ptr<blink::WebScopedPagePauser> page_pauser_;
+
+  std::unique_ptr<AppRuntimeRenderViewObserver> render_view_observer_;
 
   mojo::AssociatedReceiver<mojom::AppRuntimeWebViewClient> receiver_{this};
 };

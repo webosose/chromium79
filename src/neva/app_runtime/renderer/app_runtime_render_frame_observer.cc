@@ -20,6 +20,7 @@
 #include "content/public/common/web_preferences.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_view.h"
+#include "content/public/renderer/render_view_observer.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "third_party/blink/public/platform/web_size.h"
@@ -40,9 +41,32 @@
 
 namespace neva_app_runtime {
 
+// RenderViewObserver is needed so that we can catch actual navigation
+// control frame where we can install injections (For example iframes).
+class AppRuntimeRenderViewObserver : public content::RenderViewObserver {
+ public:
+  AppRuntimeRenderViewObserver(content::RenderView* render_view,
+                               InjectionLoader* injection_loader)
+      : content::RenderViewObserver(render_view),
+        injection_loader_(injection_loader) {}
+
+  void OnDestruct() override{};
+
+  void DidClearWindowObject(blink::WebLocalFrame* frame) override {
+    // Load injections to all frame include iframes
+    injection_loader_->Load(frame);
+  }
+
+ private:
+  InjectionLoader* injection_loader_;
+};
+
 AppRuntimeRenderFrameObserver::AppRuntimeRenderFrameObserver(
     content::RenderFrame* render_frame)
-    : content::RenderFrameObserver(render_frame) {
+    : content::RenderFrameObserver(render_frame),
+      render_view_observer_(
+          new AppRuntimeRenderViewObserver(render_frame->GetRenderView(),
+                                           &injection_loader_)) {
   render_frame->GetAssociatedInterfaceRegistry()->AddInterface(
       base::Bind(&AppRuntimeRenderFrameObserver::BindPendingReceiver,
                  base::Unretained(this)));
@@ -140,8 +164,6 @@ void AppRuntimeRenderFrameObserver::DidClearWindowObject() {
   mojo::AssociatedRemote<mojom::AppRuntimeWebViewHost> interface;
   render_frame()->GetRemoteAssociatedInterfaces()->GetInterface(&interface);
   interface->DidClearWindowObject();
-
-  injection_loader_.Load(render_frame()->GetWebFrame());
 }
 
 void AppRuntimeRenderFrameObserver::GrantLoadLocalResources() {
