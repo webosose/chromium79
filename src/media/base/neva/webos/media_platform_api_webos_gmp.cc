@@ -604,7 +604,8 @@ void MediaPlatformAPIWebOSGmp::PlayInternal() {
   VLOG(1);
 
   if (load_completed_) {
-    media_player_client_->SetPlaybackRate(playback_rate_);
+    if (playback_rate_ > 0.0f)
+      media_player_client_->SetPlaybackRate(playback_rate_);
     media_player_client_->Play();
     SetState(State::PLAYING);
   }
