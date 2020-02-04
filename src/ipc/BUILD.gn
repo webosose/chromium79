@@ -103,7 +103,6 @@ component("ipc") {
 
   deps = [
     "//base",
-    "//mojo/public/cpp/bindings",
   ]
 
   if (enable_ipc_fuzzer) {
