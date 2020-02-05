@@ -26,6 +26,15 @@ namespace {
 
 std::map<std::string, std::weak_ptr<Client>> g_clients_table;
 
+void CleanClientsTable() {
+  for (auto it = g_clients_table.begin(); it != g_clients_table.end();) {
+    if (it->second.expired())
+      it = g_clients_table.erase(it);
+    else
+      ++it;
+  }
+}
+
 }  // namespace
 
 Client::~Client() {}
@@ -43,9 +52,15 @@ std::shared_ptr<Client> GetSharedClient(const Client::Params& params) {
       else
         return std::shared_ptr<Client>();
     }
+  } else {
+    // To avoid a large accumulation of expired weak pointers and string
+    // keys to them.
+    CleanClientsTable();
   }
 
-  auto new_client = std::make_shared<ClientImpl>(params);
+  // We don't use make_shared to release memory allocated for ClientImpl
+  // as soon as last related shared_ptr has been removed.
+  std::shared_ptr<ClientImpl> new_client(new ClientImpl(params));
   g_clients_table[params.name] = std::weak_ptr<Client>(new_client);
   return new_client;
 }
