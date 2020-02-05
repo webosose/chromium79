@@ -603,6 +603,14 @@ bool FlexLayoutAlgorithm::ShouldApplyMinSizeAutoForChild(
   if (StyleRef().IsDeprecatedWebkitBox())
     return false;
 
+#if defined(OS_WEBOS)
+  // For webOS we also discard any child flexible box, for compatibility
+  // as enact 2.x did not set min-height on them to 0 when needed, and
+  // artifacts were visible. Drop this once new enact versions are used.
+  if (IsColumnFlow() && child.IsFlexibleBox())
+    return false;
+#endif
+
   return !child.ShouldApplySizeContainment() &&
          MainAxisOverflowForChild(child) == EOverflow::kVisible;
 }
