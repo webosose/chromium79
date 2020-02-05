@@ -27,6 +27,7 @@
 #include "media/base/bind_to_current_loop.h"
 #include "media/base/neva/media_constants.h"
 #include "media/base/neva/media_platform_api.h"
+#include "media/base/neva/media_platform_prefs.h"
 #include "media/base/renderer_factory_selector.h"
 #include "media/blink/neva/video_util_neva.h"
 #include "media/blink/webcontentdecryptionmodule_impl.h"
@@ -465,6 +466,10 @@ void WebMediaPlayerMSE::SetRenderMode(blink::WebMediaPlayer::RenderMode mode) {
 void WebMediaPlayerMSE::SetDisableAudio(bool disable) {
   LOG(INFO) << __func__ << " disable=" << disable;
   media_platform_api_->SetDisableAudio(disable);
+}
+
+bool WebMediaPlayerMSE::UsesIntrinsicSize() const {
+  return !MediaPlatformPrefs::Get()->IsDisableVideoIntrinsicSizeForMSE();
 }
 
 }  // namespace media

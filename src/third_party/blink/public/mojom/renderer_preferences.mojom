@@ -162,6 +162,9 @@ struct RendererPreferences {
   // Media Codec Capability
   string media_codec_capability;
 
+  // Media Option Preferences
+  string media_preferences;
+
   // Board type
   string board_type;
 

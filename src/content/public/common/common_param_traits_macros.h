@@ -370,6 +370,7 @@ IPC_STRUCT_TRAITS_BEGIN(blink::mojom::RendererPreferences)
 ///@{
   IPC_STRUCT_TRAITS_MEMBER(application_id)
   IPC_STRUCT_TRAITS_MEMBER(media_codec_capability)
+  IPC_STRUCT_TRAITS_MEMBER(media_preferences)
   IPC_STRUCT_TRAITS_MEMBER(board_type)
   IPC_STRUCT_TRAITS_MEMBER(allow_fake_bold_text)
   IPC_STRUCT_TRAITS_MEMBER(file_security_origin)

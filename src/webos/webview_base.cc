@@ -277,6 +277,10 @@ void WebViewBase::SetMediaCodecCapability(const std::string& capability) {
   webview_->SetMediaCodecCapability(capability);
 }
 
+void WebViewBase::SetMediaPreferences(const std::string& preferences) {
+  webview_->SetMediaPreferences(preferences);
+}
+
 void WebViewBase::SetSearchKeywordForCustomPlayer(bool enabled) {
   webview_->SetSearchKeywordForCustomPlayer(enabled);
 }

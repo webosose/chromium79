@@ -136,6 +136,7 @@ class WebView : public content::WebContentsDelegate,
   void SetTransparentBackground(bool enable);
   void SetBoardType(const std::string& board_type);
   void SetMediaCodecCapability(const std::string& capability);
+  void SetMediaPreferences(const std::string& preferences);
   void SetSearchKeywordForCustomPlayer(bool enabled);
   void SetSupportDolbyHDRContents(bool support);
   void SetUseUnlimitedMediaPolicy(bool enabled);

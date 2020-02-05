@@ -186,6 +186,7 @@ class WEBOS_EXPORT WebViewBase
   void SetAcceptLanguages(const std::string& lauguages);
   void SetBoardType(const std::string& board_type);
   void SetMediaCodecCapability(const std::string& capability);
+  void SetMediaPreferences(const std::string& preferences);
   void SetSearchKeywordForCustomPlayer(bool enabled);
   void SetSupportDolbyHDRContents(bool support);
   void SetUseUnlimitedMediaPolicy(bool enabled);

@@ -495,6 +495,13 @@ void WebView::SetMediaCodecCapability(const std::string& capability) {
   renderer_prefs->media_codec_capability = capability;
 }
 
+void WebView::SetMediaPreferences(const std::string& preferences) {
+  blink::mojom::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  if (renderer_prefs->media_preferences != preferences)
+    renderer_prefs->media_preferences = preferences;
+}
+
 void WebView::SetSearchKeywordForCustomPlayer(bool enabled) {
   NOTIMPLEMENTED();
   // TODO(jose.dapena): patch not ported

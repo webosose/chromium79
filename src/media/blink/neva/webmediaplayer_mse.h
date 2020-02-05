@@ -118,6 +118,8 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
 
   void OnSetCdm(blink::WebContentDecryptionModule* cdm) override;
 
+  bool UsesIntrinsicSize() const override;
+
  private:
   enum StatusOnSuspended {
     UnknownStatus = 0,

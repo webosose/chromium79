@@ -26,6 +26,8 @@ neva = {
       "$_dir/media_constants.h",
       "$_dir/media_platform_api.cc",
       "$_dir/media_platform_api.h",
+      "$_dir/media_platform_prefs.cc",
+      "$_dir/media_platform_prefs.h",
       "$_dir/media_track_info.cc",
       "$_dir/media_track_info.h",
       "$_dir/media_type_restriction.h",

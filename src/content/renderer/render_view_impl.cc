@@ -195,6 +195,7 @@
 
 #if defined(USE_NEVA_MEDIA)
 #include "media/base/neva/media_platform_api.h"
+#include "media/base/neva/media_platform_prefs.h"
 #endif
 
 #if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
@@ -1988,6 +1989,10 @@ void RenderViewImpl::OnSetRendererPrefs(
   std::string media_codec_capability = renderer_preferences_.media_codec_capability;
   if(!media_codec_capability.empty())
     media::MediaPlatformAPI::SetMediaCodecCapability(media_codec_capability);
+
+  if (!renderer_preferences_.media_preferences.empty())
+    media::MediaPlatformPrefs::Get()->Update(
+        renderer_preferences_.media_preferences);
 #endif
 
 #if defined(USE_NEVA_APPRUNTIME)
