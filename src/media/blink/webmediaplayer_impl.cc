@@ -3056,8 +3056,12 @@ WebMediaPlayerImpl::UpdatePlayState_ComputePlayState(bool is_flinging,
   } else if (paused_) {
     // TODO(sandersd): Is it possible to have a suspended session, be ended,
     // and not be paused? If so we should be in a PLAYING state.
+#if defined(USE_NEVA_MEDIA)
+    result.delegate_state = DelegateState::PAUSED;
+#else
     result.delegate_state =
         ended_ ? DelegateState::GONE : DelegateState::PAUSED;
+#endif
     result.is_idle = !seeking_;
   } else {
     result.delegate_state = DelegateState::PLAYING;
