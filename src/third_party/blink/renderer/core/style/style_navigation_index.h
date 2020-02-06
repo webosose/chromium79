@@ -17,8 +17,8 @@
 #ifndef THIRD_PARTY_BLINK_RENDERER_CORE_STYLE_STYLE_NAVIGATION_INDEX_H_
 #define THIRD_PARTY_BLINK_RENDERER_CORE_STYLE_STYLE_NAVIGATION_INDEX_H_
 
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_refptr.h"
+#include "third_party/blink/renderer/platform/wtf/ref_counted.h"
 
 namespace blink {
 
