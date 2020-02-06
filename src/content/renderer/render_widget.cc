@@ -3643,7 +3643,17 @@ class ReportTimeSwapPromise : public cc::SwapPromise {
 };
 
 void RenderWidget::NotifySwapTime(ReportTimeCallback callback) {
+#if defined(OS_WEBOS)
+  // Splash screen detection in webOS depends on FMP, but FMP is
+  // now happening after first presentation has happened (so it
+  // will not actually dismiss splash as expected). As we are
+  // not using the histograms, this change just makes
+  // the swap events (and FMP) be emitted immediately,
+  // unbreaking splash.
+  NotifySwapAndPresentationTime(std::move(callback), base::NullCallback());
+#else
   NotifySwapAndPresentationTime(base::NullCallback(), std::move(callback));
+#endif
 }
 
 void RenderWidget::SetEventListenerProperties(
