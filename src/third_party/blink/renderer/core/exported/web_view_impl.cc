@@ -3415,6 +3415,14 @@ PageScheduler* WebViewImpl::Scheduler() const {
 
 #if defined(USE_NEVA_APPRUNTIME)
 void WebViewImpl::SetLaunchingVisibilityState(bool is_hidden, bool is_launching) {
+  // TODO(NEVA): The following condition is to resolve the visibilitychange
+  // issue. It ensures that the visibilitychange event dispatched before
+  // resuming the page is cancelled. However, SetIsHidden() has been renamed
+  // to GetVisibilityState() since M80. Refer to the following patch link.
+  // https://chromium-review.googlesource.com/c/chromium/src/+/1898471
+  // In the next upgrade, we should properly handle this fixing the conflict.
+  if (!IsActive() && !is_launching)
+    return;
   SetIsHidden(is_hidden || is_launching, is_launching);
   WebWidgetClient* widget_client = MainFrameImpl()->LocalRootFrameWidget()->Client();
   if (widget_client)
