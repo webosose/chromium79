@@ -2153,7 +2153,8 @@ void RenderWidgetHostViewAura::UpdateCursorIfOverSelf() {
 bool RenderWidgetHostViewAura::SynchronizeVisualProperties(
     const cc::DeadlinePolicy& deadline_policy,
     const base::Optional<viz::LocalSurfaceIdAllocation>&
-        child_local_surface_id_allocation) {
+        child_local_surface_id_allocation,
+    bool ignore_pending_ack) {
   DCHECK(window_);
   window_->UpdateLocalSurfaceIdFromEmbeddedClient(
       child_local_surface_id_allocation);
@@ -2166,6 +2167,11 @@ bool RenderWidgetHostViewAura::SynchronizeVisualProperties(
     delegated_frame_host_->EmbedSurface(
         GetLocalSurfaceIdAllocation().local_surface_id(),
         window_->bounds().size(), deadline_policy);
+  }
+
+  if (ignore_pending_ack) {
+    host()->SynchronizeVisualPropertiesIgnoringPendingAck();
+    return true;
   }
   return host()->SynchronizeVisualProperties();
 }
@@ -2306,8 +2312,19 @@ void RenderWidgetHostViewAura::InternalSetBounds(const gfx::Rect& rect) {
   // Even if not showing yet, we need to synchronize on size. As the renderer
   // needs to begin layout. Waiting until we show to start layout leads to
   // significant delays in embedding the first shown surface (500+ ms.)
+  bool ignore_pending_ack = false;
+#if defined(OS_WEBOS)
+  // In webOS some applications need changed bounds already when loading
+  // for the first time before showing.in order to determine layout style for
+  // the rest of the application life time. Thus ignoe possibly pending
+  // synchronize visual properties ack and force new visual properties to be
+  // pushed to renderer.
+  if (in_bounds_changed_ && !IsShowing())
+    ignore_pending_ack = true;
+#endif
   SynchronizeVisualProperties(cc::DeadlinePolicy::UseDefaultDeadline(),
-                              window_->GetLocalSurfaceIdAllocation());
+                              window_->GetLocalSurfaceIdAllocation(),
+                              ignore_pending_ack);
 
 #if defined(OS_WIN)
   UpdateLegacyWin();
