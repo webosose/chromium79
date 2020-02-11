@@ -260,8 +260,6 @@ const char WebOSServiceBridgeInjectionExtension::kInjectionName[] =
     "v8/webosservicebridge";
 const char WebOSServiceBridgeInjectionExtension::kObsoleteName[] =
     "v8/palmservicebridge";
-std::unique_ptr<WebOSServiceBridgeProperties>
-    WebOSServiceBridgeInjectionExtension::properties_;
 
 
 void WebOSServiceBridgeInjectionExtension::Install(
@@ -276,9 +274,9 @@ void WebOSServiceBridgeInjectionExtension::Install(
   v8::Local<v8::Object> global = context->Global();
 
   v8::Local<v8::FunctionTemplate> templ = gin::CreateConstructorTemplate(
-      isolate, base::Bind(
-          &WebOSServiceBridgeInjectionExtension::
-              WebOSServiceBridgeConstructorCallback));
+      isolate, base::BindRepeating(&WebOSServiceBridgeInjectionExtension::
+                                       WebOSServiceBridgeConstructorCallback,
+                                   frame));
 
   global
       ->Set(context, gin::StringToSymbol(isolate, kWebOSServiceBridge),
@@ -294,8 +292,6 @@ void WebOSServiceBridgeInjectionExtension::Install(
       context, gin::StringToV8(isolate, extra_objects_js.c_str()));
   if (script.ToLocal(&local_script))
     local_script->Run(context);
-
-  properties_ = std::make_unique<WebOSServiceBridgeProperties>(frame);
 }
 
 // static
@@ -318,7 +314,6 @@ void WebOSServiceBridgeInjectionExtension::Uninstall(
 
   if (script.ToLocal(&local_script))
     local_script->Run(context);
-  properties_.reset();
 }
 
 // static
@@ -338,17 +333,20 @@ void WebOSServiceBridgeInjectionExtension::SetAppInClosing(bool closing) {
 
 // static
 void WebOSServiceBridgeInjectionExtension::
-    WebOSServiceBridgeConstructorCallback(gin::Arguments* args) {
+    WebOSServiceBridgeConstructorCallback(blink::WebLocalFrame* frame,
+                                          gin::Arguments* args) {
   if (!args->IsConstructCall()) {
     args->isolate()->ThrowException(v8::Exception::Error(
         gin::StringToV8(args->isolate(), kMethodInvocationAsConstructorOnly)));
     return;
   }
 
-  if (!properties_)
+  std::unique_ptr<WebOSServiceBridgeProperties> properties =
+      std::make_unique<WebOSServiceBridgeProperties>(frame);
+  if (!properties)
     return;
 
-  std::string appid = properties_->GetIdentifier();
+  std::string appid = properties->GetIdentifier();
 
   v8::Isolate* isolate = args->isolate();
   v8::HandleScope handle_scope(isolate);

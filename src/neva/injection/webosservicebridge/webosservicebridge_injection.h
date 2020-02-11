@@ -28,8 +28,6 @@ class WebLocalFrame;
 
 namespace injections {
 
-class WebOSServiceBridgeProperties;
-
 class WEBOSSERVICEBRIDGE_EXPORT WebOSServiceBridgeInjectionExtension {
  public:
   static const char kInjectionName[];
@@ -43,8 +41,8 @@ class WEBOSSERVICEBRIDGE_EXPORT WebOSServiceBridgeInjectionExtension {
   static void SetAppInClosing(bool closing);
 
  private:
-  static void WebOSServiceBridgeConstructorCallback(gin::Arguments* args);
-  static std::unique_ptr<WebOSServiceBridgeProperties> properties_;
+  static void WebOSServiceBridgeConstructorCallback(blink::WebLocalFrame* frame,
+                                                    gin::Arguments* args);
 };
 
 }  // namespace injections
