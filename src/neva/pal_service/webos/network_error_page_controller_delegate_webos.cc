@@ -51,6 +51,8 @@ NetworkErrorPageControllerDelegateWebOS::
   using namespace luna;
   Client::Params params;
   params.bus = Bus::Private;
+  params.name =
+      luna::GetServiceNameWithRandSuffix(service_name::kSettingsClient, "-");
   luna_client_ = CreateClient(params);
 }
 
