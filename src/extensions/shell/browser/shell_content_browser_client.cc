@@ -14,6 +14,7 @@
 #include "base/task/post_task.h"
 #include "components/guest_view/browser/guest_view_message_filter.h"
 #include "components/nacl/common/buildflags.h"
+#include "components/network_session_configurator/common/network_switches.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -281,6 +282,9 @@ void ShellContentBrowserClient::AppendExtraCommandLineSwitches(
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           ::switches::kOzoneWaylandUseXDGShell))
     command_line->AppendSwitch(::switches::kOzoneWaylandUseXDGShell);
+#endif
+#if defined(OS_WEBOS)
+  command_line->AppendSwitch(::switches::kDisableQuic);
 #endif
 }
 
@@ -560,6 +564,13 @@ void ShellContentBrowserClient::RunServiceInstance(
         pal_media::CreatePalMediaService(std::move(*receiver)));
 #endif
   }
+}
+
+void ShellContentBrowserClient::OnNetworkServiceCreated(
+    network::mojom::NetworkService* network_service) {
+#if defined(OS_WEBOS)
+  network_service->DisableQuic();
+#endif
 }
 
 mojo::Remote<network::mojom::NetworkContext>

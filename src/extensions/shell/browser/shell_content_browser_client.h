@@ -108,6 +108,8 @@ class ShellContentBrowserClient : public content::ContentBrowserClient {
       const service_manager::Identity& identity,
       mojo::PendingReceiver<service_manager::mojom::Service>* receiver)
       override;
+  void OnNetworkServiceCreated(
+      network::mojom::NetworkService* network_service) override;
   mojo::Remote<network::mojom::NetworkContext> CreateNetworkContext(
       content::BrowserContext* context,
       bool in_memory,
