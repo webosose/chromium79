@@ -120,6 +120,9 @@ class AppRuntimeContentBrowserClient : public content::ContentBrowserClient {
       bool in_memory,
       const base::FilePath& relative_partition_path) override;
 
+  void OnNetworkServiceCreated(
+      network::mojom::NetworkService* network_service) override;
+
   AppRuntimeBrowserMainParts* GetMainParts() { return main_parts_; }
 
   void SetProxyServer(const ProxySettings& proxy_settings);
