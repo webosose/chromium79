@@ -202,12 +202,21 @@ class FileURLDirectoryLoader
       return;
     }
 
+#if defined(USE_NEVA_APPRUNTIME)
+    if (!GetContentClient()->browser()->IsFileAccessAllowedForRequest(
+            path_, base::MakeAbsoluteFilePath(path_), profile_path, request)) {
+      client->OnComplete(
+          network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED));
+      return;
+    }
+#else
     if (!GetContentClient()->browser()->IsFileAccessAllowed(
             path_, base::MakeAbsoluteFilePath(path_), profile_path)) {
       client->OnComplete(
           network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED));
       return;
     }
+#endif
 
     mojo::DataPipe pipe(kDefaultFileUrlPipeSize);
     if (!pipe.consumer_handle.is_valid()) {
