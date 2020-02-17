@@ -17,10 +17,16 @@ namespace content {
 class BackgroundTracingAgentClientImpl
     : public tracing::mojom::BackgroundTracingAgentClient {
  public:
+#if defined(USE_NEVA_APPRUNTIME)
+  static void Create(
+      int child_process_id,
+      mojo::Remote<tracing::mojom::BackgroundTracingAgentProvider> provider);
+#else
   static void Create(
       int child_process_id,
       mojo::PendingRemote<tracing::mojom::BackgroundTracingAgentProvider>
           pending_provider);
+#endif
 
   ~BackgroundTracingAgentClientImpl() override;
 

@@ -16,6 +16,10 @@
 #include "content/public/browser/background_tracing_manager.h"
 #include "services/tracing/public/cpp/perfetto/trace_event_data_source.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "components/tracing/common/background_tracing_agent.mojom.h"
+#endif
+
 namespace base {
 template <typename T>
 class NoDestructor;
@@ -153,7 +157,15 @@ class BackgroundTracingManagerImpl : public BackgroundTracingManager {
       bool privacy_filtering_enabled);
   bool IsTriggerHandleValid(TriggerHandle handle) const;
   void OnScenarioAborted();
+#if defined(USE_NEVA_APPRUNTIME)
+  static void AddPendingAgentConstructor(
+      int child_process_id,
+      mojo::PendingRemote<tracing::mojom::BackgroundTracingAgentProvider>
+          provider);
+  static void ClearPendingAgentConstructor(int child_process_id);
+#else
   static void AddPendingAgentConstructor(base::OnceClosure constructor);
+#endif
   void MaybeConstructPendingAgents();
 
   std::unique_ptr<BackgroundTracingActiveScenario> active_scenario_;
@@ -168,7 +180,11 @@ class BackgroundTracingManagerImpl : public BackgroundTracingManager {
   std::set<tracing::mojom::BackgroundTracingAgent*> agents_;
   std::set<AgentObserver*> agent_observers_;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  std::map<int, base::OnceClosure> pending_agent_constructors_;
+#else
   std::vector<base::OnceClosure> pending_agent_constructors_;
+#endif
 
   IdleCallback idle_callback_;
   base::RepeatingClosure tracing_enabled_callback_for_testing_;

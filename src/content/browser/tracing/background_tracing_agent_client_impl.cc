@@ -14,17 +14,27 @@
 namespace content {
 
 // static
+#if defined(USE_NEVA_APPRUNTIME)
+void BackgroundTracingAgentClientImpl::Create(
+    int child_process_id,
+    mojo::Remote<tracing::mojom::BackgroundTracingAgentProvider> provider) {
+#else
 void BackgroundTracingAgentClientImpl::Create(
     int child_process_id,
     mojo::PendingRemote<tracing::mojom::BackgroundTracingAgentProvider>
         pending_provider) {
+#endif
   mojo::PendingRemote<tracing::mojom::BackgroundTracingAgentClient> client;
   auto client_receiver = client.InitWithNewPipeAndPassReceiver();
 
   mojo::Remote<tracing::mojom::BackgroundTracingAgent> agent;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  provider.set_disconnect_handler(base::OnceCallback<void()>());
+#else
   mojo::Remote<tracing::mojom::BackgroundTracingAgentProvider> provider(
       std::move(pending_provider));
+#endif
   provider->Create(ChildProcessHostImpl::ChildProcessUniqueIdToTracingProcessId(
                        child_process_id),
                    std::move(client), agent.BindNewPipeAndPassReceiver());

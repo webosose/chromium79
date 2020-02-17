@@ -71,6 +71,12 @@ void BackgroundTracingManagerImpl::ActivateForProcess(
   child_process->GetBackgroundTracingAgentProvider(
       pending_provider.InitWithNewPipeAndPassReceiver());
 
+#if defined(USE_NEVA_APPRUNTIME)
+  base::PostTask(
+      FROM_HERE, {BrowserThread::UI},
+      base::BindOnce(&BackgroundTracingManagerImpl::AddPendingAgentConstructor,
+                     child_process_id,  std::move(pending_provider)));
+#else
   auto constructor =
       base::BindOnce(&BackgroundTracingAgentClientImpl::Create,
                      child_process_id, std::move(pending_provider));
@@ -79,6 +85,7 @@ void BackgroundTracingManagerImpl::ActivateForProcess(
       FROM_HERE, {BrowserThread::UI},
       base::BindOnce(&BackgroundTracingManagerImpl::AddPendingAgentConstructor,
                      std::move(constructor)));
+#endif
 }
 
 BackgroundTracingManagerImpl::BackgroundTracingManagerImpl()
@@ -456,6 +463,40 @@ void BackgroundTracingManagerImpl::OnScenarioAborted() {
   }
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+// static
+void BackgroundTracingManagerImpl::AddPendingAgentConstructor(
+    int child_process_id,
+    mojo::PendingRemote<tracing::mojom::BackgroundTracingAgentProvider>
+        pending_provider) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+
+  mojo::Remote<tracing::mojom::BackgroundTracingAgentProvider> provider(
+      std::move(pending_provider));
+  provider.set_disconnect_handler(base::BindOnce(
+      &BackgroundTracingManagerImpl::ClearPendingAgentConstructor,
+      child_process_id));
+
+  // Stash away the parameters here, and delay agent initialization until we
+  // have an interested AgentObserver.
+
+  auto constructor = base::BindOnce(&BackgroundTracingAgentClientImpl::Create,
+                                    child_process_id, std::move(provider));
+
+  GetInstance()->pending_agent_constructors_[child_process_id] =
+      std::move(constructor);
+  GetInstance()->MaybeConstructPendingAgents();
+  DVLOG(1) << __func__ << " # pending ctor="
+           << GetInstance()->pending_agent_constructors_.size();
+}
+
+// static
+void BackgroundTracingManagerImpl::ClearPendingAgentConstructor(
+    int child_process_id) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  GetInstance()->pending_agent_constructors_.erase(child_process_id);
+}
+#else
 // static
 void BackgroundTracingManagerImpl::AddPendingAgentConstructor(
     base::OnceClosure constructor) {
@@ -467,6 +508,7 @@ void BackgroundTracingManagerImpl::AddPendingAgentConstructor(
   GetInstance()->pending_agent_constructors_.push_back(std::move(constructor));
   GetInstance()->MaybeConstructPendingAgents();
 }
+#endif
 
 void BackgroundTracingManagerImpl::MaybeConstructPendingAgents() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
@@ -474,8 +516,13 @@ void BackgroundTracingManagerImpl::MaybeConstructPendingAgents() {
   if (agent_observers_.empty())
     return;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  for (auto& constructor : pending_agent_constructors_)
+    std::move(constructor.second).Run();
+#else
   for (auto& constructor : pending_agent_constructors_)
     std::move(constructor).Run();
+#endif
   pending_agent_constructors_.clear();
 }
 
