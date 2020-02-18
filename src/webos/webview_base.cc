@@ -16,10 +16,11 @@
 
 #include "webos/webview_base.h"
 
-#include "base/task/post_task.h"
+#include <unordered_map>
+
 #include "base/unguessable_token.h"
 #include "content/browser/web_contents/web_contents_impl.h"
-#include "content/public/browser/browser_task_traits.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
@@ -32,7 +33,6 @@
 #include "neva/app_runtime/webview_profile.h"
 #include "ui/display/display.h"
 #include "ui/display/screen.h"
-#include "webos/browser/webos_webview_renderer_state.h"
 #include "webos/common/webos_event.h"
 
 namespace {
@@ -42,6 +42,21 @@ static const char kCachedDisplayTitle[] = "index.html";
 }  // namespace
 
 namespace webos {
+
+namespace {
+
+// <process id, routing id>
+using RenderId = std::pair<int32_t, int32_t>;
+using RenderIdMap =
+    std::unordered_map<RenderId, WebViewBase*, base::IntPairHash<RenderId>>;
+base::LazyInstance<RenderIdMap>::Leaky g_render_id_map =
+    LAZY_INSTANCE_INITIALIZER;
+
+using FrameTreeNodeIdMap = std::unordered_map<int, WebViewBase*>;
+base::LazyInstance<FrameTreeNodeIdMap>::Leaky g_frame_tree_node_id_map =
+    LAZY_INSTANCE_INITIALIZER;
+
+}  // namespace
 
 ///@name DEPRECATED_API
 ///@{
@@ -76,13 +91,39 @@ WebViewBase::WebViewBase(bool alt_storage_path, int width, int height) {
   webview_ = new neva_app_runtime::WebView(width, height);
   webview_->SetDelegate(this);
   webview_->SetControllerDelegate(this);
-  PushStateToIOThread();
+
+  RenderId render_id(GetWebContents()->GetMainFrame()->GetProcess()->GetID(),
+                     GetWebContents()->GetRenderViewHost()->GetRoutingID());
+  int frame_tree_node_id =
+      GetWebContents()->GetMainFrame()->GetFrameTreeNodeId();
+  g_render_id_map.Get().emplace(render_id, this);
+  g_frame_tree_node_id_map.Get().emplace(frame_tree_node_id, this);
 }
 
 WebViewBase::~WebViewBase() {
-  RemoveStateFromIOThread(GetWebContents());
+  RenderId render_id(GetWebContents()->GetMainFrame()->GetProcess()->GetID(),
+                     GetWebContents()->GetRenderViewHost()->GetRoutingID());
+  int frame_tree_node_id =
+      GetWebContents()->GetMainFrame()->GetFrameTreeNodeId();
+  g_render_id_map.Get().erase(render_id);
+  g_frame_tree_node_id_map.Get().erase(frame_tree_node_id);
+
   webview_->SetDelegate(nullptr);
   delete webview_;
+}
+
+WebViewBase* WebViewBase::FromID(int render_process_id, int render_view_id) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  RenderIdMap* views = g_render_id_map.Pointer();
+  auto it = views->find(RenderId(render_process_id, render_view_id));
+  return it == views->end() ? nullptr : it->second;
+}
+
+WebViewBase* WebViewBase::FromFrameTreeNodeId(int frame_tree_node_id) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  FrameTreeNodeIdMap* map = g_frame_tree_node_id_map.Pointer();
+  auto it = map->find(frame_tree_node_id);
+  return it == map->end() ? nullptr : it->second;
 }
 
 void WebViewBase::Initialize(const std::string& app_id,
@@ -562,7 +603,6 @@ void WebViewBase::SetWebSecurityEnabled(bool enable) {
   webview_->UpdatePreferencesAttribute(
       neva_app_runtime::WebView::Attribute::WebSecurityEnabled,
       enable);
-  PushStateToIOThread();
 }
 
 void WebViewBase::SetKeepAliveWebApp(bool enable) {
@@ -651,7 +691,6 @@ void WebViewBase::SetAppPath(const std::string& app_path) {
     return;
 
   app_path_ = app_path;
-  PushStateToIOThread();
 }
 
 void WebViewBase::SetTrustLevel(const std::string& trust_level) {
@@ -659,7 +698,6 @@ void WebViewBase::SetTrustLevel(const std::string& trust_level) {
     return;
 
   trust_level_ = trust_level;
-  PushStateToIOThread();
 }
 
 void WebViewBase::HandleBrowserControlCommand(
@@ -687,36 +725,6 @@ std::string WebViewBase::RunFunction(
   std::string result;
   HandleBrowserControlFunction(command, arguments, &result);
   return result;
-}
-
-void WebViewBase::PushStateToIOThread() {
-  if (!GetWebContents())
-    return;
-
-  webos::WebOSWebViewRendererState::WebViewInfo web_view_info;
-  web_view_info.app_path = app_path_;
-  web_view_info.trust_level = trust_level_;
-  web_view_info.accept_language = accept_language_;
-
-  base::PostTask(
-      FROM_HERE, {content::BrowserThread::IO},
-      base::Bind(
-          &webos::WebOSWebViewRendererState::RegisterWebViewInfo,
-          base::Unretained(webos::WebOSWebViewRendererState::GetInstance()),
-          GetWebContents()->GetMainFrame()->GetProcess()->GetID(),
-          GetWebContents()->GetRenderViewHost()->GetRoutingID(),
-          GetWebContents()->GetMainFrame()->GetFrameTreeNodeId(),
-          web_view_info));
-}
-
-void WebViewBase::RemoveStateFromIOThread(content::WebContents* web_contents) {
-  base::PostTask(
-      FROM_HERE, {content::BrowserThread::IO},
-      base::Bind(
-          &webos::WebOSWebViewRendererState::UnRegisterWebViewInfo,
-          base::Unretained(webos::WebOSWebViewRendererState::GetInstance()),
-          GetWebContents()->GetMainFrame()->GetProcess()->GetID(),
-          GetWebContents()->GetRenderViewHost()->GetRoutingID()));
 }
 
 void WebViewBase::SetSSLCertErrorPolicy(

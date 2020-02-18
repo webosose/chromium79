@@ -132,11 +132,7 @@ struct COMPONENT_EXPORT(NETWORK_CPP_BASE) ResourceRequest {
   bool enable_load_timing = false;
   bool enable_upload_progress = false;
   bool do_not_prompt_for_login = false;
-#if defined(USE_NEVA_APPRUNTIME)
-  static constexpr int kInvalidProcessId = 0xffffffff;
-  static constexpr int kBrowserProcessId = 0;
-  int process_id = kInvalidProcessId;
-#endif
+  uint32_t process_id;
   int render_frame_id = MSG_ROUTING_NONE;
   bool is_main_frame = false;
   int transition_type = 0;

@@ -5,6 +5,7 @@
 #include "services/network/public/cpp/resource_request.h"
 
 #include "net/base/load_flags.h"
+#include "services/network/public/mojom/network_context.mojom.h"
 
 namespace network {
 
@@ -18,7 +19,11 @@ bool ResourceRequest::TrustedParams::operator==(
              other.update_network_isolation_key_on_redirect;
 }
 
-ResourceRequest::ResourceRequest() {}
+ResourceRequest::ResourceRequest() {
+#if defined(USE_NEVA_APPRUNTIME) || defined(CROW_BROWSER)
+  process_id = mojom::kInvalidProcessId;
+#endif
+}
 ResourceRequest::ResourceRequest(const ResourceRequest& request) = default;
 ResourceRequest::~ResourceRequest() {}
 

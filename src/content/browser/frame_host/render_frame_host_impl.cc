@@ -5429,7 +5429,7 @@ void RenderFrameHostImpl::CommitNavigation(
     // Because loading local files from bundled exchanges file is prohibited.
     if (common_params->url.SchemeIsFile() && !navigation_to_bundled_exchanges) {
       auto file_factory = std::make_unique<FileURLLoaderFactory>(
-          browser_context->GetPath(),
+          GetProcess()->GetID(), browser_context->GetPath(),
           browser_context->GetSharedCorsOriginAccessList(),
           // A user-initiated navigation is USER_BLOCKING.
           base::TaskPriority::USER_BLOCKING);

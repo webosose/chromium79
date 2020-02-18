@@ -229,7 +229,7 @@ WorkerScriptFetchInitiator::CreateFactoryBundle(
 
   if (file_support) {
     auto file_factory = std::make_unique<FileURLLoaderFactory>(
-        storage_partition->browser_context()->GetPath(),
+        worker_process_id, storage_partition->browser_context()->GetPath(),
         storage_partition->browser_context()->GetSharedCorsOriginAccessList(),
         // USER_VISIBLE because worker script fetch may affect the UI.
         base::TaskPriority::USER_VISIBLE);

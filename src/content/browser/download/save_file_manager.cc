@@ -267,7 +267,8 @@ void SaveFileManager::SaveURL(SaveItemId save_item_id,
       factory = url_loader_factory.get();
     } else if (url.SchemeIsFile()) {
       url_loader_factory = std::make_unique<FileURLLoaderFactory>(
-          context->GetPath(), context->GetSharedCorsOriginAccessList(),
+          rfh->GetProcess()->GetID(), context->GetPath(),
+          context->GetSharedCorsOriginAccessList(),
           base::TaskPriority::USER_VISIBLE);
       factory = url_loader_factory.get();
     } else if (url.SchemeIsFileSystem() && rfh) {

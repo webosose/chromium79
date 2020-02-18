@@ -151,6 +151,7 @@ class FileURLDirectoryLoader
   static void CreateAndStart(
       const base::FilePath& profile_path,
       const network::ResourceRequest& request,
+      uint32_t process_id,
       network::mojom::URLLoaderRequest loader,
       network::mojom::URLLoaderClientPtrInfo client_info,
       std::unique_ptr<FileURLLoaderObserver> observer,
@@ -159,7 +160,7 @@ class FileURLDirectoryLoader
     // bindings are alive - essentially until either the client gives up or all
     // file data has been sent to it.
     auto* file_url_loader = new FileURLDirectoryLoader;
-    file_url_loader->Start(profile_path, request, std::move(loader),
+    file_url_loader->Start(profile_path, request, process_id, std::move(loader),
                            std::move(client_info), std::move(observer),
                            std::move(response_headers));
   }
@@ -179,6 +180,7 @@ class FileURLDirectoryLoader
 
   void Start(const base::FilePath& profile_path,
              const network::ResourceRequest& request,
+             uint32_t process_id,
              network::mojom::URLLoaderRequest loader,
              network::mojom::URLLoaderClientPtrInfo client_info,
              std::unique_ptr<content::FileURLLoaderObserver> observer,
@@ -202,21 +204,12 @@ class FileURLDirectoryLoader
       return;
     }
 
-#if defined(USE_NEVA_APPRUNTIME)
-    if (!GetContentClient()->browser()->IsFileAccessAllowedForRequest(
-            path_, base::MakeAbsoluteFilePath(path_), profile_path, request)) {
-      client->OnComplete(
-          network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED));
-      return;
-    }
-#else
     if (!GetContentClient()->browser()->IsFileAccessAllowed(
             path_, base::MakeAbsoluteFilePath(path_), profile_path)) {
       client->OnComplete(
           network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED));
       return;
     }
-#endif
 
     mojo::DataPipe pipe(kDefaultFileUrlPipeSize);
     if (!pipe.consumer_handle.is_valid()) {
@@ -369,6 +362,7 @@ class FileURLLoader : public network::mojom::URLLoader {
   static void CreateAndStart(
       const base::FilePath& profile_path,
       const network::ResourceRequest& request,
+      uint32_t process_id,
       network::mojom::URLLoaderRequest loader,
       network::mojom::URLLoaderClientPtrInfo client_info,
       DirectoryLoadingPolicy directory_loading_policy,
@@ -380,10 +374,11 @@ class FileURLLoader : public network::mojom::URLLoader {
     // bindings are alive - essentially until either the client gives up or all
     // file data has been sent to it.
     auto* file_url_loader = new FileURLLoader;
-    file_url_loader->Start(
-        profile_path, request, std::move(loader), std::move(client_info),
-        directory_loading_policy, file_access_policy, link_following_policy,
-        std::move(observer), std::move(extra_response_headers));
+    file_url_loader->Start(profile_path, request, process_id, std::move(loader),
+                           std::move(client_info), directory_loading_policy,
+                           file_access_policy, link_following_policy,
+                           std::move(observer),
+                           std::move(extra_response_headers));
   }
 
   // network::mojom::URLLoader:
@@ -396,13 +391,13 @@ class FileURLLoader : public network::mojom::URLLoader {
     if (redirect_data->is_directory) {
       FileURLDirectoryLoader::CreateAndStart(
           redirect_data->profile_path, redirect_data->request,
-          binding_.Unbind(), client_.PassInterface(),
+          redirect_data->process_id, binding_.Unbind(), client_.PassInterface(),
           std::move(redirect_data->observer),
           std::move(redirect_data->extra_response_headers));
     } else {
       FileURLLoader::CreateAndStart(
           redirect_data->profile_path, redirect_data->request,
-          binding_.Unbind(), client_.PassInterface(),
+          redirect_data->process_id, binding_.Unbind(), client_.PassInterface(),
           redirect_data->directory_loading_policy,
           redirect_data->file_access_policy,
           redirect_data->link_following_policy,
@@ -424,6 +419,7 @@ class FileURLLoader : public network::mojom::URLLoader {
     bool is_directory = false;
     base::FilePath profile_path;
     network::ResourceRequest request;
+    uint32_t process_id;
     network::mojom::URLLoaderRequest loader;
     DirectoryLoadingPolicy directory_loading_policy =
         DirectoryLoadingPolicy::kFail;
@@ -439,6 +435,7 @@ class FileURLLoader : public network::mojom::URLLoader {
 
   void Start(const base::FilePath& profile_path,
              const network::ResourceRequest& request,
+             uint32_t process_id,
              network::mojom::URLLoaderRequest loader,
              network::mojom::URLLoaderClientPtrInfo client_info,
              DirectoryLoadingPolicy directory_loading_policy,
@@ -502,6 +499,7 @@ class FileURLLoader : public network::mojom::URLLoader {
       redirect_data_->is_directory = true;
       redirect_data_->profile_path = std::move(profile_path);
       redirect_data_->request = request;
+      redirect_data_->process_id = process_id;
       redirect_data_->directory_loading_policy = directory_loading_policy;
       redirect_data_->file_access_policy = file_access_policy;
       redirect_data_->link_following_policy = link_following_policy;
@@ -769,10 +767,12 @@ class FileURLLoader : public network::mojom::URLLoader {
 }  // namespace
 
 FileURLLoaderFactory::FileURLLoaderFactory(
+    uint32_t process_id,
     const base::FilePath& profile_path,
     scoped_refptr<SharedCorsOriginAccessList> shared_cors_origin_access_list,
     base::TaskPriority task_priority)
-    : profile_path_(profile_path),
+    : process_id_(process_id),
+      profile_path_(profile_path),
       shared_cors_origin_access_list_(
           std::move(shared_cors_origin_access_list)),
       task_runner_(base::CreateSequencedTaskRunner(
@@ -840,6 +840,11 @@ void FileURLLoaderFactory::CreateLoaderAndStartInternal(
     bool cors_flag) {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
+  uint32_t process_id =
+      (request.process_id == network::mojom::kInvalidProcessId)
+          ? process_id_
+          : request.process_id;
+
   if (cors_flag) {
     // FileURLLoader doesn't support CORS and it's not covered by CorsURLLoader,
     // so we need to reject requests that need CORS manually.
@@ -857,17 +862,27 @@ void FileURLLoaderFactory::CreateLoaderAndStartInternal(
     return;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (!GetContentClient()->browser()->IsFileAccessAllowedForRequest(
+          file_path, request, process_id)) {
+    client->OnComplete(
+        network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED));
+    return;
+  }
+#endif
+
   if (file_path.EndsWithSeparator() && file_path.IsAbsolute()) {
     task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(&FileURLDirectoryLoader::CreateAndStart, profile_path_,
-                       request, std::move(loader), client.PassInterface(),
+                       request, process_id, std::move(loader),
+                       client.PassInterface(),
                        std::unique_ptr<FileURLLoaderObserver>(), nullptr));
   } else {
     task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(&FileURLLoader::CreateAndStart, profile_path_, request,
-                       std::move(loader), client.PassInterface(),
+                       process_id, std::move(loader), client.PassInterface(),
                        DirectoryLoadingPolicy::kRespondWithListing,
                        FileAccessPolicy::kRestricted,
                        LinkFollowingPolicy::kFollow,
@@ -900,7 +915,8 @@ void CreateFileURLLoader(
       FROM_HERE,
       base::BindOnce(
           &FileURLLoader::CreateAndStart, base::FilePath(), request,
-          std::move(loader), client.PassInterface(),
+          network::mojom::kInvalidProcessId, std::move(loader),
+          client.PassInterface(),
           allow_directory_listing ? DirectoryLoadingPolicy::kRespondWithListing
                                   : DirectoryLoadingPolicy::kFail,
           FileAccessPolicy::kUnrestricted, LinkFollowingPolicy::kDoNotFollow,
@@ -908,12 +924,13 @@ void CreateFileURLLoader(
 }
 
 std::unique_ptr<network::mojom::URLLoaderFactory> CreateFileURLLoaderFactory(
+    uint32_t process_id,
     const base::FilePath& profile_path,
     scoped_refptr<SharedCorsOriginAccessList> shared_cors_origin_access_list) {
   // TODO(crbug.com/924416): Re-evaluate TaskPriority: Should the caller provide
   // it?
   return std::make_unique<content::FileURLLoaderFactory>(
-      profile_path, shared_cors_origin_access_list,
+      process_id, profile_path, shared_cors_origin_access_list,
       base::TaskPriority::USER_VISIBLE);
 }
 
