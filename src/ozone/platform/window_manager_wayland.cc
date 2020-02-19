@@ -690,8 +690,7 @@ void WindowManagerWayland::NotifyTouchEvent(uint32_t device_id,
                                             ui::EventType type,
                                             const ui::TouchEventInfo& event_info) {
   gfx::Point position(event_info.x_, event_info.y_);
-  base::TimeTicks timestamp =
-      base::TimeTicks() + base::TimeDelta::FromMilliseconds(event_info.time_stamp_);
+  base::TimeTicks timestamp = EventTimeForNow();
   uint32_t touch_slot = touch_slot_generator_.GetGeneratedID(event_info.touch_id_);
 
   if (type == ET_TOUCH_PRESSED)
