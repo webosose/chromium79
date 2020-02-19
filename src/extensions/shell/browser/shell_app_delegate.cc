@@ -11,8 +11,11 @@
 #include "extensions/common/constants.h"
 #include "extensions/shell/browser/shell_extension_web_contents_observer.h"
 
-#if defined(ENABLE_MEMORYMANAGER_WEBAPI)
+#if defined(USE_NEVA_APPRUNTIME)
 #include "content/public/browser/render_view_host.h"
+#include "extensions/common/switches.h"
+#include "extensions/shell/browser/webview_controller_impl.h"
+#include "extensions/shell/webview_controller_delegate.h"
 #include "neva/app_runtime/public/mojom/app_runtime_webview.mojom.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
 #endif
@@ -23,6 +26,32 @@
 #endif
 
 namespace extensions {
+
+#if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
+class WebViewGuestWebViewControllerDelegate : public WebViewControllerDelegate {
+  void RunCommand(const std::string& name,
+                  const std::vector<std::string>& arguments) override {}
+  std::string RunFunction(const std::string& name,
+                          const std::vector<std::string>&) override {
+    if (name == std::string("initialize")) {
+      base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+      if (cmd->HasSwitch(extensions::switches::kWebOSAppId)) {
+        std::stringstream result_stream;
+        result_stream << "{\"identifier\":\""
+                      << cmd->GetSwitchValueASCII(
+                             extensions::switches::kWebOSAppId)
+                      << "}";
+        return result_stream.str();
+      }
+    } else if (name == std::string("identifier")) {
+      base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+      if (cmd->HasSwitch(extensions::switches::kWebOSAppId))
+        return cmd->GetSwitchValueASCII(extensions::switches::kWebOSAppId);
+    }
+    return std::string();
+  }
+};
+#endif
 
 ShellAppDelegate::ShellAppDelegate() {
 }
@@ -46,13 +75,33 @@ void ShellAppDelegate::RenderViewCreated(
   // and views::WebView but app_shell is aura-only and must do it manually.
   content::WebContents::FromRenderViewHost(render_view_host)->Focus();
 
-#if defined(ENABLE_MEMORYMANAGER_WEBAPI)
+#if defined(USE_NEVA_APPRUNTIME)
+  content::WebContents* web_contents =
+      content::WebContents::FromRenderViewHost(render_view_host);
+
+#if defined(OS_WEBOS)
+  webview_controller_impl_ =
+      std::make_unique<ExtensionsWebViewControllerImpl>(web_contents);
+
+  webview_controller_delegate_ =
+      std::make_unique<WebViewGuestWebViewControllerDelegate>();
+
+  webview_controller_impl_->SetDelegate(webview_controller_delegate_.get());
+#endif
+
   mojo::AssociatedRemote<neva_app_runtime::mojom::AppRuntimeWebViewClient>
       client;
   render_view_host->GetMainFrame()->GetRemoteAssociatedInterfaces()
       ->GetInterface(&client);
+
+#if defined(ENABLE_MEMORYMANAGER_WEBAPI)
   client->AddInjectionToLoad(std::string("v8/memorymanager"));
 #endif
+
+#if defined(OS_WEBOS)
+  client->AddInjectionToLoad(std::string("v8/webosservicebridge"));
+#endif
+#endif  // if defined(USE_NEVA_APPRUNTIME)
 }
 
 void ShellAppDelegate::ResizeWebContents(content::WebContents* web_contents,

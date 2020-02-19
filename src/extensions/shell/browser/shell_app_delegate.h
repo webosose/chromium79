@@ -11,6 +11,11 @@
 
 namespace extensions {
 
+#if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
+class ExtensionsWebViewControllerImpl;
+class WebViewControllerDelegate;
+#endif
+
 // AppDelegate implementation for app_shell. Sets focus after the WebContents is
 // created. Ignores most operations that would create a new dialog or window.
 class ShellAppDelegate : public AppDelegate {
@@ -60,6 +65,10 @@ class ShellAppDelegate : public AppDelegate {
   void ExitPictureInPicture() override;
 
  private:
+#if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
+  std::unique_ptr<ExtensionsWebViewControllerImpl> webview_controller_impl_;
+  std::unique_ptr<WebViewControllerDelegate> webview_controller_delegate_;
+#endif
   DISALLOW_COPY_AND_ASSIGN(ShellAppDelegate);
 };
 

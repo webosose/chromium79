@@ -177,6 +177,8 @@ source_set("app_shell_lib") {
     "browser/shell_virtual_keyboard_delegate.h",
     "browser/shell_web_view_guest_delegate.cc",
     "browser/shell_web_view_guest_delegate.h",
+    "browser/webview_controller_impl.cc",
+    "browser/webview_controller_impl.h",
     "common/shell_content_client.cc",
     "common/shell_content_client.h",
     "common/shell_extensions_api_provider.cc",
@@ -189,6 +191,7 @@ source_set("app_shell_lib") {
     "renderer/shell_content_renderer_client.h",
     "renderer/shell_extensions_renderer_client.cc",
     "renderer/shell_extensions_renderer_client.h",
+    "webview_controller_delegate.h",
   ]
 
   if (use_aura) {
