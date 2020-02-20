@@ -177,13 +177,13 @@ MIMETypeRegistry::SupportsType MIMETypeRegistry::SupportsMediaSourceMIMEType(
 }
 
 #if defined(USE_NEVA_MEDIA)
-bool MIMETypeRegistry::IsSupportedMediaSourceMIMEType(
+MIMETypeRegistry::SupportsType MIMETypeRegistry::IsSupportedMediaSourceMIMEType(
     const String& mime_type,
     const String& codecs,
     const base::Optional<WebMediaTypeRestriction>& restriction) {
   const std::string ascii_mime_type = ToLowerASCIIOrEmpty(mime_type);
   if (ascii_mime_type.empty())
-    return false;
+    return kIsNotSupported;
   std::vector<std::string> parsed_codec_ids;
   media::SplitCodecs(ToASCIIOrEmpty(codecs), &parsed_codec_ids);
 

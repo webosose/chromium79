@@ -387,8 +387,9 @@ bool MediaSource::isTypeSupported(const String& type) {
           width, height, frame_rate, bit_rate, channels);
       restriction = web_media_type_restriction;
     }
-    bool result = MIMETypeRegistry::IsSupportedMediaSourceMIMEType(
-        content_type.GetType(), codecs, restriction);
+    bool result = MIMETypeRegistry::kIsSupported ==
+                  MIMETypeRegistry::IsSupportedMediaSourceMIMEType(
+                      content_type.GetType(), codecs, restriction);
     DVLOG(1) << __func__ << "(" << type << ") -> "
              << (result ? "true" : "false");
     return result;

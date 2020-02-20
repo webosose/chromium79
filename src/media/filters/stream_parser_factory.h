@@ -38,7 +38,7 @@ class MEDIA_EXPORT StreamParserFactory {
 #if defined(USE_NEVA_MEDIA)
   // Checks to see if the specified additional options are supported.
   // Returns true if conditions are supported.
-  static bool IsTypeSupported(
+  static SupportsType IsTypeSupported(
       const std::string& type,
       const std::vector<std::string>& codecs,
       const base::Optional<MediaTypeRestriction>& restriction);

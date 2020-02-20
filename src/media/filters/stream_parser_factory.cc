@@ -568,7 +568,7 @@ SupportsType StreamParserFactory::IsTypeSupported(
 }
 
 #if defined(USE_NEVA_MEDIA)
-bool StreamParserFactory::IsTypeSupported(
+SupportsType StreamParserFactory::IsTypeSupported(
     const std::string& type,
     const std::vector<std::string>& codecs,
     const base::Optional<MediaTypeRestriction>& restriction) {

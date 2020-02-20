@@ -102,7 +102,7 @@ class PLATFORM_EXPORT MIMETypeRegistry {
 #if defined(USE_NEVA_MEDIA)
   // Checks to see if the mime type and codecs and additional restrictions are
   // supported by the MediaSource implementation.
-  static bool IsSupportedMediaSourceMIMEType(
+  static SupportsType IsSupportedMediaSourceMIMEType(
       const String& mime_type,
       const String& codecs,
       const base::Optional<WebMediaTypeRestriction>& restriction);
