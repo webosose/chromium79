@@ -142,8 +142,7 @@ MediaPlatformAPIWebOSGmp::MediaPlatformAPIWebOSGmp(
     const base::Closure& suspend_done_cb,
     const ActiveRegionCB& active_region_cb,
     const PipelineStatusCB& error_cb)
-    : ls_client_(app_id),
-      main_task_runner_(main_task_runner),
+    : main_task_runner_(main_task_runner),
       media_task_runner_(media_task_runner),
       app_id_(app_id),
       natural_video_size_changed_cb_(natural_video_size_changed_cb),
@@ -628,14 +627,10 @@ void MediaPlatformAPIWebOSGmp::PauseInternal(bool update_media) {
 void MediaPlatformAPIWebOSGmp::SetVolumeInternal(double volume) {
   VLOG(1) << " volume=" << volume;
 
-  Json::Value root;
-  Json::FastWriter writer;
+  if (!media_player_client_)
+    return;
 
-  root["volume"] = (int)(volume * 100);
-  std::string param = writer.write(root);
-
-  // Send input volume to audiod
-  ls_client_.CallAsync("luna://com.webos.service.audio/media/setVolume", param);
+  media_player_client_->SetVolume(static_cast<int>(volume * 100));
 }
 
 MediaPlatformAPIWebOSGmp::FeedStatus MediaPlatformAPIWebOSGmp::FeedInternal(

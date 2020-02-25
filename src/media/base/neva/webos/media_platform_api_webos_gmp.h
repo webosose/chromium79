@@ -17,7 +17,6 @@
 #ifndef MEDIA_BASE_NEVA_WEBOS_MEDIA_PLATFORM_API_WEBOS_GMP_H_
 #define MEDIA_BASE_NEVA_WEBOS_MEDIA_PLATFORM_API_WEBOS_GMP_H_
 
-#include "base/neva/webos/luna_service_client.h"
 #include "media/base/neva/media_platform_api.h"
 #include "third_party/blink/public/platform/web_rect.h"
 #include "ui/gfx/geometry/rect.h"
@@ -159,7 +158,6 @@ class MEDIA_EXPORT MediaPlatformAPIWebOSGmp : public MediaPlatformAPI {
 
   bool IsFeedableState() const;
 
-  base::LunaServiceClient ls_client_;
   scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
   scoped_refptr<base::SingleThreadTaskRunner> media_task_runner_;
   std::string app_id_;
