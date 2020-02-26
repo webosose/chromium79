@@ -114,7 +114,7 @@ std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create(
 
 ForeignVideoWindowProvider::ForeignVideoWindowProvider(
     VideoWindowSupport* support)
-    : support_(support) {}
+    : support_(support), task_runner_(base::ThreadTaskRunnerHandle::Get()) {}
 
 ForeignVideoWindowProvider::~ForeignVideoWindowProvider() = default;
 
@@ -148,8 +148,7 @@ void ForeignVideoWindowProvider::OnCreatedForeignWindow(
   window->state_ = ForeignVideoWindow::State::kCreated;
   window->native_window_name_ = native_window_id;
   window->type_ = type;
-  // TODO(neva) check the running thread and is it thread-safe ?
-  base::ThreadTaskRunnerHandle::Get()->PostTask(
+  task_runner_->PostTask(
       FROM_HERE, base::BindOnce(window->window_event_cb_, window->window_id_,
                                 ui::VideoWindowProvider::Event::kCreated));
 }
@@ -176,8 +175,6 @@ void ForeignVideoWindowProvider::CreateNativeVideoWindow(
 
   wl_webos_exported_add_listener(window->webos_exported_, &exported_listener,
                                  this);
-
-  wl_display_dispatch(display->display());
 }
 
 void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
@@ -267,7 +264,7 @@ void ForeignVideoWindowProvider::DestroyNativeVideoWindow(
   ForeignVideoWindow* w = FindWindow(id);
   if (w) {
     w->state_ = ForeignVideoWindow::State::kDestroying;
-    base::ThreadTaskRunnerHandle::Get()->PostTask(
+    task_runner_->PostTask(
         FROM_HERE, base::BindOnce(w->window_event_cb_, id,
                                   ui::VideoWindowProvider::Event::kDestroyed));
     foreign_windows_.erase(id);

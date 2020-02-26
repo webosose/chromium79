@@ -23,6 +23,7 @@
 #include <string>
 
 #include "base/cancelable_callback.h"
+#include "base/single_thread_task_runner.h"
 #include "base/unguessable_token.h"
 #include "ozone/media/video_window_provider.h"
 #include "ui/gfx/geometry/rect.h"
@@ -69,6 +70,8 @@ class ForeignVideoWindowProvider : public VideoWindowProvider {
   std::map<base::UnguessableToken, std::unique_ptr<ForeignVideoWindow>>
       foreign_windows_;
   std::map<std::string, base::UnguessableToken> native_id_to_window_id_;
+
+  const scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 };
 
 }  // namespace ui
