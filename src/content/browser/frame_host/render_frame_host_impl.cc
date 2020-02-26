@@ -553,6 +553,14 @@ void GetRestrictedCookieManager(
 // TODO(crbug.com/977040): Remove when no longer needed.
 const uint32_t kMaxCookieSameSiteDeprecationUrls = 20;
 
+static bool IsFileAccessAllowedFromNetwork() {
+#if defined(USE_NEVA_APPRUNTIME)
+  return GetContentClient()->browser()->IsFileAccessAllowedFromNetwork();
+#else
+  return false;
+#endif
+}
+
 }  // namespace
 
 class RenderFrameHostImpl::DroppedInterfaceRequestLogger
@@ -5427,7 +5435,9 @@ void RenderFrameHostImpl::CommitNavigation(
     //
     // For loading bundled exchanges files, we don't set FileURLLoaderFactory.
     // Because loading local files from bundled exchanges file is prohibited.
-    if (common_params->url.SchemeIsFile() && !navigation_to_bundled_exchanges) {
+    if ((common_params->url.SchemeIsFile() ||
+         IsFileAccessAllowedFromNetwork()) &&
+        !navigation_to_bundled_exchanges) {
       auto file_factory = std::make_unique<FileURLLoaderFactory>(
           GetProcess()->GetID(), browser_context->GetPath(),
           browser_context->GetSharedCorsOriginAccessList(),
