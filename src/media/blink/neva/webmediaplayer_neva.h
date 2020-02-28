@@ -468,7 +468,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   content::MediaLayerInfo media_layer_info_{base::UnguessableToken::Null()};
 
   bool has_first_frame_ = false;
-
+  bool pending_load_media_ = false;
   std::unique_ptr<media::VideoHoleGeometryUpdateHelper> geometry_update_helper_;
 
   base::WeakPtr<WebMediaPlayerNeva> weak_this_;

@@ -362,6 +362,18 @@ void WebMediaPlayerNeva::LoadMedia() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
 
+#if defined(USE_GAV)
+  // TODO(neva): we need to refactor this we request a media_layer excplict
+  // manner and make sure we always have a valid media_layer_id before calling
+  // Initialize or SetPreload.
+  if (media_layer_info_.media_layer_id_.empty()) {
+    pending_load_media_ = true;
+    return;
+  }
+
+  pending_load_media_ = false;
+#endif
+
   player_api_->Initialize(
       GetClient()->IsVideo(), CurrentTime(), app_id_, url_.spec(),
       std::string(GetClient()->ContentMIMEType().Utf8().data()),
@@ -1126,6 +1138,10 @@ void WebMediaPlayerNeva::OnMediaLayerCreated(
           << " layer_info_id=" << info.media_layer_id_
           << " layer_info_token=" << info.overlay_plane_token_;
   SetMediaLayerId(info);
+#if defined(USE_GAV)
+  if (pending_load_media_)
+    LoadMedia();
+#endif
 }
 
 void WebMediaPlayerNeva::OnMediaLayerWillDestroyed() {
@@ -1168,6 +1184,7 @@ void WebMediaPlayerNeva::OnResume() {
         this, MediaPlayerNevaFactory::GetMediaPlayerType(
                   client_->ContentMIMEType().Latin1()),
         main_task_runner_, app_id_));
+    player_api_->SetMediaLayerId(media_layer_info_.media_layer_id_);
     player_api_->SetVolume(volume_);
     LoadMedia();
 #if defined(NEVA_VIDEO_HOLE)
