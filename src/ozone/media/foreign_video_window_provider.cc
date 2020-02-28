@@ -182,13 +182,14 @@ void ForeignVideoWindowProvider::CreateNativeVideoWindow(
 
 void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
     const base::UnguessableToken& window_id) {
-  LOG(INFO) << __func__ << " window_id=" << window_id;
   ForeignVideoWindow* w = FindWindow(window_id);
   if (!w) {
     LOG(ERROR) << __func__ << " failed to find foreign window for "
                << window_id;
     return;
   }
+  VLOG(1) << __func__ << " window_id=" << window_id
+          << " rect=" << w->rect_.ToString();
 
   if (!w->notify_geometry_cb_.IsCancelled())
     w->notify_geometry_cb_.Cancel();

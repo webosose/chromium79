@@ -28,30 +28,43 @@ webos = {
     "$_dir/mediaplayer_ums.h",
     "$_dir/mediaplayerneva_factory_webos.cc",
     "$_dir/webos_mediaclient.h",
+    "$_dir/webos_mediaclient_stub.cc",
+    "$_dir/webos_mediaclient_stub.h",
   ]
 
+  use_umediaclient = false
+  support_camera = false
+  use_luna_service = false
+
   if (use_gst_media) {
+    use_umediaclient = true
+    support_camera = true
+    defines += [ "UMS_INTERNAL_API_VERSION=2" ]
+  }
+
+  if (use_umediaclient) {
+    sources -= [
+      "$_dir/webos_mediaclient_stub.cc",
+      "$_dir/webos_mediaclient_stub.h",
+    ]
     sources += [
       "$_dir/media_util.cc",
       "$_dir/media_util.h",
+      "$_dir/system_media_manager.cc",
       "$_dir/system_media_manager.h",
       "$_dir/umediaclient_impl.cc",
       "$_dir/umediaclient_impl.h",
     ]
   }
 
-  if (use_gst_media) {
+  if (support_camera) {
     sources += [
       "$_dir/mediaplayer_camera.cc",
       "$_dir/mediaplayer_camera.h",
-      "$_dir/system_media_manager_gmp.cc",
-      "$_dir/system_media_manager_gmp.h",
     ]
-    defines += [ "UMS_INTERNAL_API_VERSION=2" ]
-  } else {
-    sources += [
-      "$_dir/webos_mediaclient_stub.cc",
-      "$_dir/webos_mediaclient_stub.h",
-    ]
+  }
+
+  if (use_luna_service) {
+    deps += [ "//base/neva/webos" ]
   }
 }

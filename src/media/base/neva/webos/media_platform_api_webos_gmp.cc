@@ -857,7 +857,7 @@ bool MediaPlatformAPIWebOSGmp::MakeLoadData(int64_t start_time,
     load_data->extraData = (void*)video_config_.extra_data().data();
     load_data->extraSize = video_config_.extra_data().size();
 #if defined(USE_GAV)
-    load_data->windowId = const_cast<char*>(get_media_id().c_str());
+    load_data->windowId = const_cast<char*>(get_media_layer_id().c_str());
 #endif
   }
 

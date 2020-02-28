@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2018 LG Electronics, Inc.
+// Copyright (c) 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,11 +35,15 @@ namespace ums {
 struct audio_info_t;
 struct video_info_t;
 }  // namespace ums
+using AudioInfoType = ums::audio_info_t;
+using VideoInfoType = ums::video_info_t;
 #else
 namespace uMediaServer {
 struct audio_info_t;
 struct video_info_t;
 }  // namespace uMediaServer
+using AudioInfoType = uMediaServer::audio_info_t;
+using VideoInfoType = uMediaServer::video_info_t;
 #endif
 
 namespace media {
@@ -68,52 +72,47 @@ class SystemMediaManager {
       const base::WeakPtr<UMediaClientImpl>& umedia_client,
       const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner);
 
-  virtual ~SystemMediaManager(){};
+  virtual ~SystemMediaManager() {}
 
   virtual long Initialize(const bool is_video,
                           const std::string& app_id,
-                          const ActiveRegionCB& active_region_cb) = 0;
+                          const ActiveRegionCB& active_region_cb) {
+    return 0;
+  }
   // |UMediaClientImpl| will call |UpdateMediaOption| before
   // |UMediaClientImpl| continue to Load
-  virtual void UpdateMediaOption(const Json::Value& media_option) = 0;
+  virtual void UpdateMediaOption(const Json::Value& media_option) {}
   // Set video out position in screen space by using in_rect in video space
   virtual bool SetDisplayWindow(const gfx::Rect& out_rect,
                                 const gfx::Rect& in_rect,
-                                bool fullscreen) = 0;
+                                bool fullscreen) {
+    return true;
+  }
   // Set visibility of video
-  virtual void SetVisibility(bool visible) = 0;
+  virtual void SetVisibility(bool visible) {}
   // Get current visibility of video
-  virtual bool GetVisibility() = 0;
+  virtual bool GetVisibility() { return true; }
   // Set the media audio focus
-  virtual void SetAudioFocus() = 0;
+  virtual void SetAudioFocus() {}
   // Test the media has audio focus.
-  virtual bool GetAudioFocus() = 0;
+  virtual bool GetAudioFocus() { return true; }
   // Switch to autolayout mode to prepare vtg
-  virtual void SwitchToAutoLayout() = 0;
-#if UMS_INTERNAL_API_VERSION == 2
+  virtual void SwitchToAutoLayout() {}
   // Notify |UMediaClientImpl| has updated audio info
-  virtual void AudioInfoUpdated(const struct ums::audio_info_t& audio_info) = 0;
+  virtual void AudioInfoUpdated(const AudioInfoType& audio_info) {}
   // Notify |UMediaClientImpl| has updated video info
-  virtual void VideoInfoUpdated(const struct ums::video_info_t& videoInfo) = 0;
-#else
-  // Notify |UMediaClientImpl| has updated audio info
-  virtual void AudioInfoUpdated(
-      const struct uMediaServer::audio_info_t& audio_info) = 0;
-  // Notify |UMediaClientImpl| has updated video info
-  virtual void VideoInfoUpdated(
-      const struct uMediaServer::video_info_t& videoInfo) = 0;
-#endif
-  virtual void SourceInfoUpdated(bool has_video, bool has_audio) = 0;
+  virtual void VideoInfoUpdated(const VideoInfoType& videoInfo) {}
+  virtual void SourceInfoUpdated(bool has_video, bool has_audio) {}
   // Notify app state is changed
-  virtual void AppStateChanged(AppState s) = 0;
+  virtual void AppStateChanged(AppState s) {}
   // Notify play state is changed
-  virtual void PlayStateChanged(PlayState s) = 0;
+  virtual void PlayStateChanged(PlayState s) {}
   // Notify audio mute is changed
-  virtual void AudioMuteChanged(bool mute) = 0;
+  virtual void AudioMuteChanged(bool mute) {}
   // Send custom message to system media manager
-  virtual bool SendCustomMessage(const std::string& message) = 0;
+  virtual bool SendCustomMessage(const std::string& message) { return true; }
   // Eof recived
-  virtual void EofReceived() = 0;
+  virtual void EofReceived() {}
 };
 
 }  // namespace media

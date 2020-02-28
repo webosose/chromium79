@@ -1351,7 +1351,6 @@ std::string UMediaClientImpl::UpdateMediaOption(const std::string& mediaOption,
 
 #if defined(USE_GAV)
   media_option["option"]["windowId"] = media_layer_id_;
-  media_option["option"]["videoDisplayMode"] = "Textured";
 #endif
 
   media_option["option"]["preload"] =
