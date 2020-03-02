@@ -3180,9 +3180,11 @@ void LayerTreeHostImpl::SetVisible(bool visible) {
     }
   } else {
 #if defined(USE_NEVA_APPRUNTIME)
-    if (settings_.use_aggressive_release_policy)
+    if (settings_.use_aggressive_release_policy) {
       ReleaseTreeResources();
-    else
+      if (layer_tree_frame_sink_)
+        layer_tree_frame_sink_->Invalidate(true);
+    } else
 #endif
       EvictAllUIResources();
 

@@ -87,6 +87,7 @@ class VIZ_SERVICE_EXPORT DirectLayerTreeFrameSink
   void DidAllocateSharedBitmap(base::ReadOnlySharedMemoryRegion region,
                                const SharedBitmapId& id) override;
   void DidDeleteSharedBitmap(const SharedBitmapId& id) override;
+  void Invalidate(bool needs_redraw) override;
 
   // DisplayClient implementation.
   void DisplayOutputSurfaceLost() override;

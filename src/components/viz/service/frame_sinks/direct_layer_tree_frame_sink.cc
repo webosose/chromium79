@@ -220,6 +220,15 @@ void DirectLayerTreeFrameSink::DidDeleteSharedBitmap(const SharedBitmapId& id) {
   support_->DidDeleteSharedBitmap(id);
 }
 
+void DirectLayerTreeFrameSink::Invalidate(bool needs_redraw) {
+  TRACE_EVENT0("viz", "DirectLayerTreeFrameSink::Invalidate");
+  if (needs_redraw && support_->last_activated_local_surface_id().is_valid()) {
+    support_->EvictSurface(support_->last_activated_local_surface_id());
+    parent_local_surface_id_allocator_.Invalidate();
+    display_->SetLocalSurfaceId(LocalSurfaceId(), device_scale_factor_);
+  }
+}
+
 void DirectLayerTreeFrameSink::DisplayOutputSurfaceLost() {
   is_lost_ = true;
   client_->DidLoseLayerTreeFrameSink();
