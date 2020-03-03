@@ -204,7 +204,8 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
       render_mode_(blink::WebMediaPlayer::RenderModeNone),
       active_video_region_changed_(false),
       app_id_(params_neva->application_id().Utf8().data()),
-      is_loading_(false) {
+      is_loading_(false),
+      create_video_window_cb_(params_neva->get_create_video_window_callback()) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
 
   weak_this_ = weak_factory_.GetWeakPtr();
@@ -241,6 +242,8 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
   bool require_media_resource = player_api_->RequireMediaResource() &&
                                 !params_neva->use_unlimited_media_policy();
   delegate_->DidMediaCreated(delegate_id_, require_media_resource);
+
+  EnsureVideoWindowCreated();
 }
 
 WebMediaPlayerNeva::~WebMediaPlayerNeva() {
@@ -363,14 +366,10 @@ void WebMediaPlayerNeva::LoadMedia() {
   FUNC_LOG(1);
 
 #if defined(USE_GAV)
-  // TODO(neva): we need to refactor this we request a media_layer excplict
-  // manner and make sure we always have a valid media_layer_id before calling
-  // Initialize or SetPreload.
-  if (media_layer_info_.media_layer_id_.empty()) {
+  if (!EnsureVideoWindowCreated()) {
     pending_load_media_ = true;
     return;
   }
-
   pending_load_media_ = false;
 #endif
 
@@ -505,6 +504,11 @@ void WebMediaPlayerNeva::SetVolume(double volume) {
 void WebMediaPlayerNeva::SetPreload(Preload preload) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
+  if (!EnsureVideoWindowCreated()) {
+    pending_preload_ = preload;
+    return;
+  }
+  pending_preload_ = base::nullopt;
   switch (preload) {
     case WebMediaPlayer::kPreloadNone:
       player_api_->SetPreload(MediaPlayerNeva::PreloadNone);
@@ -832,6 +836,8 @@ void WebMediaPlayerNeva::OnVideoSizeChanged(int width, int height) {
 
   client_->SizeChanged();
 
+  if (video_window_remote_)
+    video_window_remote_->SetNaturalVideoSize(natural_size_);
   // set video size first then update videoframe since videoframe
   // needs video size.
   video_frame_provider_->SetNaturalVideoSize(NaturalSize());
@@ -1132,34 +1138,6 @@ void WebMediaPlayerNeva::OnMediaActivationPermitted() {
   delegate_->DidMediaActivated(delegate_id_);
 }
 
-void WebMediaPlayerNeva::OnMediaLayerCreated(
-    const content::MediaLayerInfo& info) {
-  VLOG(1) << __func__ << " player_id=" << delegate_id_
-          << " layer_info_id=" << info.media_layer_id_
-          << " layer_info_token=" << info.overlay_plane_token_;
-  SetMediaLayerId(info);
-#if defined(USE_GAV)
-  if (pending_load_media_)
-    LoadMedia();
-#endif
-}
-
-void WebMediaPlayerNeva::OnMediaLayerWillDestroyed() {
-  SetMediaLayerId(content::MediaLayerInfo());
-}
-
-void WebMediaPlayerNeva::OnMediaLayerGeometryChanged(const gfx::Rect& rect) {
-#if defined(NEVA_VIDEO_HOLE)
-  geometry_update_helper_->SetMediaLayerGeometry(rect);
-#endif
-}
-
-void WebMediaPlayerNeva::OnMediaLayerVisibilityChanged(bool visibility) {
-#if defined(NEVA_VIDEO_HOLE)
-  geometry_update_helper_->SetMediaLayerVisibility(visibility);
-#endif
-}
-
 void WebMediaPlayerNeva::OnResume() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   if (!is_suspended_) {
@@ -1184,7 +1162,8 @@ void WebMediaPlayerNeva::OnResume() {
         this, MediaPlayerNevaFactory::GetMediaPlayerType(
                   client_->ContentMIMEType().Latin1()),
         main_task_runner_, app_id_));
-    player_api_->SetMediaLayerId(media_layer_info_.media_layer_id_);
+    if (video_window_info_)
+      player_api_->SetMediaLayerId(video_window_info_->native_window_id);
     player_api_->SetVolume(volume_);
     LoadMedia();
 #if defined(NEVA_VIDEO_HOLE)
@@ -1302,10 +1281,60 @@ void WebMediaPlayerNeva::OnMediaSourceOpened(
   client_->MediaSourceOpened(web_media_source);
 }
 
-void WebMediaPlayerNeva::SetMediaLayerId(const content::MediaLayerInfo& info) {
-  media_layer_info_ = info;
-  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
-  player_api_->SetMediaLayerId(info.media_layer_id_);
+void WebMediaPlayerNeva::OnVideoWindowCreated(const ui::VideoWindowInfo& info) {
+  video_window_info_ = info;
+  video_frame_provider_->SetOverlayPlaneId(info.window_id);
+  player_api_->SetMediaLayerId(info.native_window_id);
+  if (natural_size_.width && natural_size_.height)
+    video_window_remote_->SetNaturalVideoSize(natural_size_);
+  ContinuePlayerWithWindowId();
+}
+
+void WebMediaPlayerNeva::OnVideoWindowDestroyed() {
+  video_window_info_ = base::nullopt;
+  video_window_client_receiver_.reset();
+}
+
+void WebMediaPlayerNeva::OnVideoWindowGeometryChanged(const gfx::Rect& rect) {
+#if defined(NEVA_VIDEO_HOLE)
+  geometry_update_helper_->SetMediaLayerGeometry(rect);
+#endif
+}
+
+void WebMediaPlayerNeva::OnVideoWindowVisibilityChanged(bool visibility) {
+#if defined(NEVA_VIDEO_HOLE)
+  geometry_update_helper_->SetMediaLayerVisibility(visibility);
+#endif
+}
+
+// It returns if video window is already created and can be continued to next
+// step.
+bool WebMediaPlayerNeva::EnsureVideoWindowCreated() {
+  if (video_window_info_)
+    return true;
+  // |is_bound()| would be true if we already requested so we need to just wait
+  // for response
+  if (video_window_client_receiver_.is_bound())
+    return false;
+
+  mojo::PendingRemote<ui::mojom::VideoWindowClient> pending_client;
+  video_window_client_receiver_.Bind(
+      pending_client.InitWithNewPipeAndPassReceiver());
+
+  mojo::PendingRemote<ui::mojom::VideoWindow> pending_window_remote;
+  create_video_window_cb_.Run(
+      std::move(pending_client),
+      pending_window_remote.InitWithNewPipeAndPassReceiver(),
+      ui::VideoWindowParams());
+  video_window_remote_.Bind(std::move(pending_window_remote));
+  return false;
+}
+
+void WebMediaPlayerNeva::ContinuePlayerWithWindowId() {
+  if (pending_preload_)
+    SetPreload(pending_preload_.value());
+  if (pending_load_media_)
+    LoadMedia();
 }
 
 void WebMediaPlayerNeva::OnFrameHidden() {

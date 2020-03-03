@@ -1,0 +1,13 @@
+mojom = "//ui/platform_window/neva/mojo/video_window_controller.mojom"
+public_headers = [ "//ui/platform_window/neva/video_window_info.h" ]
+traits_headers = [ "//ui/platform_window/neva/mojo/video_window_controller_mojom_traits.h" ]
+sources = [
+  "//ui/platform_window/neva/mojo/video_window_controller_mojom_traits.cc",
+  "//ui/platform_window/neva/mojo/video_window_controller_mojom_traits.h"
+]
+
+public_deps = [ "//base" ]
+type_mappings = [
+  "ui.mojom.VideoWindowInfo=::ui::VideoWindowInfo",
+  "ui.mojom.VideoWindowParams=::ui::VideoWindowParams",
+ ]

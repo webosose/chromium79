@@ -51,6 +51,7 @@ source_set("ozone_wayland") {
   ]
 
   if (use_neva_media) {
+    deps += [ "//ui/platform_window:mojom" ]
     sources += [
       "media/video_window_controller_host_impl.cc",
       "media/video_window_controller_host_impl.h",

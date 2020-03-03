@@ -20,8 +20,11 @@
 
 #include "base/callback.h"
 #include "base/unguessable_token.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
+#include "mojo/public/cpp/bindings/pending_remote.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace ui {
 
@@ -43,18 +46,24 @@ class VideoWindowProvider {
 
   static std::unique_ptr<VideoWindowProvider> Create(VideoWindowSupport*);
 
-  using WindowEventCb =
-      base::RepeatingCallback<void(const base::UnguessableToken&, Event)>;
+  using WindowEventCb = base::RepeatingCallback<
+      void(gfx::AcceleratedWidget, const base::UnguessableToken&, Event)>;
 
-  virtual void CreateNativeVideoWindow(gfx::AcceleratedWidget w,
-                                       const base::UnguessableToken& id,
-                                       WindowEventCb cb) = 0;
-  virtual void DestroyNativeVideoWindow(const base::UnguessableToken& id) = 0;
-  virtual std::string GetNativeVideoWindowName(
-      const base::UnguessableToken& id) = 0;
+  virtual base::UnguessableToken CreateNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+      mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+      const VideoWindowParams& params,
+      WindowEventCb cb) = 0;
+  virtual void DestroyNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      const base::UnguessableToken& window_id) = 0;
+
   virtual void NativeVideoWindowGeometryChanged(
       const base::UnguessableToken& window_id,
-      const gfx::Rect& rect) = 0;
+      const gfx::Rect& dst_rect,
+      const gfx::Rect& src_rect = gfx::Rect(),
+      const base::Optional<gfx::Rect>& ori_rect = base::nullopt) = 0;
   virtual void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
       bool visibility) = 0;

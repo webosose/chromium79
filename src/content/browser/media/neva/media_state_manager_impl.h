@@ -20,7 +20,6 @@
 #include "base/memory/singleton.h"
 #include "content/browser/media/neva/media_state_policy.h"
 #include "content/public/browser/neva/media_state_manager.h"
-#include "ui/platform_window/neva/video_window_controller_helper.h"
 
 namespace content {
 
@@ -28,10 +27,8 @@ namespace content {
 // MediaStateManagerImpl receives messages from each components and executes
 // action. 'Logical decision' is not resposibility of MediaStateManagerImpl.
 // It will be done by MediaStatePolicy.
-class CONTENT_EXPORT MediaStateManagerImpl
-    : public MediaStateManager,
-      public MediaStatePolicy::Client,
-      public ui::VideoWindowControllerHost::Client {
+class CONTENT_EXPORT MediaStateManagerImpl : public MediaStateManager,
+                                             public MediaStatePolicy::Client {
  public:
   static MediaStateManagerImpl* GetInstance();
 
@@ -68,28 +65,8 @@ class CONTENT_EXPORT MediaStateManagerImpl
   MediaStateManagerImpl();
   ~MediaStateManagerImpl() override;
 
-  // implements VideoWindowControllerHost:Client
-  void OnVideoWindowCreated(const base::UnguessableToken& window_id) override;
-  void OnVideoWindowDestroyed(const base::UnguessableToken& window_id) override;
-  void OnVideoWindowGeometryChanged(const base::UnguessableToken& window_id,
-                                    const gfx::Rect& rect) override;
-  void OnVideoWindowVisibilityChanged(const base::UnguessableToken& window_id,
-                                      bool visibility) override;
-  // end of VideoWindowController:Client
-
-  void RequestVideoWindow(MediaPlayerId player, bool from_activation);
-  void RemoveVideoWindow(MediaPlayerId player);
-  void CleanupVideoWindow(RenderFrameHost* host);
-
-  VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
-
-  // This is a bidirectional map between player and global media id.
-  std::map<base::UnguessableToken, std::unique_ptr<VideoWindowInfo>>
-      id_to_info_map_;
   std::map<MediaPlayerId, base::UnguessableToken> player_to_id_map_;
   std::unique_ptr<MediaStatePolicy> policy_;
-
-  ui::VideoWindowControllerHostHelper vwch_ = {this};
 
   DISALLOW_COPY_AND_ASSIGN(MediaStateManagerImpl);
 };

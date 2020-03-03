@@ -746,6 +746,10 @@ class CONTENT_EXPORT RenderFrameImpl
   // content::RenderFrame
   void ResetStateToMarkNextPaint() override;
 #endif
+#if defined(USE_NEVA_MEDIA)
+  content::mojom::FrameVideoWindowFactory* GetFrameVideoWindowFactory()
+      override;
+#endif
 
   void BeginNavigation(std::unique_ptr<blink::WebNavigationInfo> info) override;
   void WillSendSubmitEvent(const blink::WebFormElement& form) override;
@@ -1721,6 +1725,8 @@ class CONTENT_EXPORT RenderFrameImpl
 
 #if defined(USE_NEVA_MEDIA)
   neva::FrameMediaControllerImpl frame_media_controller_impl_;
+  mojo::AssociatedRemote<content::mojom::FrameVideoWindowFactory>
+      frame_video_window_factory_;
 #endif
 
   // Used for devtools instrumentation and trace-ability. This token is

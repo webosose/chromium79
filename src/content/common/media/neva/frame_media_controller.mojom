@@ -16,7 +16,6 @@
 
 module content.mojom;
 
-import "content/common/media/neva/media_layer_info.mojom";
 import "ui/gfx/geometry/mojom/geometry.mojom";
 
 interface FrameMediaController {
@@ -28,9 +27,4 @@ interface FrameMediaController {
 
   // Request suspend media player
   SuspendMedia(int32 player_id);
-
-  NotifyMediaLayerCreated(int32 player_id, MediaLayerInfo info);
-  NotifyMediaLayerWillDestroyed(int32 player_id);
-  NotifyMediaLayerGeometryChanged(int32 player_id, gfx.mojom.Rect rect);
-  NotifyMediaLayerVisibilityChanged(int32 player_id, bool visibility);
 };

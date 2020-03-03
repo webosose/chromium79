@@ -21,9 +21,11 @@
 
 #include "base/macros.h"
 #include "base/unguessable_token.h"
+#include "mojo/public/cpp/bindings/remote.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 #include "ui/platform_window/neva/video_window_controller_host.h"
 
 namespace ui {
@@ -47,48 +49,21 @@ class VideoWindowControllerHostImpl : public VideoWindowControllerHost,
       scoped_refptr<base::SingleThreadTaskRunner> ui_runner,
       scoped_refptr<base::SingleThreadTaskRunner> send_runner,
       base::RepeatingCallback<void(IPC::Message*)> sender) override {}
-
   void OnChannelDestroyed(int host_id) override {}
-
   void OnGpuServiceLaunched(
       int host_id,
       scoped_refptr<base::SingleThreadTaskRunner> host_runner,
       scoped_refptr<base::SingleThreadTaskRunner> io_runner,
       GpuHostBindInterfaceCallback binder,
       GpuHostTerminateCallback terminate_callback) override {}
-  // IPC::Listener:
-  void OnMessageReceived(const IPC::Message& message) override;
+  void OnMessageReceived(const IPC::Message& message) override {}
 
-  void RegisterClient(Client*) override;
-  void UnRegisterClient(Client*) override;
-
-  base::UnguessableToken CreateVideoWindow(
-      Client*,
-      gfx::AcceleratedWidget owner) override;
-  void DestroyVideoWindow(Client*,
-                          const base::UnguessableToken& window_id) override;
-  std::string GetNativeLayerId(
-      const base::UnguessableToken& window_id) override;
+  ui::mojom::VideoWindowController* GetControllerRemote() override;
 
  private:
-  struct VideoWindowInfo;
-  void SetVideoWindowVisibility(const base::UnguessableToken& window_id,
-                                bool visibility);
-  void OnVideoWindowCreated(unsigned w,
-                            const base::UnguessableToken& window_id,
-                            const std::string& native_id);
-  void OnVideoWindowGeometryChanged(const base::UnguessableToken& window_id,
-                                    const gfx::Rect& rect);
-  void OnVideoWindowVisibilityChanged(const base::UnguessableToken& window_id,
-                                      bool visibility);
-  void OnVideoWindowDestroyed(const base::UnguessableToken& window_id);
-  VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
-
   OzoneGpuPlatformSupportHost* proxy_;
-  std::set<Client*> clients_;
-  std::map<base::UnguessableToken, std::unique_ptr<VideoWindowInfo>>
-      video_windows_;
-
+  GpuHostBindInterfaceCallback bind_interface_;
+  mojo::Remote<ui::mojom::VideoWindowController> controller_;
   DISALLOW_COPY_AND_ASSIGN(VideoWindowControllerHostImpl);
 };
 

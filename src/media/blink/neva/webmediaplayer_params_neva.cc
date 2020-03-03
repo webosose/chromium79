@@ -18,13 +18,15 @@
 
 namespace media {
 
-WebMediaPlayerParamsNeva::WebMediaPlayerParamsNeva()
-    : additional_contents_scale_(blink::WebFloatPoint(1.0f,1.0f)) {}
+WebMediaPlayerParamsNeva::WebMediaPlayerParamsNeva(CreateVideoWindowCB callback)
+    : create_video_window_cb_(callback) {}
 
 WebMediaPlayerParamsNeva::WebMediaPlayerParamsNeva(
+    CreateVideoWindowCB callback,
     blink::WebFloatPoint additional_contents_scale,
     blink::WebString application_id)
-    : additional_contents_scale_(additional_contents_scale),
+    : create_video_window_cb_(callback),
+      additional_contents_scale_(additional_contents_scale),
       application_id_(application_id) {}
 
 }  // namespace media

@@ -21,31 +21,39 @@
 
 #include "base/cancelable_callback.h"
 #include "base/unguessable_token.h"
+#include "ozone/media/video_window_provider.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
-#include "ozone/media/video_window_provider.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace ui {
 class VideoWindowSupport;
+class PseudoVideoWindow;
 
 class PseudoVideoWindowProvider : public VideoWindowProvider {
  public:
   PseudoVideoWindowProvider(VideoWindowSupport*);
   ~PseudoVideoWindowProvider() override;
-  void CreateNativeVideoWindow(gfx::AcceleratedWidget w,
-                               const base::UnguessableToken& id,
-                               WindowEventCb cb) override;
-  void DestroyNativeVideoWindow(const base::UnguessableToken& id) override;
-  std::string GetNativeVideoWindowName(
-      const base::UnguessableToken& id) override;
-  void NativeVideoWindowGeometryChanged(const base::UnguessableToken& window_id,
-                                        const gfx::Rect& rect) override;
+  base::UnguessableToken CreateNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+      mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+      const VideoWindowParams& params,
+      WindowEventCb cb) override;
+  void DestroyNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      const base::UnguessableToken& window_id) override;
+  void NativeVideoWindowGeometryChanged(
+      const base::UnguessableToken& window_id,
+      const gfx::Rect& dst,
+      const gfx::Rect& src = gfx::Rect(),
+      const base::Optional<gfx::Rect>& ori = base::nullopt) override;
   void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
       bool visibility) override;
 
  private:
-  struct PseudoVideoWindow;
+  friend class PseudoVideoWindow;
   void UpdateNativeVideoWindowGeometry(const base::UnguessableToken& window_id);
   PseudoVideoWindow* FindWindow(const base::UnguessableToken& window_id);
 

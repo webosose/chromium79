@@ -26,6 +26,7 @@
 
 #if defined(USE_NEVA_MEDIA)
 #include "ozone/media/video_window_controller_host_impl.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 #endif  // defined(USE_NEVA_MEDIA)
 
 namespace ui {
@@ -72,6 +73,17 @@ class OzonePlatformWayland : public OzonePlatform {
 
   GpuPlatformSupport* GetGpuPlatformSupport() override {
     return wayland_display_.get();
+  }
+
+  void AddInterfaces(service_manager::BinderRegistry* registry) {
+    registry->AddInterface(base::BindRepeating(
+        &OzonePlatformWayland::GetVideoWindowControlleConnection,
+        base::Unretained(this)));
+  }
+
+  void GetVideoWindowControlleConnection(
+      mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
+    wayland_display_->BindVideoWindowController(std::move(receiver));
   }
 
 #if defined(USE_NEVA_MEDIA)

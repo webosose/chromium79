@@ -391,31 +391,3 @@ IPC_MESSAGE_CONTROL1(
 IPC_MESSAGE_CONTROL1(
     WaylandDisplay_DetachWindowGroup,  // NOLINT(readability/fn_size)
     unsigned /*handle*/)
-
-#if defined(USE_NEVA_MEDIA)
-IPC_MESSAGE_CONTROL2(WaylandDisplay_CreateVideoWindow,
-                     unsigned /*handle*/,
-                     base::UnguessableToken /*window_id*/)
-
-IPC_MESSAGE_CONTROL2(WaylandDisplay_DestroyVideoWindow,
-                     unsigned /*handle*/,
-                     base::UnguessableToken /*window_id*/)
-
-IPC_MESSAGE_CONTROL3(WaylandDisplay_VideoWindowCreated,
-                     unsigned /*handle*/,
-                     base::UnguessableToken /*window_id*/,
-                     std::string /*native_id*/)
-
-IPC_MESSAGE_CONTROL2(WaylandDisplay_VideoWindowDestroyed,
-                     unsigned /*handle*/,
-                     base::UnguessableToken /*window_id*/)
-
-IPC_MESSAGE_CONTROL2(WaylandDisplay_VideoWindowGeometryChanged,
-                     base::UnguessableToken /*window_id*/,
-                     gfx::Rect /*video geomtry*/)
-
-IPC_MESSAGE_CONTROL2(WaylandDisplay_VideoWindowVisibilityChanged,
-                     base::UnguessableToken /*window_id*/,
-                     bool /*visibility*/)
-
-#endif  // defined(USE_NEVA_MEDIA)

@@ -8,10 +8,6 @@
 #include "third_party/blink/public/platform/web_common.h"
 #include "third_party/blink/public/platform/web_media_player.h"
 
-#if defined(USE_NEVA_MEDIA)
-#include "content/common/media/neva/media_layer_info.h"
-#endif
-
 namespace gfx {
 class Size;
 }  // namespace gfx
@@ -82,10 +78,6 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerDelegate {
 #if defined(USE_NEVA_MEDIA)
     virtual void OnMediaActivationPermitted() {}
     virtual void OnSuspend() {}
-    virtual void OnMediaLayerCreated(const content::MediaLayerInfo& info) {}
-    virtual void OnMediaLayerWillDestroyed() {}
-    virtual void OnMediaLayerGeometryChanged(const gfx::Rect& rect) {}
-    virtual void OnMediaLayerVisibilityChanged(bool visibility) {}
 #endif
   };
 

@@ -435,7 +435,9 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
   const RenderWidget* render_widget = render_frame_->GetLocalRootRenderWidget();
 
   std::unique_ptr<media::WebMediaPlayerParamsNeva> params_neva(
-      new media::WebMediaPlayerParamsNeva());
+      new media::WebMediaPlayerParamsNeva(base::BindRepeating(
+          &content::mojom::FrameVideoWindowFactory::CreateVideoWindow,
+          base::Unretained(render_frame_->GetFrameVideoWindowFactory()))));
   params_neva->set_application_id(
       blink::WebString::FromUTF8(renderer_prefs.application_id));
   params_neva->set_use_unlimited_media_policy(

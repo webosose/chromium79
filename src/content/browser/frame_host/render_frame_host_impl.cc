@@ -5761,6 +5761,15 @@ void RenderFrameHostImpl::SetUpMojoIfNeeded() {
             std::make_unique<ActiveURLMessageFilter>(impl));
       },
       base::Unretained(this)));
+#if defined(USE_NEVA_MEDIA)
+  associated_registry_->AddInterface(base::BindRepeating(
+      [](RenderFrameHostImpl* impl,
+         mojo::PendingAssociatedReceiver<
+             content::mojom::FrameVideoWindowFactory> receiver) {
+        impl->frame_video_window_factory_receiver_.Bind(std::move(receiver));
+      },
+      base::Unretained(this)));
+#endif  // defined(USE_NEVA_MEDIA)
   RegisterMojoInterfaces();
   mojo::PendingRemote<mojom::FrameFactory> frame_factory;
   BindInterface(GetProcess(), &frame_factory);
@@ -6949,31 +6958,6 @@ void RenderFrameHostImpl::SetSuppressed(bool is_suppressed) {
 void RenderFrameHostImpl::SuspendMedia(int player_id) {
   if (GetFrameMediaController())
     GetFrameMediaController()->SuspendMedia(player_id);
-}
-
-void RenderFrameHostImpl::NotifyMediaLayerCreated(int player_id,
-                                                  const MediaLayerInfo& info) {
-  if (GetFrameMediaController())
-    GetFrameMediaController()->NotifyMediaLayerCreated(player_id, info);
-}
-
-void RenderFrameHostImpl::NotifyMediaLayerWillDestroyed(int player_id) {
-  if (GetFrameMediaController())
-    GetFrameMediaController()->NotifyMediaLayerWillDestroyed(player_id);
-}
-
-void RenderFrameHostImpl::NotifyMediaLayerGeometryChanged(
-    int player_id,
-    const gfx::Rect& rect) {
-  if (GetFrameMediaController())
-    GetFrameMediaController()->NotifyMediaLayerGeometryChanged(player_id, rect);
-}
-
-void RenderFrameHostImpl::NotifyMediaLayerVisibilityChanged(int player_id,
-                                                            bool visibility) {
-  if (GetFrameMediaController())
-    GetFrameMediaController()->NotifyMediaLayerVisibilityChanged(player_id,
-                                                                 visibility);
 }
 
 gfx::AcceleratedWidget RenderFrameHostImpl::GetAcceleratedWidget() {

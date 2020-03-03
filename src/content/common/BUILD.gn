@@ -494,13 +494,6 @@ mojom("mojo_bindings") {
     "widget.mojom",
   ]
 
-  if (use_neva_media) {
-    sources += [
-      "media/neva/frame_media_controller.mojom",
-      "media/neva/media_layer_info.mojom",
-    ]
-  }
-
   enabled_features = []
   if (enable_ipc_logging) {
     enabled_features += [ "ipc_logging" ]
@@ -553,6 +546,14 @@ mojom("mojo_bindings") {
       "web_contents_ns_view_bridge.mojom",
     ]
     public_deps += [ "//ui/display/mojom" ]
+  }
+
+  if (use_neva_media) {
+    sources += [
+      "media/neva/frame_media_controller.mojom",
+      "media/neva/frame_video_window_factory.mojom",
+    ]
+    public_deps += [ "//ui/platform_window:mojom" ]
   }
 
   overridden_deps = [ "//third_party/blink/public/mojom:mojom_core" ]

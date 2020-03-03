@@ -17,19 +17,25 @@
 #ifndef MEDIA_BLINK_NEVA_WEBMEDIAPLAYER_PARAMS_NEVA_H_
 #define MEDIA_BLINK_NEVA_WEBMEDIAPLAYER_PARAMS_NEVA_H_
 
+#include "content/common/media/neva/frame_video_window_factory.mojom.h"
 #include "media/blink/media_blink_export.h"
 #include "third_party/blink/public/platform/web_float_point.h"
 #include "third_party/blink/public/platform/web_string.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace media {
 
 class MEDIA_BLINK_EXPORT WebMediaPlayerParamsNeva {
  public:
-  WebMediaPlayerParamsNeva(
-    blink::WebFloatPoint additional_contents_scale,
-    blink::WebString application_id);
+  using CreateVideoWindowCB = base::RepeatingCallback<void(
+      mojo::PendingRemote<ui::mojom::VideoWindowClient>,
+      mojo::PendingReceiver<ui::mojom::VideoWindow>,
+      const ui::VideoWindowParams&)>;
+  WebMediaPlayerParamsNeva(CreateVideoWindowCB callback,
+                           blink::WebFloatPoint additional_contents_scale,
+                           blink::WebString application_id);
 
-  WebMediaPlayerParamsNeva();
+  WebMediaPlayerParamsNeva(CreateVideoWindowCB callback);
   ~WebMediaPlayerParamsNeva() {}
 
   blink::WebFloatPoint additional_contents_scale() const {
@@ -57,8 +63,13 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerParamsNeva {
     use_unlimited_media_policy_ = use_unlimited_media_policy;
   }
 
+  CreateVideoWindowCB&& get_create_video_window_callback() {
+    return std::move(create_video_window_cb_);
+  }
+
  protected:
-  blink::WebFloatPoint additional_contents_scale_;
+  CreateVideoWindowCB create_video_window_cb_;
+  blink::WebFloatPoint additional_contents_scale_ = {1.0f, 1.0f};
   blink::WebString application_id_;
   bool use_unlimited_media_policy_ = false;
 };

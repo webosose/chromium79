@@ -23,6 +23,7 @@
 #include "base/unguessable_token.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace ui {
 
@@ -34,33 +35,10 @@ namespace ui {
  */
 class VideoWindowControllerHost {
  public:
-  class Client {
-   public:
-    virtual void OnVideoWindowCreated(
-        const base::UnguessableToken& window_id) = 0;
-    virtual void OnVideoWindowDestroyed(
-        const base::UnguessableToken& window_id) = 0;
-
-    virtual void OnVideoWindowGeometryChanged(
-        const base::UnguessableToken& window_id,
-        const gfx::Rect& rect) = 0;
-    virtual void OnVideoWindowVisibilityChanged(
-        const base::UnguessableToken& window_id,
-        bool visibility) = 0;
-  };
-
   virtual ~VideoWindowControllerHost() {}
-
-  virtual void RegisterClient(Client*) = 0;
-  virtual void UnRegisterClient(Client*) = 0;
-
-  virtual base::UnguessableToken CreateVideoWindow(
-      Client*,
-      gfx::AcceleratedWidget owner) = 0;
-  virtual void DestroyVideoWindow(Client*,
-                                  const base::UnguessableToken& window_id) = 0;
-  virtual std::string GetNativeLayerId(
-      const base::UnguessableToken& window_id) = 0;
+  virtual ui::mojom::VideoWindowController* GetControllerRemote() {
+    return nullptr;
+  }
 };
 }  // namespace ui
 

@@ -58,31 +58,5 @@ void FrameMediaControllerImpl::SuspendMedia(int player_id) {
   }
 }
 
-void FrameMediaControllerImpl::NotifyMediaLayerCreated(
-    int player_id,
-    const content::MediaLayerInfo& info) {
-  for (auto& observer : render_frame_impl_->observers_)
-    observer.OnMediaLayerCreated(player_id, info);
-}
-
-void FrameMediaControllerImpl::NotifyMediaLayerWillDestroyed(int player_id) {
-  for (auto& observer : render_frame_impl_->observers_)
-    observer.OnMediaLayerWillDestroyed(player_id);
-}
-
-void FrameMediaControllerImpl::NotifyMediaLayerGeometryChanged(
-    int player_id,
-    const gfx::Rect& rect) {
-  for (auto& observer : render_frame_impl_->observers_)
-    observer.OnMediaLayerGeometryChanged(player_id, rect);
-}
-
-void FrameMediaControllerImpl::NotifyMediaLayerVisibilityChanged(
-    int player_id,
-    bool visibility) {
-  for (auto& observer : render_frame_impl_->observers_)
-    observer.OnMediaLayerVisibilityChanged(player_id, visibility);
-}
-
 }  // namespace neva
 }  // namespace content

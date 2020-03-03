@@ -682,20 +682,6 @@ struct wl_webos_foreign* WaylandDisplay::GetWebosForeign() const {
   return webos_foreign_;
 }
 #endif  // defiend(USE_GAV)
-
-void WaylandDisplay::CreateVideoWindow(
-    unsigned w,
-    const base::UnguessableToken& window_id) {
-  VLOG(1) << __func__ << " widget=" << w << " window_id=" << window_id;
-  video_window_controller_impl_->CreateVideoWindow(w, window_id);
-}
-
-void WaylandDisplay::DestroyVideoWindow(
-    unsigned w,
-    const base::UnguessableToken& window_id) {
-  VLOG(1) << __func__;
-  video_window_controller_impl_->DestroyVideoWindow(w, window_id);
-}
 #endif  // defined(USE_NEVA_MEDIA)
 
 void WaylandDisplay::CreateWindowGroup(
@@ -976,12 +962,14 @@ void WaylandDisplay::KeyboardLeave(unsigned handle) {
 }
 
 #if defined(USE_NEVA_MEDIA)
-ui::VideoWindowController* WaylandDisplay::GetVideoWindowController() {
-  return video_window_controller_impl_.get();
+void WaylandDisplay::BindVideoWindowController(
+    mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
+  video_window_controller_impl_->Bind(std::move(receiver));
 }
 
-void WaylandDisplay::SendVideoWindowMessage(IPC::Message* message) {
-  Dispatch(message);
+// Called from overlay processor
+ui::VideoWindowController* WaylandDisplay::GetVideoWindowController() {
+  return video_window_controller_impl_.get();
 }
 #endif
 
@@ -1117,10 +1105,6 @@ bool WaylandDisplay::OnMessageReceived(const IPC::Message& message) {
   IPC_MESSAGE_HANDLER(WaylandDisplay_FocusWindowGroupLayer,
                       FocusWindowGroupLayer)
   IPC_MESSAGE_HANDLER(WaylandDisplay_DetachWindowGroup, DetachWindowGroup)
-#if defined(USE_NEVA_MEDIA)
-  IPC_MESSAGE_HANDLER(WaylandDisplay_CreateVideoWindow, CreateVideoWindow)
-  IPC_MESSAGE_HANDLER(WaylandDisplay_DestroyVideoWindow, DestroyVideoWindow)
-#endif  // defined(USE_NEVA_MEDIA)
 
   IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()

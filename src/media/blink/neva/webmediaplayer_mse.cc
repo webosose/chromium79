@@ -66,7 +66,8 @@ WebMediaPlayerMSE::WebMediaPlayerMSE(
                                 std::move(compositor),
                                 std::move(params)),
       additional_contents_scale_(params_neva->additional_contents_scale()),
-      app_id_(params_neva->application_id().Utf8()) {
+      app_id_(params_neva->application_id().Utf8()),
+      create_video_window_cb_(params_neva->get_create_video_window_callback()) {
   weak_this_for_mse_ = weak_factory_for_mse_.GetWeakPtr();
 
   // Use the null sink for our MSE player
@@ -256,26 +257,6 @@ void WebMediaPlayerMSE::OnMediaActivationPermitted() {
   delegate_->DidMediaActivated(delegate_id_);
 }
 
-void WebMediaPlayerMSE::OnMediaLayerCreated(
-    const content::MediaLayerInfo& info) {
-  VLOG(1) << __func__ << " player_id=" << delegate_id_
-          << " layer_info_id=" << info.media_layer_id_
-          << " layer_info_token=" << info.overlay_plane_token_;
-  SetMediaLayerId(info);
-}
-
-void WebMediaPlayerMSE::OnMediaLayerWillDestroyed() {
-  SetMediaLayerId(content::MediaLayerInfo());
-}
-
-void WebMediaPlayerMSE::OnMediaLayerGeometryChanged(const gfx::Rect& rect) {
-  geometry_update_helper_->SetMediaLayerGeometry(rect);
-}
-
-void WebMediaPlayerMSE::OnMediaLayerVisibilityChanged(bool visibility) {
-  geometry_update_helper_->SetMediaLayerVisibility(visibility);
-}
-
 void WebMediaPlayerMSE::OnResume() {
   if (!is_suspended_) {
     delegate_->DidMediaActivated(delegate_id_);
@@ -323,6 +304,10 @@ void WebMediaPlayerMSE::OnResumed() {
 
 void WebMediaPlayerMSE::OnLoadPermitted() {
   // call base-class implementation
+  if (!EnsureVideoWindowCreated()) {
+    pending_load_media_ = true;
+    return;
+  }
   media::WebMediaPlayerImpl::Load(pending_load_type_, pending_source_,
                                   pending_cors_mode_);
 }
@@ -333,6 +318,8 @@ void WebMediaPlayerMSE::OnNaturalVideoSizeChanged(
             << " , height: " << natural_video_size.height();
   natural_video_size_ = natural_video_size;
   geometry_update_helper_->SetNaturalVideoSize(natural_video_size_);
+  if (video_window_remote_)
+    video_window_remote_->SetNaturalVideoSize(natural_video_size_);
 }
 
 void WebMediaPlayerMSE::OnError(PipelineStatus metadata) {
@@ -425,10 +412,62 @@ void WebMediaPlayerMSE::OnMetadata(const PipelineMetadata& metadata) {
   UpdatePlayState();
 }
 
-void WebMediaPlayerMSE::SetMediaLayerId(const content::MediaLayerInfo& info) {
-  media_layer_info_ = info;
-  video_frame_provider_->SetOverlayPlaneId(info.overlay_plane_token_);
-  media_platform_api_->SetMediaLayerId(info.media_layer_id_);
+void WebMediaPlayerMSE::OnVideoWindowCreated(const ui::VideoWindowInfo& info) {
+  video_window_info_ = info;
+  video_frame_provider_->SetOverlayPlaneId(info.window_id);
+  media_platform_api_->SetMediaLayerId(info.native_window_id);
+  if (!natural_video_size_.IsEmpty())
+    video_window_remote_->SetNaturalVideoSize(natural_video_size_);
+  ContinuePlayerWithWindowId();
+}
+
+void WebMediaPlayerMSE::OnVideoWindowDestroyed() {
+  video_window_info_ = base::nullopt;
+  video_window_client_receiver_.reset();
+}
+
+void WebMediaPlayerMSE::OnVideoWindowGeometryChanged(const gfx::Rect& rect) {
+#if defined(NEVA_VIDEO_HOLE)
+  geometry_update_helper_->SetMediaLayerGeometry(rect);
+#endif
+}
+
+void WebMediaPlayerMSE::OnVideoWindowVisibilityChanged(bool visibility) {
+#if defined(NEVA_VIDEO_HOLE)
+  geometry_update_helper_->SetMediaLayerVisibility(visibility);
+#endif
+}
+
+// It returns if video window is already created and can be continued to next
+// step.
+bool WebMediaPlayerMSE::EnsureVideoWindowCreated() {
+  if (video_window_info_)
+    return true;
+  // |is_bound()| would be true if we already requested so we need to just wait
+  // for response
+  if (video_window_client_receiver_.is_bound())
+    return false;
+
+  mojo::PendingRemote<ui::mojom::VideoWindowClient> pending_client;
+  video_window_client_receiver_.Bind(
+      pending_client.InitWithNewPipeAndPassReceiver());
+
+  // We don't use VideoWindow interface here, just pass reciver and close.
+  mojo::PendingRemote<ui::mojom::VideoWindow> pending_window_remote;
+  create_video_window_cb_.Run(
+      std::move(pending_client),
+      pending_window_remote.InitWithNewPipeAndPassReceiver(),
+      ui::VideoWindowParams());
+  video_window_remote_.Bind(std::move(pending_window_remote));
+  return false;
+}
+
+void WebMediaPlayerMSE::ContinuePlayerWithWindowId() {
+  if (pending_load_media_) {
+    media::WebMediaPlayerImpl::Load(pending_load_type_, pending_source_,
+                                    pending_cors_mode_);
+    pending_load_media_ = false;
+  }
 }
 
 scoped_refptr<VideoFrame> WebMediaPlayerMSE::GetCurrentFrameFromCompositor()

@@ -123,7 +123,9 @@
 #endif
 
 #if defined(USE_NEVA_MEDIA)
+#include "content/browser/media/neva/frame_video_window_factory_impl.h"
 #include "content/common/media/neva/frame_media_controller.mojom.h"
+#include "content/common/media/neva/frame_video_window_factory.mojom.h"
 #endif
 
 class GURL;
@@ -928,13 +930,6 @@ class CONTENT_EXPORT RenderFrameHostImpl
   void PermitMediaActivation(int player_id) override;
   void SetSuppressed(bool is_suppressed) override;
   void SuspendMedia(int player_id) override;
-  void NotifyMediaLayerCreated(int player_id,
-                               const MediaLayerInfo& info) override;
-  void NotifyMediaLayerWillDestroyed(int player_id) override;
-  void NotifyMediaLayerGeometryChanged(int player_id,
-                                       const gfx::Rect& rect) override;
-  void NotifyMediaLayerVisibilityChanged(int player_id,
-                                         bool visibility) override;
   gfx::AcceleratedWidget GetAcceleratedWidget() override;
 #endif
 
@@ -2255,6 +2250,12 @@ class CONTENT_EXPORT RenderFrameHostImpl
   mojo::AssociatedRemote<mojom::FrameNavigationControl> navigation_control_;
   mojo::AssociatedReceiver<blink::mojom::LocalFrameHost>
       local_frame_host_receiver_{this};
+
+#if defined(USE_NEVA_MEDIA)
+  FrameVideoWindowFactoryImpl frame_video_window_factory_impl_{this};
+  mojo::AssociatedReceiver<content::mojom::FrameVideoWindowFactory>
+      frame_video_window_factory_receiver_{&frame_video_window_factory_impl_};
+#endif
 
   // If this is true then this object was created in response to a renderer
   // initiated request. Init() will be called, and until then navigation

@@ -55,7 +55,9 @@
 
 #if defined(USE_NEVA_MEDIA)
 #include "base/unguessable_token.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "ozone/media/video_window_controller_impl.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 #endif  // defined(USE_NEVA_MEDIA)
 
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
@@ -264,8 +266,9 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   void KeyboardLeave(unsigned handle);
 
 #if defined(USE_NEVA_MEDIA)
+  void BindVideoWindowController(
+      mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver);
   ui::VideoWindowController* GetVideoWindowController() override;
-  void SendVideoWindowMessage(IPC::Message* message) override;
 #endif
  private:
   typedef std::queue<IPC::Message*> DeferredMessages;
@@ -323,10 +326,6 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   void FocusWindowGroupOwner(unsigned w);
   void FocusWindowGroupLayer(unsigned w);
   void DetachWindowGroup(unsigned w);
-#if defined(USE_NEVA_MEDIA)
-  void CreateVideoWindow(unsigned w, const base::UnguessableToken& window_id);
-  void DestroyVideoWindow(unsigned w, const base::UnguessableToken& window_id);
-#endif  // defined(USE_NEVA_MEDIA)
 
   // This handler resolves all server events used in initialization. It also
   // handles input device registration, screen registration.

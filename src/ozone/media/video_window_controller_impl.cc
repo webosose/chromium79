@@ -21,27 +21,25 @@
 #include "ui/ozone/public/ozone_platform.h"
 #include "ozone/media/video_window_provider.h"
 
+#include "mojo/public/cpp/bindings/remote.h"
+
 namespace ui {
 
-struct VideoWindowControllerImpl::VideoWindowInfo {
-  enum class State {
-    kNone,
-    kCreating,    // create is requested
-    kCreated,     //
-    kDestroying,  // destroy is requested
-    kDestroyed
-  };
+class VideoWindowControllerImpl::VideoWindowInfo {
+ public:
+  enum class State { kCreating, kCreated, kDestroyed };
 
   explicit VideoWindowInfo(gfx::AcceleratedWidget w,
                            const base::UnguessableToken& id,
-                           base::Optional<bool> visibility)
-      : owner_widget_(w), id_(id), visibility_(visibility) {}
+                           const VideoWindowParams& params)
+      : owner_widget_(w), id_(id), params_(params) {}
   ~VideoWindowInfo() = default;
 
   gfx::AcceleratedWidget owner_widget_;
   base::UnguessableToken id_;
-  base::Optional<bool> visibility_;
-  State state_ = State::kNone;
+  base::Optional<bool> visibility_ = base::nullopt;
+  State state_ = State::kCreating;
+  VideoWindowParams params_;
 };
 
 VideoWindowControllerImpl::VideoWindowControllerImpl(
@@ -51,18 +49,19 @@ VideoWindowControllerImpl::VideoWindowControllerImpl(
 VideoWindowControllerImpl::~VideoWindowControllerImpl() = default;
 
 void VideoWindowControllerImpl::CreateVideoWindow(
-    unsigned w,
-    const base::UnguessableToken& window_id) {
-  VLOG(1) << __func__ << " window_id=" << window_id;
-  VideoWindowInfo* info = new VideoWindowInfo(w, window_id, base::nullopt);
-  info->state_ = VideoWindowInfo::State::kCreating;
+    gfx::AcceleratedWidget w,
+    mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+    mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+    const ui::VideoWindowParams& params) {
+  base::UnguessableToken window_id = provider_->CreateNativeVideoWindow(
+      w, std::move(client), std::move(receiver), params,
+      base::BindRepeating(&VideoWindowControllerImpl::OnWindowEvent,
+                          base::Unretained(this)));
+
+  VideoWindowInfo* info = new VideoWindowInfo(w, window_id, params);
   id_to_widget_map_[window_id] = w;
   VideoWindowInfoList& list = video_windows_[w];
   list.emplace_back(info);
-  provider_->CreateNativeVideoWindow(
-      w, window_id,
-      base::BindRepeating(&VideoWindowControllerImpl::OnWindowEvent,
-                          base::Unretained(this)));
 }
 
 VideoWindowControllerImpl::VideoWindowInfo*
@@ -110,26 +109,10 @@ void VideoWindowControllerImpl::RemoveVideoWindowInfo(
             << " / # of windows of widget(" << w << "):" << count;
 }
 
-void VideoWindowControllerImpl::DestroyVideoWindow(
-    unsigned w,
-    const base::UnguessableToken& window_id) {
-  VLOG(1) << __func__ << " window_id=" << window_id;
-  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
-  if (!info) {
-    LOG(ERROR) << __func__ << " failed to find info for " << window_id;
-    return;
-  }
-  info->state_ = VideoWindowInfo::State::kDestroying;
-  provider_->DestroyNativeVideoWindow(window_id);
-}
-
 void VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged(
     const gpu::SurfaceHandle h,
     const base::UnguessableToken& window_id,
     const gfx::Rect& rect) {
-  VLOG(2) << __func__ << " window_id=" << window_id
-          << " rect=" << rect.ToString();
-
   gfx::AcceleratedWidget w = static_cast<gfx::AcceleratedWidget>(h);
 
   auto it = hidden_candidate_.find(w);
@@ -139,7 +122,13 @@ void VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged(
   }
 
   SetVideoWindowVisibility(window_id, true);
-  provider_->NativeVideoWindowGeometryChanged(window_id, rect);
+
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (info && info->params_.use_overlay_processor_layout) {
+    VLOG(2) << __func__ << " window_id=" << window_id
+            << " rect=" << rect.ToString();
+    provider_->NativeVideoWindowGeometryChanged(window_id, rect);
+  }
 }
 
 void VideoWindowControllerImpl::SetVideoWindowVisibility(
@@ -163,14 +152,16 @@ void VideoWindowControllerImpl::SetVideoWindowVisibility(
 }
 
 void VideoWindowControllerImpl::OnWindowEvent(
+    gfx::AcceleratedWidget w,
     const base::UnguessableToken& window_id,
     VideoWindowProvider::Event event) {
+  VLOG(1) << __func__ << " w=" << w << " id=" << window_id;
   switch (event) {
     case VideoWindowProvider::Event::kCreated:
-      OnVideoWindowCreated(window_id);
+      OnVideoWindowCreated(w, window_id);
       break;
     case VideoWindowProvider::Event::kDestroyed:
-      OnVideoWindowDestroyed(window_id);
+      OnVideoWindowDestroyed(w, window_id);
       break;
     default:
       break;
@@ -178,34 +169,29 @@ void VideoWindowControllerImpl::OnWindowEvent(
 }
 
 void VideoWindowControllerImpl::OnVideoWindowCreated(
+    gfx::AcceleratedWidget w,
     const base::UnguessableToken& window_id) {
   VLOG(1) << __func__ << " window_id=" << window_id;
-  VideoWindowInfo* w = FindVideoWindowInfo(window_id);
-  if (!w) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(WARNING) << __func__ << " failed to find video window for "
                  << window_id;
     return;
   }
-
-  w->state_ = VideoWindowInfo::State::kCreated;
-  std::string native_id = provider_->GetNativeVideoWindowName(window_id);
-  support_->SendVideoWindowMessage(new WaylandDisplay_VideoWindowCreated(
-      w->owner_widget_, window_id, native_id));
+  info->state_ = VideoWindowInfo::State::kCreated;
 }
 
 void VideoWindowControllerImpl::OnVideoWindowDestroyed(
+    gfx::AcceleratedWidget w,
     const base::UnguessableToken& window_id) {
   VLOG(1) << __func__ << " window_id=" << window_id;
-  VideoWindowInfo* w = FindVideoWindowInfo(window_id);
-  if (!w) {
+  VideoWindowInfo* info = FindVideoWindowInfo(window_id);
+  if (!info) {
     LOG(WARNING) << __func__ << " failed to find video window for "
                  << window_id;
     return;
   }
-
-  w->state_ = VideoWindowInfo::State::kDestroyed;
-  support_->SendVideoWindowMessage(
-      new WaylandDisplay_VideoWindowDestroyed(w->owner_widget_, window_id));
+  info->state_ = VideoWindowInfo::State::kDestroyed;
   RemoveVideoWindowInfo(window_id);
 }
 
@@ -243,9 +229,7 @@ void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
   if (it == video_windows_.end())
     return;
   for (auto const& w_info : it->second)
-    if (w_info->state_ == VideoWindowInfo::State::kCreating ||
-        w_info->state_ == VideoWindowInfo::State::kCreated)
-      DestroyVideoWindow(w_info->owner_widget_, w_info->id_);
+    provider_->DestroyNativeVideoWindow(w, w_info->id_);
 }
 
 }  // namespace ui

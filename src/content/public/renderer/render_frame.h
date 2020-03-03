@@ -27,6 +27,10 @@
 #include "third_party/blink/public/web/web_navigation_policy.h"
 #include "ui/accessibility/ax_mode.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "content/common/media/neva/frame_video_window_factory.mojom.h"
+#endif
+
 namespace blink {
 class AssociatedInterfaceProvider;
 class AssociatedInterfaceRegistry;
@@ -293,6 +297,9 @@ class CONTENT_EXPORT RenderFrame : public IPC::Listener,
 
 #if defined(USE_NEVA_APPRUNTIME)
   virtual void ResetStateToMarkNextPaint() {}
+#endif
+#if defined(USE_NEVA_MEDIA)
+  virtual content::mojom::FrameVideoWindowFactory* GetFrameVideoWindowFactory();
 #endif
 
   // Per-frame media playback options passed to each WebMediaPlayer.

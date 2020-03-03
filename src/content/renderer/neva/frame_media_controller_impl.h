@@ -36,13 +36,6 @@ class FrameMediaControllerImpl : public content::mojom::FrameMediaController {
   void PermitMediaActivation(int player_id) override;
   void SetSuppressed(bool is_suppressed) override;
   void SuspendMedia(int player_id) override;
-  void NotifyMediaLayerCreated(int player_id,
-                               const content::MediaLayerInfo& info) override;
-  void NotifyMediaLayerWillDestroyed(int player_id) override;
-  void NotifyMediaLayerGeometryChanged(int player_id,
-                                       const gfx::Rect& rect) override;
-  void NotifyMediaLayerVisibilityChanged(int player_id,
-                                         bool visibility) override;
 
   void Bind(
       mojo::PendingAssociatedReceiver<content::mojom::FrameMediaController>);

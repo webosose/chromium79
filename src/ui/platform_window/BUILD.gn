@@ -3,6 +3,20 @@
 # found in the LICENSE file.
 
 import("//build/config/ui.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
+
+if (use_neva_media) {
+  mojom("mojom") {
+    sources = [
+      "neva/mojo/video_window_controller.mojom"
+    ]
+    public_deps = [
+      "//mojo/public/mojom/base",
+      "//ui/gfx/geometry/mojom",
+      "//ui/gfx/mojom"
+    ]
+  }
+}
 
 source_set("platform_window") {
   sources = [
@@ -25,8 +39,6 @@ source_set("platform_window") {
   if (use_neva_media) {
     sources += [
       "neva/video_window_controller.h",
-      "neva/video_window_controller_helper.cc",
-      "neva/video_window_controller_helper.h",
       "neva/video_window_controller_host.h",
     ]
   }
@@ -36,6 +48,10 @@ source_set("platform_window") {
     "//ui/base",
     "//ui/gfx",
   ]
+
+  if (use_neva_media) {
+    deps += [ "//ui/platform_window:mojom" ]
+  }
 
   if (is_fuchsia) {
     sources += [

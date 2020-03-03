@@ -27,6 +27,9 @@ const service_manager::Manifest& GetContentGpuManifest() {
                                 "ui.ozone.mojom.DrmDevice",
                                 "ui.ozone.mojom.WaylandBufferManagerGpu",
                                 "ui.mojom.ScenicGpuService",
+#if defined(USE_NEVA_MEDIA)
+                                "ui.mojom.VideoWindowController",
+#endif  // defined(USE_NEVA_MEDIA)
                                 "viz.mojom.CompositingModeReporter",
                                 "viz.mojom.VizMain",
                             })

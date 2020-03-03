@@ -26,27 +26,35 @@
 #include "base/unguessable_token.h"
 #include "gpu/ipc/common/surface_handle.h"
 #include "ipc/ipc_message.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
+#include "mojo/public/cpp/bindings/pending_remote.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "ozone/media/video_window_provider.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 #include "ui/platform_window/neva/video_window_controller.h"
-#include "ozone/media/video_window_provider.h"
 
 namespace ui {
 class VideoWindowSupport {
  public:
   virtual ui::VideoWindowController* GetVideoWindowController() = 0;
-  // Send a message to browser process
-  virtual void SendVideoWindowMessage(IPC::Message* message) = 0;
 };
 
 /* VideoWindowControllerImpl lives in gpu process and it request
  * creating/destroying/geomtry-update VideoWindow to VideoWindowProvider */
-class VideoWindowControllerImpl : public VideoWindowController {
+class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
+                                  public VideoWindowController {
  public:
   VideoWindowControllerImpl(VideoWindowSupport*);
   ~VideoWindowControllerImpl() override;
-  void CreateVideoWindow(unsigned w, const base::UnguessableToken& window_id);
-  void DestroyVideoWindow(unsigned w, const base::UnguessableToken& window_id);
+  // Implements ui::mojom::VideoWindowController
+  void CreateVideoWindow(
+      gfx::AcceleratedWidget w,
+      mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+      mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+      const VideoWindowParams& param) override;
+  // end
   void NotifyVideoWindowGeometryChanged(gpu::SurfaceHandle h,
                                         const base::UnguessableToken& window_id,
                                         const gfx::Rect& rect) override;
@@ -54,16 +62,23 @@ class VideoWindowControllerImpl : public VideoWindowController {
   void EndOverlayProcessor(gpu::SurfaceHandle h) override;
   void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w) override;
 
+  void Bind(mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
+    receiver_.Bind(std::move(receiver));
+  }
+
  private:
-  struct VideoWindowInfo;
+  class VideoWindowInfo;
   VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
   void RemoveVideoWindowInfo(const base::UnguessableToken& window_id);
   void SetVideoWindowVisibility(const base::UnguessableToken& window_id,
                                 bool visibility);
-  void OnWindowEvent(const base::UnguessableToken& window_id,
+  void OnWindowEvent(gfx::AcceleratedWidget w,
+                     const base::UnguessableToken& window_id,
                      VideoWindowProvider::Event event);
-  void OnVideoWindowCreated(const base::UnguessableToken& window_id);
-  void OnVideoWindowDestroyed(const base::UnguessableToken& window_id);
+  void OnVideoWindowCreated(gfx::AcceleratedWidget w,
+                            const base::UnguessableToken& window_id);
+  void OnVideoWindowDestroyed(gfx::AcceleratedWidget w,
+                              const base::UnguessableToken& window_id);
 
   using VideoWindowInfoList = std::vector<std::unique_ptr<VideoWindowInfo>>;
 
@@ -74,6 +89,7 @@ class VideoWindowControllerImpl : public VideoWindowController {
   std::map<gfx::AcceleratedWidget, std::set<base::UnguessableToken>>
       hidden_candidate_;
 
+  mojo::Receiver<ui::mojom::VideoWindowController> receiver_{this};
   DISALLOW_COPY_AND_ASSIGN(VideoWindowControllerImpl);
 };
 

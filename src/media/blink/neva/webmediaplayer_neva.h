@@ -28,7 +28,7 @@
 #include "base/time/default_tick_clock.h"
 #include "base/timer/timer.h"
 #include "cc/layers/video_frame_provider.h"
-#include "content/common/media/neva/media_layer_info.h"
+#include "content/common/media/neva/frame_video_window_factory.mojom.h"
 #include "media/base/audio_renderer_sink.h"
 #include "media/base/pipeline.h"
 #include "media/base/time_delta_interpolator.h"
@@ -39,6 +39,8 @@
 #include "media/blink/neva/mediaplayerneva_factory.h"
 #include "media/blink/neva/video_frame_provider_impl.h"
 #include "media/blink/neva/webmediaplayer_params_neva.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
 #include "third_party/blink/public/platform/media/webmediaplayer_delegate.h"
 #include "third_party/blink/public/platform/web_audio_source_provider.h"
 #include "third_party/blink/public/platform/web_float_point.h"
@@ -49,6 +51,7 @@
 #include "third_party/blink/public/platform/web_size.h"
 #include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/platform/web_vector.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 #include "url/gurl.h"
 
 namespace blink {
@@ -86,6 +89,7 @@ class WebMediaPlayerParams;
 class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
     : public blink::WebMediaPlayer,
       public blink::WebMediaPlayerDelegate::Observer,
+      public ui::mojom::VideoWindowClient,
       public media::MediaPlayerNevaClient {
  public:
   enum StatusOnSuspended {
@@ -255,10 +259,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   void OnBecamePersistentVideo(bool value) override {}
   void OnSuspend() override;
   void OnMediaActivationPermitted() override;
-  void OnMediaLayerCreated(const content::MediaLayerInfo& info) override;
-  void OnMediaLayerWillDestroyed() override;
-  void OnMediaLayerGeometryChanged(const gfx::Rect& rect) override;
-  void OnMediaLayerVisibilityChanged(bool visibility) override;
 
   void OnResume();
   void OnLoadPermitted();
@@ -335,7 +335,15 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   // end of MSE implementation
   //-----------------------------------------------------
 
-  void SetMediaLayerId(const content::MediaLayerInfo& info);
+  // Implements ui::mojom::VideoWindowClient
+  void OnVideoWindowCreated(const ui::VideoWindowInfo& info) override;
+  void OnVideoWindowDestroyed() override;
+  void OnVideoWindowGeometryChanged(const gfx::Rect& rect) override;
+  void OnVideoWindowVisibilityChanged(bool visibility) override;
+  // End of blink::mojom::VideoWindowClient
+
+  bool EnsureVideoWindowCreated();
+  void ContinuePlayerWithWindowId();
 
   blink::WebLocalFrame* frame_;
 
@@ -465,10 +473,16 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   bool has_activation_permit_ = false;
 
   bool audio_disabled_ = false;
-  content::MediaLayerInfo media_layer_info_{base::UnguessableToken::Null()};
 
   bool has_first_frame_ = false;
   bool pending_load_media_ = false;
+  base::Optional<Preload> pending_preload_ = base::nullopt;
+  WebMediaPlayerParamsNeva::CreateVideoWindowCB create_video_window_cb_;
+  base::Optional<ui::VideoWindowInfo> video_window_info_ = base::nullopt;
+  mojo::Remote<ui::mojom::VideoWindow> video_window_remote_;
+  mojo::Receiver<ui::mojom::VideoWindowClient> video_window_client_receiver_{
+      this};
+
   std::unique_ptr<media::VideoHoleGeometryUpdateHelper> geometry_update_helper_;
 
   base::WeakPtr<WebMediaPlayerNeva> weak_this_;

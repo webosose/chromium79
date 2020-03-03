@@ -23,16 +23,18 @@
 #include <string>
 #include <vector>
 
-#include "content/common/media/neva/media_layer_info.h"
 #include "media/base/media_log.h"
 #include "media/base/neva/media_platform_api.h"
 #include "media/blink/neva/video_frame_provider_impl.h"
 #include "media/blink/neva/webmediaplayer_params_neva.h"
 #include "media/blink/webmediaplayer_impl.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
 #include "third_party/blink/public/platform/web_float_point.h"
 #include "third_party/blink/public/platform/web_media_player_source.h"
 #include "third_party/blink/public/platform/web_rect.h"
 #include "ui/gfx/geometry/rect_f.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 #if defined(USE_VIDEO_TEXTURE)
 #include "ui/gl/neva/video_texture.h"
@@ -47,7 +49,9 @@ class VideoHoleGeometryUpdateHelper;
 // The canonical implementation of blink::WebMediaPlayer that's backed by
 // Pipeline. Handles normal resource loading, Media Source, and
 // Encrypted Media.
-class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
+class MEDIA_BLINK_EXPORT WebMediaPlayerMSE
+    : public ui::mojom::VideoWindowClient,
+      public WebMediaPlayerImpl {
  public:
   // Constructs a WebMediaPlayer implementation using Chromium's media stack.
   // |delegate| may be null. |renderer_factory_selector| must not be null.
@@ -99,10 +103,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
   void OnBecamePersistentVideo(bool value) override {}
   void OnSuspend() override;
   void OnMediaActivationPermitted() override;
-  void OnMediaLayerCreated(const content::MediaLayerInfo& info) override;
-  void OnMediaLayerWillDestroyed() override;
-  void OnMediaLayerGeometryChanged(const gfx::Rect& rect) override;
-  void OnMediaLayerVisibilityChanged(bool visibility) override;
 
   void OnResume();
   void OnLoadPermitted();
@@ -133,7 +133,16 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
   void OnError(PipelineStatus status) override;
 
   void OnMetadata(const PipelineMetadata& metadata) override;
-  void SetMediaLayerId(const content::MediaLayerInfo& info);
+
+  // Implements ui::mojom::VideoWindowClient
+  void OnVideoWindowCreated(const ui::VideoWindowInfo& info) override;
+  void OnVideoWindowDestroyed() override;
+  void OnVideoWindowGeometryChanged(const gfx::Rect& rect) override;
+  void OnVideoWindowVisibilityChanged(bool visibility) override;
+  // End of blink::mojom::VideoWindowClient
+
+  bool EnsureVideoWindowCreated();
+  void ContinuePlayerWithWindowId();
 
   std::unique_ptr<VideoFrameProviderImpl> video_frame_provider_;
   const blink::WebFloatPoint additional_contents_scale_;
@@ -155,7 +164,13 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE : public WebMediaPlayerImpl {
       blink::WebMediaPlayer::RenderModeNone;
 
   bool has_activation_permit_ = false;
-  content::MediaLayerInfo media_layer_info_{base::UnguessableToken::Null()};
+
+  bool pending_load_media_ = false;
+  WebMediaPlayerParamsNeva::CreateVideoWindowCB create_video_window_cb_;
+  base::Optional<ui::VideoWindowInfo> video_window_info_ = base::nullopt;
+  mojo::Remote<ui::mojom::VideoWindow> video_window_remote_;
+  mojo::Receiver<ui::mojom::VideoWindowClient> video_window_client_receiver_{
+      this};
 
   std::unique_ptr<media::VideoHoleGeometryUpdateHelper> geometry_update_helper_;
 

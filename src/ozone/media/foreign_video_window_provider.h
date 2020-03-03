@@ -33,6 +33,7 @@
 namespace ui {
 class VideoWindowSupport;
 
+class ForeignVideoWindow;
 class ForeignVideoWindowProvider : public VideoWindowProvider {
  public:
   ForeignVideoWindowProvider(VideoWindowSupport*);
@@ -47,21 +48,32 @@ class ForeignVideoWindowProvider : public VideoWindowProvider {
                               const char* window_id,
                               ui::ForeignWindowType type);
 
-  void CreateNativeVideoWindow(gfx::AcceleratedWidget w,
-                               const base::UnguessableToken& id,
-                               WindowEventCb cb) override;
-  void DestroyNativeVideoWindow(const base::UnguessableToken& id) override;
-  std::string GetNativeVideoWindowName(
-      const base::UnguessableToken& id) override;
-  void NativeVideoWindowGeometryChanged(const base::UnguessableToken& window_id,
-                                        const gfx::Rect& rect) override;
+  base::UnguessableToken CreateNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+      mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+      const VideoWindowParams& params,
+      WindowEventCb cb) override;
+
+  void DestroyNativeVideoWindow(
+      gfx::AcceleratedWidget w,
+      const base::UnguessableToken& window_id) override;
+
+  void NativeVideoWindowGeometryChanged(
+      const base::UnguessableToken& window_id,
+      const gfx::Rect& dst,
+      const gfx::Rect& src = gfx::Rect(),
+      const base::Optional<gfx::Rect>& ori = base::nullopt) override;
   void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
       bool visibility) override;
 
  private:
-  struct ForeignVideoWindow;
+  friend class ForeignVideoWindow;
   void UpdateNativeVideoWindowGeometry(const base::UnguessableToken& window_id);
+  void NativeVideoWindowSetProperty(const base::UnguessableToken& window_id,
+                                    const std::string& name,
+                                    const std::string& value);
   ForeignVideoWindow* FindWindow(struct wl_webos_exported* webos_exported);
   ForeignVideoWindow* FindWindow(const base::UnguessableToken& id);
 
@@ -70,7 +82,6 @@ class ForeignVideoWindowProvider : public VideoWindowProvider {
   std::map<base::UnguessableToken, std::unique_ptr<ForeignVideoWindow>>
       foreign_windows_;
   std::map<std::string, base::UnguessableToken> native_id_to_window_id_;
-
   const scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 };
 

@@ -18,6 +18,8 @@ neva = {
   sources = get_path_info([
     "default_media_state_policy.cc",
     "default_media_state_policy.h",
+    "frame_video_window_factory_impl.cc",
+    "frame_video_window_factory_impl.h",
     "limited_media_activation_count_policy.cc",
     "limited_media_activation_count_policy.h",
     "media_state_manager_impl.cc",

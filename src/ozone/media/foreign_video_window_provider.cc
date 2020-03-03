@@ -20,17 +20,26 @@
 
 #include "base/threading/thread_task_runner_handle.h"
 #include "base/unguessable_token.h"
+#include "mojo/public/cpp/bindings/pending_receiver.h"
+#include "mojo/public/cpp/bindings/pending_remote.h"
+#include "mojo/public/cpp/bindings/receiver.h"
+#include "mojo/public/cpp/bindings/remote.h"
 #include "ozone/media/video_window_controller_impl.h"
 #include "ozone/platform/messages.h"
 #include "ozone/wayland/display.h"
+#include "ozone/wayland/screen.h"
 #include "ozone/wayland/shell/shell_surface.h"
 #include "ozone/wayland/window.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace ui {
 
 namespace {
 const int kMinVideoGeometryUpdateInterval = 200;  // milliseconds
+const char kMute[] = "mute";
+const char kMuteOn[] = "on";
+const char kMuteOff[] = "off";
 }
 
 namespace {
@@ -74,38 +83,98 @@ uint32_t ConvertToUInt32(ui::ForeignWindowType type) {
 
 }  // namespace
 
-struct ForeignVideoWindowProvider::ForeignVideoWindow : public ui::VideoWindow {
+class ForeignVideoWindow : public ui::mojom::VideoWindow,
+                           public ui::VideoWindow {
+ public:
   enum class State { kNone, kCreating, kCreated, kDestroying, kDestroyed };
 
-  ForeignVideoWindow(const base::UnguessableToken& window_id,
+  ForeignVideoWindow(ForeignVideoWindowProvider* provider,
+                     gfx::AcceleratedWidget w,
+                     const base::UnguessableToken& window_id,
+                     const ui::VideoWindowParams& params,
                      ui::ForeignWindowType type,
-                     wl_surface* surface)
-      : type_(type) {
-    window_id_ = window_id;
-    ozonewayland::WaylandDisplay* display =
-        ozonewayland::WaylandDisplay::GetInstance();
-    webos_exported_ = wl_webos_foreign_export_element(
-        display->GetWebosForeign(), surface, ConvertToUInt32(type));
-    LOG(INFO) << __func__ << " window_id=" << window_id_
-              << " type=" << (int)type << " surface=" << surface
-              << " webos_exported=" << webos_exported_;
-  }
-  ~ForeignVideoWindow() {
-    LOG(INFO) << __func__;
-    if (!webos_exported_)
-      return;
+                     wl_surface* surface);
+  ~ForeignVideoWindow();
 
-    wl_webos_exported_destroy(webos_exported_);
-  }
+  // Implements ui::mojom::VideoWindow
+  void SetNaturalVideoSize(const gfx::Size& natural_video_size) override;
+  void SetProperty(const std::string& name, const std::string& value) override;
+  void UpdateCurrentVideoWindowGeometry() override;
+  void UpdateVideoWindowGeometry(const gfx::Rect& src,
+                                 const gfx::Rect& dst) override;
+  void UpdateVideoWindowGeometryWithCrop(const gfx::Rect& ori,
+                                         const gfx::Rect& src,
+                                         const gfx::Rect& dst) override;
 
+  ForeignVideoWindowProvider* provider_;
+  gfx::AcceleratedWidget widget_;
+  ui::VideoWindowParams params_;
   struct wl_webos_exported* webos_exported_;
   ui::ForeignWindowType type_;
   VideoWindowProvider::WindowEventCb window_event_cb_;
   base::CancelableOnceCallback<void()> notify_geometry_cb_;
-  gfx::Rect rect_;
+  base::Optional<gfx::Rect> ori_rect_ = base::nullopt;
+  base::Optional<gfx::Size> natural_video_size_;
+  gfx::Rect src_rect_;
+  gfx::Rect dst_rect_;
   base::Time last_updated_ = base::Time::Now();
   State state_ = State::kNone;
+
+  mojo::Remote<ui::mojom::VideoWindowClient> client_;
+  mojo::Receiver<ui::mojom::VideoWindow> receiver_{this};
 };
+
+ForeignVideoWindow::ForeignVideoWindow(ForeignVideoWindowProvider* provider,
+                                       gfx::AcceleratedWidget w,
+                                       const base::UnguessableToken& window_id,
+                                       const ui::VideoWindowParams& params,
+                                       ui::ForeignWindowType type,
+                                       wl_surface* surface)
+    : provider_(provider), widget_(w), params_(params), type_(type) {
+  window_id_ = window_id;
+  ozonewayland::WaylandDisplay* display =
+      ozonewayland::WaylandDisplay::GetInstance();
+  webos_exported_ = wl_webos_foreign_export_element(
+      display->GetWebosForeign(), surface, ConvertToUInt32(type));
+  VLOG(1) << __func__ << " window_id=" << window_id_ << " type=" << (int)type
+          << " surface=" << surface << " webos_exported=" << webos_exported_;
+}
+ForeignVideoWindow::~ForeignVideoWindow() {
+  VLOG(1) << __func__;
+  if (!webos_exported_)
+    return;
+
+  wl_webos_exported_destroy(webos_exported_);
+}
+
+void ForeignVideoWindow::SetNaturalVideoSize(
+    const gfx::Size& natural_video_size) {
+  natural_video_size_ = natural_video_size;
+}
+
+void ForeignVideoWindow::SetProperty(const std::string& name,
+                                     const std::string& value) {
+  provider_->NativeVideoWindowSetProperty(window_id_, name, value);
+}
+
+void ForeignVideoWindow::UpdateCurrentVideoWindowGeometry() {
+  provider_->UpdateNativeVideoWindowGeometry(window_id_);
+}
+
+void ForeignVideoWindow::UpdateVideoWindowGeometry(const gfx::Rect& src,
+                                                   const gfx::Rect& dst) {
+  VLOG(1) << __func__ << " src=" << src.ToString() << " dst=" << dst.ToString();
+  provider_->NativeVideoWindowGeometryChanged(window_id_, dst, src);
+}
+
+void ForeignVideoWindow::UpdateVideoWindowGeometryWithCrop(
+    const gfx::Rect& ori,
+    const gfx::Rect& src,
+    const gfx::Rect& dst) {
+  VLOG(1) << __func__ << " ori=" << ori.ToString() << " src=" << src.ToString()
+          << " dst=" << dst.ToString();
+  provider_->NativeVideoWindowGeometryChanged(window_id_, dst, src, ori);
+}
 
 std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create(
     VideoWindowSupport* support) {
@@ -129,15 +198,19 @@ void ForeignVideoWindowProvider::HandleExportedWindowAssigned(
   if (!window)
     return;
 
-  window->OnCreatedForeignWindow(webos_exported, native_window_id,
-                                 ConvertToForeignWindowType(exported_type));
+  // ForeignVideoWindowProvider exists as long as ozone is alive.
+  window->task_runner_->PostTask(
+      FROM_HERE,
+      base::BindOnce(&ForeignVideoWindowProvider::OnCreatedForeignWindow,
+                     base::Unretained(window), webos_exported, native_window_id,
+                     ConvertToForeignWindowType(exported_type)));
 }
 
 void ForeignVideoWindowProvider::OnCreatedForeignWindow(
     struct wl_webos_exported* webos_exported,
     const char* native_window_id,
     ui::ForeignWindowType type) {
-  LOG(INFO) << __func__ << " native_window_id=" << native_window_id;
+  VLOG(1) << __func__ << " native_window_id=" << native_window_id;
   ForeignVideoWindow* window = FindWindow(webos_exported);
   if (!window) {
     LOG(ERROR) << __func__
@@ -148,33 +221,51 @@ void ForeignVideoWindowProvider::OnCreatedForeignWindow(
   window->state_ = ForeignVideoWindow::State::kCreated;
   window->native_window_name_ = native_window_id;
   window->type_ = type;
-  task_runner_->PostTask(
-      FROM_HERE, base::BindOnce(window->window_event_cb_, window->window_id_,
-                                ui::VideoWindowProvider::Event::kCreated));
+  if (!window->client_) {
+    LOG(ERROR) << __func__ << " client_ is disconnected!";
+    return;
+  }
+
+  window->client_->OnVideoWindowCreated({window->window_id_, native_window_id});
+  window->window_event_cb_.Run(window->widget_, window->window_id_,
+                               ui::VideoWindowProvider::Event::kCreated);
 }
 
-void ForeignVideoWindowProvider::CreateNativeVideoWindow(
+base::UnguessableToken ForeignVideoWindowProvider::CreateNativeVideoWindow(
     gfx::AcceleratedWidget w,
-    const base::UnguessableToken& id,
-    ui::VideoWindowProvider::WindowEventCb cb) {
+    mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
+    mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
+    const VideoWindowParams& params,
+    WindowEventCb cb) {
+  VLOG(1) << __func__;
+
   ozonewayland::WaylandDisplay* display =
       ozonewayland::WaylandDisplay::GetInstance();
   struct wl_surface* surface = display->GetWindow(static_cast<unsigned>(w))
                                    ->ShellSurface()
                                    ->GetWLSurface();
 
+  base::UnguessableToken id = base::UnguessableToken::Create();
   native_id_to_window_id_[id.ToString()] = id;
-  foreign_windows_.emplace(id, std::make_unique<ForeignVideoWindow>(
-                                   id, ForeignWindowType::VIDEO, surface));
+  foreign_windows_.emplace(
+      id, std::make_unique<ForeignVideoWindow>(
+              this, w, id, params, ForeignWindowType::VIDEO, surface));
   ForeignVideoWindow* window = FindWindow(id);
   window->state_ = ForeignVideoWindow::State::kCreating;
   window->window_id_ = id;
   window->window_event_cb_ = cb;
+  window->client_.Bind(std::move(client));
+  window->receiver_.Bind(std::move(receiver));
   static const struct wl_webos_exported_listener exported_listener = {
       ForeignVideoWindowProvider::HandleExportedWindowAssigned};
 
   wl_webos_exported_add_listener(window->webos_exported_, &exported_listener,
                                  this);
+  // To detect when the user stop using the window.
+  window->client_.set_disconnect_handler(
+      base::BindOnce(&ForeignVideoWindowProvider::DestroyNativeVideoWindow,
+                     base::Unretained(this), w, id));
+  return id;
 }
 
 void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
@@ -185,16 +276,59 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
                << window_id;
     return;
   }
-  VLOG(1) << __func__ << " window_id=" << window_id
-          << " rect=" << w->rect_.ToString();
 
   if (!w->notify_geometry_cb_.IsCancelled())
     w->notify_geometry_cb_.Cancel();
 
-  gfx::Rect source;
-  const gfx::Rect& dest = w->rect_;
-  wl_compositor* wlcompositor =
-      ozonewayland::WaylandDisplay::GetInstance()->GetCompositor();
+  gfx::Rect source = w->src_rect_;
+  gfx::Rect dest = w->dst_rect_;
+  base::Optional<gfx::Rect> ori = w->ori_rect_;
+
+  auto display = ozonewayland::WaylandDisplay::GetInstance();
+  auto screen = display->PrimaryScreen();
+  if (screen) {
+    gfx::Rect screen_bounds = screen->Geometry();
+    if (!screen_bounds.Contains(dest)) {
+      // Adjust for original_rect/source/dest rect
+      gfx::Rect original_rect = w->natural_video_size_
+                                    ? gfx::Rect(w->natural_video_size_.value())
+                                    : screen_bounds;
+
+      gfx::Rect visible_rect = gfx::IntersectRects(dest, screen_bounds);
+
+      if (visible_rect != dest) {
+        DCHECK(visible_rect.width() != 0 && visible_rect.height() != 0);
+
+        int source_x = visible_rect.x() - dest.x();
+        int source_y = visible_rect.y() - dest.y();
+
+        float scale_width =
+            static_cast<float>(original_rect.width()) / dest.width();
+        float scale_height =
+            static_cast<float>(original_rect.height()) / dest.height();
+
+        gfx::Rect source_rect(source_x, source_y, visible_rect.width(),
+                              visible_rect.height());
+        source_rect = gfx::ScaleToEnclosingRectSafe(source_rect, scale_width,
+                                                    scale_height);
+        // source_rect must be inside of original_rect
+        if (!original_rect.Contains(source_rect)) {
+          LOG(ERROR)
+              << __func__
+              << " some part of source rect are outside of original rect."
+              << "  original rect: " << original_rect.ToString()
+              << "  / source rect: " << source_rect.ToString();
+          source_rect.Intersect(original_rect);
+        }
+        ori = original_rect;
+        source = source_rect;
+        dest = visible_rect;
+      }
+    }
+  }
+
+  wl_compositor* wlcompositor = display->GetCompositor();
+
   wl_region* source_region = wl_compositor_create_region(wlcompositor);
   wl_region_add(source_region, source.x(), source.y(), source.width(),
                 source.height());
@@ -202,39 +336,72 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
   wl_region* dest_region = wl_compositor_create_region(wlcompositor);
   wl_region_add(dest_region, dest.x(), dest.y(), dest.width(), dest.height());
 
-  wl_webos_exported_set_exported_window(w->webos_exported_, source_region,
-                                        dest_region);
+  wl_region* ori_region = nullptr;
+  if (ori) {
+    ori_region = wl_compositor_create_region(wlcompositor);
+    wl_region_add(ori_region, ori->x(), ori->y(), ori->width(), ori->height());
+    wl_webos_exported_set_crop_region(w->webos_exported_, ori_region,
+                                      source_region, dest_region);
+    VLOG(1) << __func__ << " called set_crop_region ori=" << ori->ToString()
+            << " src=" << source.ToString() << " dst=" << dest.ToString();
+  } else {
+    wl_webos_exported_set_exported_window(w->webos_exported_, source_region,
+                                          dest_region);
+    VLOG(1) << __func__ << " called exported_window ori="
+            << " src=" << source.ToString() << " dst=" << dest.ToString();
+  }
+
   wl_region_destroy(dest_region);
   wl_region_destroy(source_region);
+  if (ori_region)
+    wl_region_destroy(ori_region);
+
   w->last_updated_ = base::Time::Now();
 }
 
 void ForeignVideoWindowProvider::NativeVideoWindowGeometryChanged(
     const base::UnguessableToken& window_id,
-    const gfx::Rect& rect) {
+    const gfx::Rect& dst_rect,
+    const gfx::Rect& src_rect,
+    const base::Optional<gfx::Rect>& ori_rect) {
   ForeignVideoWindow* win = FindWindow(window_id);
   if (!win) {
     LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
     return;
   }
 
-  if (win->rect_ == rect)
-    return;
-  win->rect_ = rect;
+  bool changed = false;
 
-  // callback is already scheduled!
-  if (!win->notify_geometry_cb_.IsCancelled()) {
-    return;
+  if (win->ori_rect_ != ori_rect) {
+    win->ori_rect_ = ori_rect;
+    changed = true;
   }
 
-  if (base::Time::Now() - win->last_updated_ <
-      base::TimeDelta::FromMilliseconds(kMinVideoGeometryUpdateInterval)) {
+  if (win->src_rect_ != src_rect) {
+    win->src_rect_ = src_rect;
+    changed = true;
+  }
+
+  if (win->dst_rect_ != dst_rect) {
+    win->dst_rect_ = dst_rect;
+    changed = true;
+  }
+
+  // If any geomtry is not changed there is not reason to update.
+  // Also if the callback is already scheduled, just wait for callback
+  if (!changed || !win->notify_geometry_cb_.IsCancelled())
+    return;
+
+  const base::TimeDelta elapsed = base::Time::Now() - win->last_updated_;
+  const base::TimeDelta interval =
+      base::TimeDelta::FromMilliseconds(kMinVideoGeometryUpdateInterval);
+  if (elapsed < interval) {
+    const base::TimeDelta next_update = interval - elapsed;
     win->notify_geometry_cb_.Reset(base::BindOnce(
         &ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry,
         base::Unretained(this), window_id));
     base::ThreadTaskRunnerHandle::Get()->PostDelayedTask(
-        FROM_HERE, win->notify_geometry_cb_.callback(),
-        base::TimeDelta::FromMilliseconds(kMinVideoGeometryUpdateInterval));
+        FROM_HERE, win->notify_geometry_cb_.callback(), next_update);
     return;
   }
   UpdateNativeVideoWindowGeometry(window_id);
@@ -251,21 +418,24 @@ void ForeignVideoWindowProvider::NativeVideoWindowVisibilityChanged(
     LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
     return;
   }
+
+  if (win->params_.use_video_mute_on_invisible)
+    NativeVideoWindowSetProperty(window_id, kMute,
+                                 visibility ? kMuteOff : kMuteOn);
+
   if (!win->notify_geometry_cb_.IsCancelled()) {
     UpdateNativeVideoWindowGeometry(window_id);
   }
-
-  support_->SendVideoWindowMessage(
-      new WaylandDisplay_VideoWindowVisibilityChanged(window_id, visibility));
 }
 
 void ForeignVideoWindowProvider::DestroyNativeVideoWindow(
+    gfx::AcceleratedWidget w,
     const base::UnguessableToken& id) {
-  ForeignVideoWindow* w = FindWindow(id);
-  if (w) {
-    w->state_ = ForeignVideoWindow::State::kDestroying;
+  ForeignVideoWindow* info = FindWindow(id);
+  if (info) {
+    info->state_ = ForeignVideoWindow::State::kDestroying;
     task_runner_->PostTask(
-        FROM_HERE, base::BindOnce(w->window_event_cb_, id,
+        FROM_HERE, base::BindOnce(info->window_event_cb_, w, id,
                                   ui::VideoWindowProvider::Event::kDestroyed));
     foreign_windows_.erase(id);
   } else {
@@ -273,16 +443,20 @@ void ForeignVideoWindowProvider::DestroyNativeVideoWindow(
   }
 }
 
-std::string ForeignVideoWindowProvider::GetNativeVideoWindowName(
-    const base::UnguessableToken& id) {
-  ForeignVideoWindow* win = FindWindow(id);
-  if (!win)
-    return "";
-  return win->native_window_name_;
+void ForeignVideoWindowProvider::NativeVideoWindowSetProperty(
+    const base::UnguessableToken& window_id,
+    const std::string& name,
+    const std::string& value) {
+  ForeignVideoWindow* win = FindWindow(window_id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
+    return;
+  }
+  wl_webos_exported_set_property(win->webos_exported_, name.c_str(),
+                                 value.c_str());
 }
 
-ForeignVideoWindowProvider::ForeignVideoWindow*
-ForeignVideoWindowProvider::FindWindow(
+ForeignVideoWindow* ForeignVideoWindowProvider::FindWindow(
     struct wl_webos_exported* webos_exported) {
   for (auto it = foreign_windows_.begin(); it != foreign_windows_.end(); ++it) {
     if (it->second->webos_exported_ == webos_exported) {
@@ -292,8 +466,8 @@ ForeignVideoWindowProvider::FindWindow(
   return nullptr;
 }
 
-ForeignVideoWindowProvider::ForeignVideoWindow*
-ForeignVideoWindowProvider::FindWindow(const base::UnguessableToken& id) {
+ForeignVideoWindow* ForeignVideoWindowProvider::FindWindow(
+    const base::UnguessableToken& id) {
   auto it = foreign_windows_.find(id);
   if (it == foreign_windows_.end())
     return nullptr;

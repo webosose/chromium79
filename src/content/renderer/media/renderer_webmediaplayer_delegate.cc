@@ -492,36 +492,6 @@ void RendererWebMediaPlayerDelegate::OnSuspendMedia(int player_id) {
   if (observer)
     observer->OnSuspend();
 }
-
-void RendererWebMediaPlayerDelegate::OnMediaLayerCreated(
-    int player_id,
-    const content::MediaLayerInfo& info) {
-  Observer* observer = id_map_.Lookup(player_id);
-  if (observer)
-    observer->OnMediaLayerCreated(info);
-}
-
-void RendererWebMediaPlayerDelegate::OnMediaLayerWillDestroyed(int player_id) {
-  Observer* observer = id_map_.Lookup(player_id);
-  if (observer)
-    observer->OnMediaLayerWillDestroyed();
-}
-
-void RendererWebMediaPlayerDelegate::OnMediaLayerGeometryChanged(
-    int player_id,
-    const gfx::Rect& rect) {
-  Observer* observer = id_map_.Lookup(player_id);
-  if (observer)
-    observer->OnMediaLayerGeometryChanged(rect);
-}
-
-void RendererWebMediaPlayerDelegate::OnMediaLayerVisibilityChanged(
-    int player_id,
-    bool visibility) {
-  Observer* observer = id_map_.Lookup(player_id);
-  if (observer)
-    observer->OnMediaLayerVisibilityChanged(visibility);
-}
 #endif  // defined(USE_NEVA_MEDIA)
 
 }  // namespace media

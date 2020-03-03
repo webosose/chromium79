@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,16 @@
 
 module content.mojom;
 
-import "mojo/public/mojom/base/unguessable_token.mojom";
+import "ui/platform_window/neva/mojo/video_window_controller.mojom";
 
-struct MediaLayerInfo {
-  mojo_base.mojom.UnguessableToken overlay_plane_token;
-  string media_layer_id;
+// Implmented in Browser, this interface defines video window specific methods
+// that will be invoked from the render process.
+// When use_overlay_layout is true, ovelay processor is used for setting
+// video window geometry.
+interface FrameVideoWindowFactory {
+  // Create video window
+  CreateVideoWindow(pending_remote<ui.mojom.VideoWindowClient> client,
+                    pending_receiver<ui.mojom.VideoWindow> receiver,
+                    ui.mojom.VideoWindowParams params);
 };
+

@@ -54,6 +54,7 @@ source_set("wayland") {
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/gl",
+    "//ui/platform_window:mojom",
   ]
 
   public_deps = [

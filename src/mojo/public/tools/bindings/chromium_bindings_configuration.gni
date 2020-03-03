@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import ("//neva/neva.gni")
+
 _typemap_imports = [
   "//chrome/chrome_cleaner/mojom/typemaps/typemaps.gni",
   "//chrome/common/importer/typemaps.gni",
@@ -61,6 +63,10 @@ _typemap_imports = [
   "//ui/ozone/public/mojom/typemaps.gni",
   "//url/mojom/typemaps.gni",
 ]
+
+if (use_neva_media) {
+  _typemap_imports += [ "//ui/platform_window/neva/typemaps.gni" ]
+}
 
 _typemaps = []
 foreach(typemap_import, _typemap_imports) {

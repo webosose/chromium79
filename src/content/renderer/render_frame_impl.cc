@@ -1926,6 +1926,15 @@ mojom::FrameHost* RenderFrameImpl::GetFrameHost() {
   return frame_host_remote_.get();
 }
 
+#if defined(USE_NEVA_MEDIA)
+content::mojom::FrameVideoWindowFactory*
+RenderFrameImpl::GetFrameVideoWindowFactory() {
+  if (!frame_video_window_factory_.is_bound())
+    GetRemoteAssociatedInterfaces()->GetInterface(&frame_video_window_factory_);
+  return frame_video_window_factory_.get();
+}
+#endif
+
 RenderFrameImpl::~RenderFrameImpl() {
   for (auto& observer : observers_)
     observer.RenderFrameGone();

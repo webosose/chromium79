@@ -79,12 +79,6 @@ class CONTENT_EXPORT RendererWebMediaPlayerDelegate
   // content::RenderFrameObserver implementation.
   void OnMediaActivationPermitted(int player_id) override;
   void OnSuspendMedia(int player_id) override;
-  void OnMediaLayerCreated(int player_id,
-                           const content::MediaLayerInfo& info) override;
-  void OnMediaLayerWillDestroyed(int player_id) override;
-  void OnMediaLayerGeometryChanged(int player_id,
-                                   const gfx::Rect& rect) override;
-  void OnMediaLayerVisibilityChanged(int player_id, bool visibility) override;
 #endif
 
   // content::RenderFrameObserver overrides.

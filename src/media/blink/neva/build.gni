@@ -20,7 +20,7 @@ neva = {
   configs = []
   defines = []
   public_configs = []
-  deps = []
+  deps = [ "//ui/platform_window:mojom" ]
   public_deps = [
     "//base",
     "//neva/pal_media_service/public/mojom",
