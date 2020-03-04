@@ -114,6 +114,23 @@ struct StructTraits<viz::mojom::CompositorFrameMetadataDataView,
     return metadata.preferred_frame_interval;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  static bool is_first_contentful_paint(
+      const viz::CompositorFrameMetadata& metadata) {
+    return metadata.is_first_contentful_paint;
+  }
+
+  static bool did_reset_container_state(
+      const viz::CompositorFrameMetadata& metadata) {
+    return metadata.did_reset_container_state;
+  }
+
+  static bool seen_first_contentful_paint(
+      const viz::CompositorFrameMetadata& metadata) {
+    return metadata.seen_first_contentful_paint;
+  }
+#endif
+
   static bool Read(viz::mojom::CompositorFrameMetadataDataView data,
                    viz::CompositorFrameMetadata* out);
 };

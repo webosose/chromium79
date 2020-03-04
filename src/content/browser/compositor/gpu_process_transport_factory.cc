@@ -187,6 +187,11 @@ GpuProcessTransportFactory::GpuProcessTransportFactory(
   if (command_line->HasSwitch(switches::kRunAllCompositorStagesBeforeDraw))
     wait_for_all_pipeline_stages_before_draw_ = true;
 
+#if defined(OS_WEBOS)
+  use_viz_fmp_with_timeout_ = switches::UseVizFMPWithTimeout();
+  viz_fmp_timeout_ = switches::GetVizFMPTimeout();
+#endif
+
   task_graph_runner_->Start("CompositorTileWorker1",
                             base::SimpleThread::Options());
 
@@ -458,6 +463,9 @@ void GpuProcessTransportFactory::EstablishedGpuChannel(
   auto scheduler = std::make_unique<viz::DisplayScheduler>(
       begin_frame_source, compositor->task_runner().get(),
       display_output_surface->capabilities().max_frames_pending,
+#if defined(OS_WEBOS)
+      use_viz_fmp_with_timeout_, viz_fmp_timeout_,
+#endif
       wait_for_all_pipeline_stages_before_draw_);
 
   // The Display owns and uses the |display_output_surface| created above.

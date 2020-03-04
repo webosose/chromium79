@@ -35,6 +35,10 @@
 #include "ui/display/screen.h"
 #include "webos/common/webos_event.h"
 
+#if defined(OS_WEBOS)
+#include "components/viz/common/switches.h"
+#endif
+
 namespace {
 
 static const char kCachedDisplayTitle[] = "index.html";
@@ -757,7 +761,10 @@ void WebViewBase::SetV8ExtraFlags(const std::string& v8_extra_flags) {
 }
 
 void WebViewBase::DidLoadingEnd() {
-  if (notify_on_first_paint_)
+  if (switches::UseVizFMPWithTimeout()) {
+    CallLoadVisuallyCommitted();
+    DidSwapCompositorFrame();
+  } else if (notify_on_first_paint_)
     CallLoadVisuallyCommitted();
 }
 

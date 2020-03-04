@@ -957,6 +957,20 @@ void ChromeClientImpl::NotifySwapTime(LocalFrame& frame,
   client->NotifySwapTime(ConvertToBaseOnceCallback(std::move(callback)));
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void ChromeClientImpl::NotifyVizFMPSwap(LocalFrame& frame,
+                                        bool is_first_contentful_paint,
+                                        bool did_reset_container_state) {
+  WebLocalFrameImpl* web_frame = WebLocalFrameImpl::FromFrame(frame);
+  WebFrameWidgetBase* widget = web_frame->LocalRootFrameWidget();
+  if (!widget)
+    return;
+  WebWidgetClient* client = widget->Client();
+  client->NotifyVizFMPSwap(is_first_contentful_paint,
+                           did_reset_container_state);
+}
+#endif
+
 void ChromeClientImpl::FallbackCursorModeLockCursor(LocalFrame* frame,
                                                     bool left,
                                                     bool right,

@@ -185,6 +185,15 @@ void PaintTiming::RegisterNotifySwapTime(PaintEvent event,
   // happen.
   if (!GetFrame() || !GetFrame()->GetPage())
     return;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool is_fcp = (event == PaintEvent::kFirstContentfulPaint);
+  bool is_container_reset = (event == PaintEvent::kFirstContainerResetPaint);
+  if (is_fcp || is_container_reset)
+    GetFrame()->GetPage()->GetChromeClient().NotifyVizFMPSwap(
+        *GetFrame(), is_fcp, is_container_reset);
+#endif
+
   GetFrame()->GetPage()->GetChromeClient().NotifySwapTime(*GetFrame(),
                                                           std::move(callback));
 }

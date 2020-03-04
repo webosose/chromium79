@@ -71,6 +71,10 @@ class VIZ_SERVICE_EXPORT FrameSinkManagerImpl
         kDefaultActivationDeadlineInFrames;
     OutputSurfaceProvider* output_surface_provider = nullptr;
     uint32_t restart_id = BeginFrameSource::kNotRestartableId;
+#if defined(USE_NEVA_APPRUNTIME)
+    bool use_viz_fmp_with_timeout = false;
+    uint32_t viz_fmp_timeout = kDefaultVizFMPTimeout;
+#endif
     bool run_all_compositor_stages_before_draw = false;
   };
   explicit FrameSinkManagerImpl(const InitParams& params);
@@ -225,6 +229,13 @@ class VIZ_SERVICE_EXPORT FrameSinkManagerImpl
   base::TimeDelta GetPreferredFrameIntervalForFrameSinkId(
       const FrameSinkId& id) const;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  bool FrameSinkContainsChild(const FrameSinkId& frame_sink_id,
+                              const FrameSinkId& child_frame_sink_id) {
+    return ChildContains(frame_sink_id, child_frame_sink_id);
+  }
+#endif
+
  private:
   friend class FrameSinkManagerTest;
 
@@ -297,6 +308,11 @@ class VIZ_SERVICE_EXPORT FrameSinkManagerImpl
   // Restart id to generate unique begin frames across process restarts.  Used
   // for creating a BeginFrameSource for RootCompositorFrameSink.
   const uint32_t restart_id_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool use_viz_fmp_with_timeout_;
+  uint32_t viz_fmp_timeout_;
+#endif
 
   // Whether display scheduler should wait for all pipeline stages before draw.
   const bool run_all_compositor_stages_before_draw_;

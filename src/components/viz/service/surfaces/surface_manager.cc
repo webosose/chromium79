@@ -487,6 +487,20 @@ void SurfaceManager::SurfaceActivated(
     observer.OnSurfaceActivated(surface->surface_id(), duration);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void SurfaceManager::SurfaceActivatedEx(Surface* surface,
+                                        bool is_first_contentful_paint,
+                                        bool did_reset_container_state,
+                                        bool seen_first_contentful_paint) {
+  CHECK(thread_checker_.CalledOnValidThread());
+
+  for (auto& observer : observer_list_)
+    observer.OnSurfaceActivatedEx(
+        surface->surface_id(), is_first_contentful_paint,
+        did_reset_container_state, seen_first_contentful_paint);
+}
+#endif
+
 void SurfaceManager::SurfaceDestroyed(Surface* surface) {
   for (auto& observer : observer_list_)
     observer.OnSurfaceDestroyed(surface->surface_id());

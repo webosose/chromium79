@@ -257,6 +257,11 @@ class CORE_EXPORT ChromeClientImpl final : public ChromeClient {
                      base::OnceCallback<void(bool)>) override;
 
   void NotifySwapTime(LocalFrame& frame, ReportTimeCallback callback) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void NotifyVizFMPSwap(LocalFrame& frame,
+                        bool is_first_contentful_paint = false,
+                        bool did_reset_container_state = false) override;
+#endif
 
   void FallbackCursorModeLockCursor(LocalFrame* frame,
                                     bool left,

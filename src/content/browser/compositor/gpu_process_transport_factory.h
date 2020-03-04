@@ -166,6 +166,11 @@ class GpuProcessTransportFactory : public ui::ContextFactory,
   bool disable_frame_rate_limit_ = false;
   bool wait_for_all_pipeline_stages_before_draw_ = false;
 
+#if defined(OS_WEBOS)
+  bool use_viz_fmp_with_timeout_ = false;
+  uint32_t viz_fmp_timeout_ = 0;
+#endif
+
   gpu::GpuChannelEstablishFactory* const gpu_channel_factory_;
   // Service-side impl that controls the compositing mode based on what mode the
   // display compositors are using.

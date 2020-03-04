@@ -491,6 +491,11 @@ class CONTENT_EXPORT RenderWidget
   void RequestDecode(const cc::PaintImage& image,
                      base::OnceCallback<void(bool)> callback) override;
   void NotifySwapTime(ReportTimeCallback callback) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void NotifyVizFMPSwap(bool is_first_contentful_paint,
+                        bool did_reset_container_state) override;
+#endif
+
   void SetEventListenerProperties(
       cc::EventListenerClass event_class,
       cc::EventListenerProperties properties) override;

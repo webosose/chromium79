@@ -54,6 +54,14 @@ const char kShowAggregatedDamage[] = "show-aggregated-damage";
 // The debug borders are offset from the layer rect by a few pixels for clarity.
 const char kShowDCLayerDebugBorders[] = "show-dc-layer-debug-borders";
 
+#if defined(USE_NEVA_APPRUNTIME)
+// Enables viz based First Meaninful Paint detection with milliseconds to wait
+// to activate display scheduling after FMP detection. Timeout is available
+// because many apps are not really ready when Blink reports First Meaninful
+// Paint. Giving timeout 0 will swap frame immediately after detection.
+const char kUseVizFMPWithTimeout[] = "use-viz-fmp-with-timeout";
+#endif
+
 // Enables the viz hit-test logic (HitTestAggregator and HitTestQuery), with
 // hit-test data coming from surface layer.
 const char kUseVizHitTestSurfaceLayer[] = "use-viz-hit-test-surface-layer";
@@ -76,6 +84,26 @@ base::Optional<uint32_t> GetDeadlineToSynchronizeSurfaces() {
     return base::nullopt;
   }
   return activation_deadline_in_frames;
+}
+
+bool UseVizFMPWithTimeout() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  return command_line->HasSwitch(switches::kUseVizFMPWithTimeout);
+}
+
+uint32_t GetVizFMPTimeout() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  std::string use_viz_fmp_with_timeout_string =
+      command_line->GetSwitchValueASCII(switches::kUseVizFMPWithTimeout);
+  if (use_viz_fmp_with_timeout_string.empty())
+    return viz::kDefaultVizFMPTimeout;
+
+  uint32_t use_viz_fmp_with_timeout;
+  if (!base::StringToUint(use_viz_fmp_with_timeout_string,
+                          &use_viz_fmp_with_timeout)) {
+    return viz::kDefaultVizFMPTimeout;
+  }
+  return use_viz_fmp_with_timeout;
 }
 
 }  // namespace switches

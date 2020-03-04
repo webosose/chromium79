@@ -803,6 +803,14 @@ void Display::DidFinishFrame(const BeginFrameAck& ack) {
   }
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+bool Display::RootFrameSinkContainsChild(
+    const FrameSinkId& frame_sink_id) const {
+  return client_->FrameSinkContainsChild(current_surface_id_.frame_sink_id(),
+                                         frame_sink_id);
+}
+#endif
+
 const SurfaceId& Display::CurrentSurfaceId() {
   return current_surface_id_;
 }

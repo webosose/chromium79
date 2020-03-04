@@ -263,6 +263,13 @@ void FirstMeaningfulPaintDetector::ResetStateToMarkNextPaint() {
   outstanding_swap_promise_count_ = 0;
   defer_first_meaningful_paint_ = kDoNotDefer;
 
+  paint_timing_->RegisterNotifySwapTime(
+      PaintEvent::kFirstContainerResetPaint,
+      CrossThreadBindOnce(
+          &FirstMeaningfulPaintDetector::ReportFirstContainerResetPaint,
+          WrapCrossThreadWeakPersistent(this),
+          PaintEvent::kFirstContainerResetPaint));
+
   if (GetDocument() && GetDocument()->GetFrame() &&
       GetDocument()->GetFrame()->GetIdlenessDetector())
     GetDocument()->GetFrame()->GetIdlenessDetector()->DomContentLoadedEventFired();
@@ -274,6 +281,11 @@ void FirstMeaningfulPaintDetector::NotifyNonFirstMeaningfulPaint() {
   if (GetDocument() && GetDocument()->Loader())
     GetDocument()->Loader()->CommitNonFirstMeaningfulPaintAfterLoad();
 }
+
+void FirstMeaningfulPaintDetector::ReportFirstContainerResetPaint(
+    PaintEvent event,
+    WebWidgetClient::SwapResult result,
+    base::TimeTicks timestamp) {}
 #endif
 
 // static

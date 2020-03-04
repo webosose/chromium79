@@ -44,6 +44,10 @@ class RootCompositorFrameSinkImpl : public mojom::CompositorFrameSink,
       FrameSinkManagerImpl* frame_sink_manager,
       OutputSurfaceProvider* output_surface_provider,
       uint32_t restart_id,
+#if defined(USE_NEVA_APPRUNTIME)
+      bool use_viz_fmp_with_timeout,
+      uint32_t viz_fmp_timeout,
+#endif
       bool run_all_compositor_stages_before_draw);
 
   ~RootCompositorFrameSinkImpl() override;

@@ -100,6 +100,11 @@ class VIZ_SERVICE_EXPORT DirectLayerTreeFrameSink
   void SetPreferredFrameInterval(base::TimeDelta interval) override;
   base::TimeDelta GetPreferredFrameIntervalForFrameSinkId(
       const FrameSinkId& id) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  bool FrameSinkContainsChild(
+      const FrameSinkId& frame_sink_id,
+      const FrameSinkId& child_frame_sink_id) const override;
+#endif
 
  private:
   // mojom::CompositorFrameSinkClient implementation:

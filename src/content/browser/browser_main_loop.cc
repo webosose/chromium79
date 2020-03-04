@@ -1293,6 +1293,11 @@ int BrowserMainLoop::BrowserThreadsStarted() {
     params.shared_bitmap_manager = server_shared_bitmap_manager_.get();
     params.activation_deadline_in_frames =
         switches::GetDeadlineToSynchronizeSurfaces();
+#if defined(OS_WEBOS)
+    params.use_viz_fmp_with_timeout = switches::UseVizFMPWithTimeout();
+    params.viz_fmp_timeout = switches::GetVizFMPTimeout();
+#endif
+
     frame_sink_manager_impl_ =
         std::make_unique<viz::FrameSinkManagerImpl>(params);
 

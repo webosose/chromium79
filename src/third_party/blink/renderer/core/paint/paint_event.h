@@ -14,6 +14,9 @@ enum class PaintEvent {
   kFirstContentfulPaint,
   kProvisionalFirstMeaningfulPaint,
   kFirstImagePaint,
+#if defined(OS_WEBOS)
+  kFirstContainerResetPaint,
+#endif
 };
 
 }  // namespace blink

@@ -137,6 +137,10 @@ class VIZ_SERVICE_EXPORT Display : public DisplaySchedulerClient,
                       const BeginFrameAck& ack) override;
   void SurfaceDestroyed(const SurfaceId& surface_id) override;
   void DidFinishFrame(const BeginFrameAck& ack) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  bool RootFrameSinkContainsChild(
+      const FrameSinkId& frame_sink_id) const override;
+#endif
 
   // OutputSurfaceClient implementation.
   void SetNeedsRedrawRect(const gfx::Rect& damage_rect) override;

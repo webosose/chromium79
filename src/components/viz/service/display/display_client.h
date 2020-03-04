@@ -29,6 +29,13 @@ class DisplayClient {
   virtual void SetPreferredFrameInterval(base::TimeDelta interval) = 0;
   virtual base::TimeDelta GetPreferredFrameIntervalForFrameSinkId(
       const FrameSinkId& id) = 0;
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual bool FrameSinkContainsChild(
+      const FrameSinkId& frame_sink_id,
+      const FrameSinkId& child_frame_sink_id) const {
+    return false;
+  }
+#endif
 };
 
 }  // namespace viz

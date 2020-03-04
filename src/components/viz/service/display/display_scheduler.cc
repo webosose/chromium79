@@ -4,8 +4,8 @@
 
 #include "components/viz/service/display/display_scheduler.h"
 
+#include <base/debug/stack_trace.h>
 #include <vector>
-
 #include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/metrics/histogram_macros.h"
@@ -16,9 +16,17 @@
 
 namespace viz {
 
+namespace {
+const int kActivateEventuallyTimeoutMs = 8000;
+}
+
 DisplayScheduler::DisplayScheduler(BeginFrameSource* begin_frame_source,
                                    base::SingleThreadTaskRunner* task_runner,
                                    int max_pending_swaps,
+#if defined(USE_NEVA_APPRUNTIME)
+                                   bool use_viz_fmp_with_timeout,
+                                   uint32_t viz_fmp_timeout,
+#endif
                                    bool wait_for_all_surfaces_before_draw)
     : client_(nullptr),
       begin_frame_source_(begin_frame_source),
@@ -34,11 +42,14 @@ DisplayScheduler::DisplayScheduler(BeginFrameSource* begin_frame_source,
       next_swap_id_(1),
       pending_swaps_(0),
       max_pending_swaps_(max_pending_swaps),
+#if defined(USE_NEVA_APPRUNTIME)
+      use_viz_fmp_with_timeout_(use_viz_fmp_with_timeout),
+      viz_fmp_timeout_(viz_fmp_timeout),
+#endif
       wait_for_all_surfaces_before_draw_(wait_for_all_surfaces_before_draw),
       observing_begin_frame_source_(false) {
   begin_frame_deadline_closure_ = base::BindRepeating(
       &DisplayScheduler::OnBeginFrameDeadline, weak_ptr_factory_.GetWeakPtr());
-
   // The DisplayScheduler handles animate_only BeginFrames as if they were
   // normal BeginFrames: Clients won't commit a CompositorFrame but will still
   // acknowledge when they have completed the BeginFrame via BeginFrameAcks and
@@ -63,6 +74,29 @@ void DisplayScheduler::SetVisible(bool visible) {
     return;
 
   visible_ = visible;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  if (use_viz_fmp_with_timeout_) {
+    if (visible && initial_set_visible_) {
+      // Ignore initial set visible as it's only for viz preparing
+      visible_ = false;
+      initial_set_visible_ = false;
+      return;
+    }
+    if (visible_ && !first_surface_activated_) {
+      notify_first_activation_eventually_task_.Reset(base::BindOnce(
+          base::IgnoreResult(
+              &DisplayScheduler::NotifyFirstSetVisibleActivationTimeout),
+          base::Unretained(this)));
+      task_runner_->PostDelayedTask(
+          FROM_HERE, notify_first_activation_eventually_task_.callback(),
+          base::TimeDelta::FromMilliseconds(kActivateEventuallyTimeoutMs));
+
+      return;  // No point to continue at this state
+    }
+  }
+#endif
+
   // If going invisible, we'll stop observing begin frames once we try
   // to draw and fail.
   MaybeStartObservingBeginFrames();
@@ -298,8 +332,16 @@ void DisplayScheduler::StopObservingBeginFrames() {
 bool DisplayScheduler::ShouldDraw() const {
   // Note: When any of these cases becomes true, MaybeStartObservingBeginFrames
   // must be called to ensure the draw will happen.
+#if defined(USE_NEVA_APPRUNTIME)
+  bool shouldDraw =
+      needs_draw_ && !output_surface_lost_ && visible_ && !root_frame_missing_;
+  if (use_viz_fmp_with_timeout_)
+    shouldDraw &= first_surface_activated_;
+  return shouldDraw;
+#else
   return needs_draw_ && !output_surface_lost_ && visible_ &&
          !root_frame_missing_;
+#endif
 }
 
 void DisplayScheduler::OnBeginFrameSourcePausedChanged(bool paused) {
@@ -315,6 +357,82 @@ void DisplayScheduler::OnFirstSurfaceActivation(
 void DisplayScheduler::OnSurfaceActivated(
     const SurfaceId& surface_id,
     base::Optional<base::TimeDelta> duration) {}
+
+#if defined(USE_NEVA_APPRUNTIME)
+void DisplayScheduler::OnSurfaceActivatedEx(const SurfaceId& surface_id,
+                                            bool is_first_contentful_paint,
+                                            bool did_reset_container_state,
+                                            bool seen_first_contentful_paint) {
+  if (use_viz_fmp_with_timeout_) {
+    // Following are on purose on separate blocks to make logic clear
+
+    uint32_t timeout_to_post = viz_fmp_timeout_;
+
+    // This is likely keep alive app which has recreated window after
+    // hiding. In this state DisplayScheduler is waiting for fmp activation
+    // but it will never compe because renderer has already seen it
+    if (!seen_first_surface_activation_ && seen_first_contentful_paint) {
+      if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+        return;
+      TRACE_EVENT_INSTANT0("viz",
+                           "Keepalive app did reset first contentful paint",
+                           TRACE_EVENT_SCOPE_THREAD);
+      visible_ = true;
+      is_first_contentful_paint = true;
+      seen_first_surface_activation_ = false;
+      timeout_to_post = 4 * 16;
+    }
+
+    // Container app did reset state and we expect to get fmp again
+    if (did_reset_container_state) {
+      if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+        return;
+      TRACE_EVENT_INSTANT0("viz", "Container did reset first contentful paint",
+                           TRACE_EVENT_SCOPE_THREAD);
+      seen_first_surface_activation_ = false;
+      first_surface_activated_ = false;
+    }
+
+    if (!seen_first_surface_activation_ && is_first_contentful_paint) {
+      if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+        return;
+
+      if (viz_fmp_timeout_ > 0) {
+        TRACE_EVENT_INSTANT1(
+            "viz", "Release swaps after first contentful paint",
+            TRACE_EVENT_SCOPE_THREAD, "timeout", timeout_to_post);
+        seen_first_surface_activation_ = true;
+        task_runner_->PostDelayedTask(
+            FROM_HERE,
+            base::BindOnce(&DisplayScheduler::NotifyFirstSurfaceActivation,
+                           weak_ptr_factory_.GetWeakPtr()),
+            base::TimeDelta::FromMilliseconds(timeout_to_post));
+      } else {
+        TRACE_EVENT_INSTANT0("viz",
+                             "Release swaps after first contentful paint",
+                             TRACE_EVENT_SCOPE_THREAD);
+        NotifyFirstSurfaceActivation();
+      }
+    }
+  }
+}
+
+void DisplayScheduler::NotifyFirstSurfaceActivation() {
+  notify_first_activation_eventually_task_.Cancel();
+  // set true in case call comes from notify_first_activation_eventually_task_
+  seen_first_surface_activation_ = true;
+  first_surface_activated_ = true;
+
+  if (visible_) {
+    MaybeStartObservingBeginFrames();
+    ScheduleBeginFrameDeadline();
+  }
+}
+
+void DisplayScheduler::NotifyFirstSetVisibleActivationTimeout() {
+  NotifyFirstSurfaceActivation();
+}
+#endif
 
 void DisplayScheduler::OnSurfaceMarkedForDestruction(
     const SurfaceId& surface_id) {

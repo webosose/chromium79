@@ -281,6 +281,15 @@ DirectLayerTreeFrameSink::GetPreferredFrameIntervalForFrameSinkId(
   return frame_sink_manager_->GetPreferredFrameIntervalForFrameSinkId(id);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+bool DirectLayerTreeFrameSink::FrameSinkContainsChild(
+    const FrameSinkId& frame_sink_id,
+    const FrameSinkId& child_frame_sink_id) const {
+  return frame_sink_manager_->FrameSinkContainsChild(frame_sink_id,
+                                                     child_frame_sink_id);
+}
+#endif
+
 void DirectLayerTreeFrameSink::DidReceiveCompositorFrameAck(
     const std::vector<ReturnedResource>& resources) {
   // Submitting a CompositorFrame can synchronously draw and dispatch a frame

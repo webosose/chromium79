@@ -321,6 +321,10 @@ class WebWidgetClient {
   // submitted (still called "swapped") to the display compositor (either with
   // DidSwap or DidNotSwap).
   virtual void NotifySwapTime(ReportTimeCallback callback) {}
+#if defined(OS_WEBOS)
+  virtual void NotifyVizFMPSwap(bool is_first_contentful_paint,
+                                bool did_reset_container_state) {}
+#endif
 
   // Set or get what event handlers exist in the document contained in the
   // WebWidget in order to inform the compositor thread if it is able to handle

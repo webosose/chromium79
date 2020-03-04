@@ -464,6 +464,11 @@ class CORE_EXPORT ChromeClient : public GarbageCollected<ChromeClient> {
       WTF::CrossThreadOnceFunction<void(WebWidgetClient::SwapResult,
                                         base::TimeTicks)>;
   virtual void NotifySwapTime(LocalFrame& frame, ReportTimeCallback callback) {}
+#if defined(USE_NEVA_APPRUNTIME)
+  virtual void NotifyVizFMPSwap(LocalFrame& frame,
+                                bool is_first_contentful_paint,
+                                bool did_reset_container_state) {}
+#endif
 
   virtual void FallbackCursorModeLockCursor(LocalFrame* frame,
                                             bool left,

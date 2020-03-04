@@ -67,6 +67,13 @@ class VIZ_SERVICE_EXPORT SurfaceManager {
     return activation_deadline_in_frames_;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void set_use_viz_fmp_with_timeout(bool use_viz_fmp_with_timeout) {
+    use_viz_fmp_with_timeout_ = use_viz_fmp_with_timeout;
+  }
+  bool use_viz_fmp_with_timeout() const { return use_viz_fmp_with_timeout_; }
+#endif
+
   // Sets an alternative base::TickClock to pass into surfaces for surface
   // synchronization deadlines. This allows unit tests to mock the wall clock.
   void SetTickClockForTesting(const base::TickClock* tick_clock);
@@ -111,6 +118,13 @@ class VIZ_SERVICE_EXPORT SurfaceManager {
   // was not blocked on dependencies.
   void SurfaceActivated(Surface* surface,
                         base::Optional<base::TimeDelta> duration);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  void SurfaceActivatedEx(Surface* surface,
+                          bool is_first_contentful_paint,
+                          bool did_reset_container_state,
+                          bool seen_first_contentful_paint);
+#endif
 
   // Called when |surface| is being destroyed.
   void SurfaceDestroyed(Surface* surface);
@@ -322,6 +336,10 @@ class VIZ_SERVICE_EXPORT SurfaceManager {
   base::Optional<base::RepeatingTimer> expire_timer_;
 
   bool allocation_groups_need_garbage_collection_ = false;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool use_viz_fmp_with_timeout_ = false;
+#endif
 
   base::WeakPtrFactory<SurfaceManager> weak_factory_{this};
 

@@ -32,6 +32,10 @@ RootCompositorFrameSinkImpl::Create(
     FrameSinkManagerImpl* frame_sink_manager,
     OutputSurfaceProvider* output_surface_provider,
     uint32_t restart_id,
+#if defined(USE_NEVA_APPRUNTIME)
+    bool use_viz_fmp_with_timeout,
+    uint32_t viz_fmp_timeout,
+#endif
     bool run_all_compositor_stages_before_draw) {
   // First create an output surface.
   mojom::DisplayClientPtr display_client =
@@ -106,6 +110,9 @@ RootCompositorFrameSinkImpl::Create(
 
   auto scheduler = std::make_unique<DisplayScheduler>(
       begin_frame_source, task_runner.get(), max_frames_pending,
+#if defined(USE_NEVA_APPRUNTIME)
+      use_viz_fmp_with_timeout, viz_fmp_timeout,
+#endif
       run_all_compositor_stages_before_draw);
 
   auto* output_surface_ptr = output_surface.get();
