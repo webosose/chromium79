@@ -888,13 +888,6 @@ void WindowManagerWayland::CursorVisibilityChanged(bool visible) {
 void WindowManagerWayland::NotifyInputPanelVisibilityChanged(
     unsigned windowhandle,
     bool visibility) {
-  if (!visibility) {
-    for (auto* const window : open_windows()) {
-      if (window->GetHandle() != windowhandle)
-        window->GetDelegate()->OnInputPanelVisibilityChanged(visibility);
-    }
-  }
-
   OzoneWaylandWindow* window = GetWindow(windowhandle);
   if (!window) {
     LOG(ERROR) << "Received invalid window handle " << windowhandle
@@ -902,6 +895,14 @@ void WindowManagerWayland::NotifyInputPanelVisibilityChanged(
     return;
   }
   window->GetDelegate()->OnInputPanelVisibilityChanged(visibility);
+
+  if (!visibility) {
+    for (auto* const open_window : open_windows()) {
+      if (open_window->GetHandle() != windowhandle &&
+          open_window->GetDisplayId() == window->GetDisplayId())
+        open_window->GetDelegate()->OnInputPanelVisibilityChanged(visibility);
+    }
+  }
 }
 
 void WindowManagerWayland::NotifyInputPanelRectChanged(unsigned windowhandle,
@@ -909,15 +910,16 @@ void WindowManagerWayland::NotifyInputPanelRectChanged(unsigned windowhandle,
                                                        int32_t y,
                                                        uint32_t width,
                                                        uint32_t height) {
-  for (auto* const window : open_windows()) {
-    window->GetDelegate()->OnInputPanelRectChanged(x, y, width, height);
-  }
-
   OzoneWaylandWindow* window = GetWindow(windowhandle);
   if (!window) {
     LOG(ERROR) << "Received invalid window handle " << windowhandle
                << " from GPU process";
     return;
+  }
+
+  for (auto* const open_window : open_windows()) {
+    if (open_window->GetDisplayId() == window->GetDisplayId())
+      open_window->GetDelegate()->OnInputPanelRectChanged(x, y, width, height);
   }
 }
 
