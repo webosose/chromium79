@@ -191,12 +191,16 @@ void ShellDesktopControllerAura::AddAppWindow(AppWindow* app_window,
 #if defined(OS_WEBOS)
   const char kAppId[] = "appId";
   const char kWebOSAccessPolicyKeysBack[] = "_WEBOS_ACCESS_POLICY_KEYS_BACK";
+  const char kDisplayAffinity[] = "displayAffinity";
   std::string app_id = app_window->GetApplicationId();
+  std::string display_id = app_window->GetDisplayId();
   if (!app_id.empty()) {
     aura::WindowTreeHost* window_tree_host =
         root_window_controllers_[display.id()]->host();
     window_tree_host->SetWindowProperty(kAppId, app_id);
     window_tree_host->SetWindowProperty(kWebOSAccessPolicyKeysBack, "true");
+    if (!display_id.empty())
+      window_tree_host->SetWindowProperty(kDisplayAffinity, display_id);
   }
 #endif
 #if defined(USE_NEVA_APPRUNTIME)

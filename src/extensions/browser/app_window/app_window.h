@@ -390,6 +390,10 @@ class AppWindow : public content::WebContentsDelegate,
   // used by neva project
   std::string GetApplicationId() const { return application_id_; }
 
+  // used by neva project
+  std::string GetDisplayId() const { return display_id_; }
+  void SetDisplayId(const std::string& id) { display_id_ = id; }
+
   bool DidFinishFirstNavigation() { return did_finish_first_navigation_; }
 
  protected:
@@ -606,6 +610,9 @@ class AppWindow : public content::WebContentsDelegate,
 
   // application id that is sent to backend
   std::string application_id_;
+
+  // display affinity sent to backend
+  std::string display_id_;
 
   base::WeakPtrFactory<AppWindow> image_loader_ptr_factory_{this};
 

@@ -37,6 +37,7 @@ extern const char kProcessPerGuestWebView[];
 ///@}
 #if defined(OS_WEBOS)
 extern const char kWebOSAppId[];
+extern const char kWebOSDisplayId[];
 #endif
 }  // namespace switches
 

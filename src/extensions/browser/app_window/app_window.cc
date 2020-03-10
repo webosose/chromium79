@@ -266,6 +266,11 @@ void AppWindow::Init(const GURL& url,
     std::string app_id = command_line->GetSwitchValueASCII(switches::kWebOSAppId);
     SetApplicationId(app_id);
   }
+  if (command_line->HasSwitch(switches::kWebOSDisplayId)) {
+    std::string display_id =
+        command_line->GetSwitchValueASCII(switches::kWebOSDisplayId);
+    SetDisplayId(display_id);
+  }
 #endif
 
   // Initialize the render interface and web contents
