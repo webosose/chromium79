@@ -51,7 +51,10 @@ LanguageListener::LanguageListener(content::WebContents* web_contents)
   pal::luna::Client::Params params;
   params.bus = pal::luna::Bus::Private;
   params.appid = cmd->GetSwitchValueASCII(extensions::switches::kWebOSAppId);
-  params.name = pal::luna::GetServiceNameWithPID(params.appid.c_str());
+  params.name = cmd->HasSwitch(extensions::switches::kWebOSLunaServiceName)
+                    ? cmd->GetSwitchValueASCII(
+                          extensions::switches::kWebOSLunaServiceName)
+                    : pal::luna::GetServiceNameWithPID(params.appid.c_str());
   luna_client_ = pal::luna::GetSharedClient(params);
 
   if (luna_client_ && luna_client_->IsInitialized()) {

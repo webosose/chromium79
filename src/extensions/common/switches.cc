@@ -96,6 +96,8 @@ const char kProcessPerGuestWebView[] =
 const char kWebOSAppId[] = "webos-appid";
 // Pass display Id to browser
 const char kWebOSDisplayId[] = "webos-displayid";
+// Pass luna service name to browser
+const char kWebOSLunaServiceName[] = "webos-luna-service-name";
 #endif
 
 }  // namespace switches
