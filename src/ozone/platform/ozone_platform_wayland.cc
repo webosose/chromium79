@@ -75,6 +75,7 @@ class OzonePlatformWayland : public OzonePlatform {
     return wayland_display_.get();
   }
 
+#if defined(USE_NEVA_MEDIA)
   void AddInterfaces(service_manager::BinderRegistry* registry) {
     registry->AddInterface(base::BindRepeating(
         &OzonePlatformWayland::GetVideoWindowControlleConnection,
@@ -86,7 +87,6 @@ class OzonePlatformWayland : public OzonePlatform {
     wayland_display_->BindVideoWindowController(std::move(receiver));
   }
 
-#if defined(USE_NEVA_MEDIA)
   ui::VideoWindowControllerHost* GetVideoWindowControllerHost() override {
     return video_window_controller_host_impl_.get();
   }
