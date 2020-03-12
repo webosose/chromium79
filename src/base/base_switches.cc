@@ -146,4 +146,9 @@ const char kEnableReachedCodeProfiler[] = "enable-reached-code-profiler";
 const char kEnableThreadInstructionCount[] = "enable-thread-instruction-count";
 #endif
 
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+// On/Off local storage manager
+const char kLocalStorageManager[] = "local-storage-manager";
+#endif
+
 }  // namespace switches

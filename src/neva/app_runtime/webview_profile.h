@@ -20,6 +20,7 @@
 #include <string>
 
 #include "neva/app_runtime/public/app_runtime_export.h"
+#include "url/gurl.h"
 
 namespace neva_app_runtime {
 
@@ -37,6 +38,9 @@ class APP_RUNTIME_EXPORT WebViewProfile {
   void AppendExtraWebSocketHeader(const std::string& key,
                                   const std::string& value);
 
+  void RemoveBrowsingData(int remove_browsing_data_mask,
+                          const GURL& origin,
+                          base::OnceCallback<void()> callback);
   void RemoveBrowsingData(int remove_browsing_data_mask);
 
   void FlushCookieStore();

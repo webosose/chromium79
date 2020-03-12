@@ -153,6 +153,7 @@ void AppRuntimeBrowserMainParts::PreMainMessageLoopRun() {
 
   browser_context_adapter_.reset(
       new BrowserContextAdapter("Default", url_request_context_factory_, true));
+  browser_context_adapter_->Initialize();
 
 #if defined(ENABLE_PLUGINS)
   plugin_service_filter_.reset(new AppRuntimePluginServiceFilter);

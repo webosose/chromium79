@@ -38,6 +38,7 @@ class BrowserContextAdapter {
   AppRuntimeBrowserContext* GetBrowserContext() const;
 
   std::string GetStorageName() const;
+  void Initialize();
 
   bool IsDefault() const;
 

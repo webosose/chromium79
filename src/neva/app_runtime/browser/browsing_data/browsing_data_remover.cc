@@ -52,9 +52,14 @@ BrowsingDataRemover::BrowsingDataRemover(
 
 BrowsingDataRemover::~BrowsingDataRemover() {}
 
-void BrowsingDataRemover::Remove(const TimeRange& time_range, int remove_mask) {
+void BrowsingDataRemover::Remove(const TimeRange& time_range,
+                                 int remove_mask,
+                                 const GURL& origin,
+                                 CompleteCallback callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   DCHECK_NE(base::Time(), time_range.end);
+
+  callback_ = std::move(callback);
 
   // Start time to delete from.
   base::Time delete_begin = time_range.begin;
@@ -153,7 +158,7 @@ void BrowsingDataRemover::Remove(const TimeRange& time_range, int remove_mask) {
 
     const uint32_t quota_storage_remove_mask = 0xFFFFFFFF;
     storage_partition->ClearData(
-        storage_partition_remove_mask, quota_storage_remove_mask, GURL(),
+        storage_partition_remove_mask, quota_storage_remove_mask, origin,
         delete_begin, delete_end,
         base::Bind(&BrowsingDataRemover::OnClearedStoragePartitionData,
                    weak_ptr_factory_.GetWeakPtr()));
@@ -161,6 +166,8 @@ void BrowsingDataRemover::Remove(const TimeRange& time_range, int remove_mask) {
 }
 
 void BrowsingDataRemover::NotifyAndDelete() {
+  if (!callback_.is_null())
+    std::move(callback_).Run();
   base::ThreadTaskRunnerHandle::Get()->DeleteSoon(FROM_HERE, this);
 }
 

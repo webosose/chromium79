@@ -17,6 +17,7 @@
 #ifndef NEVA_APP_RUNTIME_BROWSER_APP_RUNTIME_BROWSER_CONTEXT_H_
 #define NEVA_APP_RUNTIME_BROWSER_APP_RUNTIME_BROWSER_CONTEXT_H_
 
+#include "content/browser/local_storage_manager/local_storage_manager.h"
 #include "content/public/browser/browser_context.h"
 
 namespace neva_app_runtime {
@@ -51,11 +52,13 @@ class AppRuntimeBrowserContext : public content::BrowserContext {
   content::BackgroundFetchDelegate* GetBackgroundFetchDelegate() override;
   content::BackgroundSyncController* GetBackgroundSyncController() override;
   content::BrowsingDataRemoverDelegate* GetBrowsingDataRemoverDelegate() override;
+  content::LocalStorageManager* GetLocalStorageManager();
 
   void AppendExtraWebSocketHeader(const std::string& key,
                                   const std::string& value);
 
   void FlushCookieStore();
+  void Initialize();
 
   bool IsDefault() const;
 
@@ -69,6 +72,9 @@ class AppRuntimeBrowserContext : public content::BrowserContext {
   const BrowserContextAdapter* adapter_;
   URLRequestContextFactory* const url_request_context_factory_;
   std::unique_ptr<content::ResourceContext> resource_context_;
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+  scoped_refptr<content::LocalStorageManager> local_storage_manager_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(AppRuntimeBrowserContext);
 };

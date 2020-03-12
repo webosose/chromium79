@@ -47,12 +47,18 @@ source_set("webos_impl") {
   ]
 
   sources = [
+    "application_installation_handler.cc",
+    "application_installation_handler.h",
     "app/webos_content_main_delegate.cc",
     "app/webos_content_main_delegate.h",
     "app/webos_main.cc",
     "app/webos_main.h",
     "browser/webos_file_access_delegate.cc",
     "browser/webos_file_access_delegate.h",
+    "browser/webos_luna_service_delegate.cc",
+    "browser/webos_luna_service_delegate.h",
+    "browser/webos_data_deleter.cc",
+    "browser/webos_data_deleter.h",
     "common/webos_constants.h",
     "common/webos_content_client.cc",
     "common/webos_content_client.h",

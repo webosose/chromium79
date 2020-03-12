@@ -101,8 +101,13 @@ bool CookieDeletionInfo::Matches(const CanonicalCookie& cookie,
   if (!creation_range.Contains(cookie.CreationDate()))
     return false;
 
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+  // delete all types of cookies, for host and for domain
+  if (host.has_value() && !cookie.IsDomainMatch(host.value())) {
+#else
   if (host.has_value() &&
       !(cookie.IsHostCookie() && cookie.IsDomainMatch(host.value()))) {
+#endif
     return false;
   }
 

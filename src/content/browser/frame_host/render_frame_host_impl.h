@@ -128,6 +128,10 @@
 #include "content/common/media/neva/frame_video_window_factory.mojom.h"
 #endif
 
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+#include "content/browser/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
+#endif
+
 class GURL;
 struct AccessibilityHostMsg_EventBundleParams;
 struct AccessibilityHostMsg_FindInPageResultParams;
@@ -167,6 +171,9 @@ class FrameTree;
 class FrameTreeNode;
 class GeolocationServiceImpl;
 class KeepAliveHandleFactory;
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+class LocalStorageManagerMojoImpl;
+#endif
 class MediaInterfaceProxy;
 class NavigationEntryImpl;
 class NavigationRequest;
@@ -1225,6 +1232,11 @@ class CONTENT_EXPORT RenderFrameHostImpl
   void EnterFullscreen(blink::mojom::FullscreenOptionsPtr options) override;
   void ExitFullscreen() override;
   void FullscreenStateChanged(bool is_fullscreen) override;
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+  void GetLocalStorageManagerMojoImpl(
+      mojo::PendingReceiver<local_storage::mojom::LocalStorageManager>
+          receiver);
+#endif
 
  protected:
   friend class RenderFrameHostFactory;
@@ -2552,6 +2564,10 @@ class CONTENT_EXPORT RenderFrameHostImpl
 
   // NOTE: This must be the last member.
   base::WeakPtrFactory<RenderFrameHostImpl> weak_ptr_factory_{this};
+
+#if defined(USE_LOCAL_STORAGE_MANAGER)
+  std::unique_ptr<LocalStorageManagerMojoImpl> lsm_responder_;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(RenderFrameHostImpl);
 };

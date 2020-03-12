@@ -49,6 +49,10 @@ std::string BrowserContextAdapter::GetStorageName() const {
   return storage_name_;
 }
 
+void BrowserContextAdapter::Initialize() {
+  browser_context_->Initialize();
+}
+
 bool BrowserContextAdapter::IsDefault() const {
   return is_default_;
 }

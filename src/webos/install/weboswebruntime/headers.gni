@@ -189,6 +189,7 @@ headers = [
   "//ui/gfx/native_widget_types.h",
   "//webos/app/webos_content_main_delegate.h",
   "//webos/app/webos_main.h",
+  "//webos/application_installation_handler.h",
   "//webos/common/webos_constants.h",
   "//webos/common/webos_content_client.h",
   "//webos/common/webos_event.h",
