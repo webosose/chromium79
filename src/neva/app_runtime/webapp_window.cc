@@ -838,6 +838,13 @@ int WebAppWindow::GetHeight() const {
   return widget_ ? widget_->GetWindowBoundsInScreen().height() : 0;
 }
 
+void WebAppWindow::PrepareStackForVizFMP() {
+  if (!host_)
+    return;
+
+  host_->AsWindowTreeHost()->PrepareStackForVizFMP();
+}
+
 void WebAppWindow::CreateGroup(const WindowGroupConfiguration& config) {
   if (!host_)
     return;

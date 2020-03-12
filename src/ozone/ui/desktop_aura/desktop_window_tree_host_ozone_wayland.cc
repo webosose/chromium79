@@ -1290,6 +1290,14 @@ void DesktopWindowTreeHostOzone::DetachGroup() {
   platform_window_->DetachGroup();
 }
 
+void DesktopWindowTreeHostOzone::PrepareStackForVizFMP() {
+  // Hide compositor
+  if (compositor())
+    compositor()->SetVisible(false);
+  // But kick scheduling loop to prepare ui stack
+  desktop_native_widget_aura_->content_window()->Show();
+}
+
 void DesktopWindowTreeHostOzone::OnShowIme() {
   platform_window_->ShowInputPanel();
 }

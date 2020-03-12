@@ -196,6 +196,7 @@ class VIEWS_EXPORT DesktopWindowTreeHostOzone
   void FocusGroupOwner() override;
   void FocusGroupLayer() override;
   void DetachGroup() override;
+  void PrepareStackForVizFMP() override;
 
   // Overridden from ui::PlatformWindowDelegate:
   void OnBoundsChanged(const gfx::Rect&) override;

@@ -182,6 +182,10 @@ class VIZ_SERVICE_EXPORT Display : public DisplaySchedulerClient,
 
   bool IsRootFrameMissing() const;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void RenderProcessGone();
+#endif
+
  private:
   // PresentationGroupTiming stores rendering pipeline stage timings associated
   // with a call to Display::DrawAndSwap along with a list of

@@ -102,6 +102,10 @@ class VIZ_SERVICE_EXPORT DisplayScheduler : public BeginFrameObserverBase,
                                const BeginFrameArgs& args) override;
   void set_needs_draw() { needs_draw_ = true; }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void RenderProcessGone();
+#endif
+
  protected:
   // These values inidicate how a response to the BeginFrame should be
   // scheduled.
@@ -190,9 +194,9 @@ class VIZ_SERVICE_EXPORT DisplayScheduler : public BeginFrameObserverBase,
   bool observing_begin_frame_source_;
 
 #if defined(USE_NEVA_APPRUNTIME)
-  bool initial_set_visible_ = true;
   bool seen_first_surface_activation_ = false;
   bool first_surface_activated_ = false;
+  bool pending_first_surface_activation_ = false;
   base::CancelableOnceClosure notify_first_activation_eventually_task_;
 #endif
 
