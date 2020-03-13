@@ -242,6 +242,9 @@ Compositor::Compositor(const viz::FrameSinkId& frame_sink_id,
     slow_animations_ = std::make_unique<ScopedAnimationDurationScaleMode>(
         ScopedAnimationDurationScaleMode::SLOW_DURATION);
   }
+
+  if (switches::UseVizFMPWithTimeout())
+    disable_drawing_ = false;
 }
 
 Compositor::~Compositor() {
@@ -303,7 +306,12 @@ void Compositor::SetLayerTreeFrameSink(
   // Display properties are reset when the output surface is lost, so update it
   // to match the Compositor's.
   if (context_factory_private_) {
+#if defined(USE_NEVA_APPRUNTIME)
+    if (display_visibility_enabled_)
+      context_factory_private_->SetDisplayVisible(this, host_->IsVisible());
+#else
     context_factory_private_->SetDisplayVisible(this, host_->IsVisible());
+#endif
     context_factory_private_->SetDisplayColorSpace(this, output_color_space_,
                                                    sdr_white_level_);
     context_factory_private_->SetDisplayColorMatrix(this,
@@ -479,11 +487,17 @@ void Compositor::SetBackgroundColor(SkColor color) {
 
 void Compositor::SetVisible(bool visible) {
   host_->SetVisible(visible);
+
   // Visibility is reset when the output surface is lost, so this must also be
   // updated then.
   // TODO(fsamuel): Eliminate this call.
+#if defined(USE_NEVA_APPRUNTIME)
+  if (context_factory_private_ && display_visibility_enabled_)
+    context_factory_private_->SetDisplayVisible(this, host_->IsVisible());
+#else
   if (context_factory_private_)
     context_factory_private_->SetDisplayVisible(this, visible);
+#endif
 }
 
 bool Compositor::IsVisible() {
@@ -736,6 +750,15 @@ void Compositor::ResumeDrawing() {
 
   disable_drawing_ = false;
   host_->SetVisible(true);
+}
+
+void Compositor::RenderProcessGone() {
+  if (context_factory_private_)
+    context_factory_private_->RenderProcessGone(this);
+}
+
+void Compositor::SetDisplayVisibilityEnabled(bool enabled) {
+  display_visibility_enabled_ = enabled;
 }
 #endif
 

@@ -131,15 +131,8 @@ void WebAppWindowBase::InitWindow(int width, int height) {
   params.type = views::Widget::InitParams::TYPE_WINDOW_FRAMELESS;
   webapp_window_ = new WebAppWindow(params);
   webapp_window_->SetDelegate(this);
-#if defined(OS_WEBOS)
-  if (switches::UseVizFMPWithTimeout()) {
-    // webOS has moved FMP handling to cc and viz layers so we can
-    // call this here since viz fmp will ignore first show but prepare
-    // rest of the stack
-    webapp_window_->Activate();
-    webapp_window_->Show();
-  }
-#endif
+  webapp_window_->BeginPrepareStackForWebApp();
+
 }
 
 void WebAppWindowBase::Show() {
@@ -183,6 +176,7 @@ void WebAppWindowBase::AttachWebContents(void* web_contents) {
   if (webapp_window_) {
     webapp_window_->SetupWebContents(
         static_cast<content::WebContents*>(web_contents));
+    webapp_window_->FinishPrepareStackForWebApp();
   }
 }
 

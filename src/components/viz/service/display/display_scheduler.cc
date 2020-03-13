@@ -4,7 +4,6 @@
 
 #include "components/viz/service/display/display_scheduler.h"
 
-#include <base/debug/stack_trace.h>
 #include <vector>
 #include "base/auto_reset.h"
 #include "base/bind.h"
@@ -77,12 +76,6 @@ void DisplayScheduler::SetVisible(bool visible) {
 
 #if defined(USE_NEVA_APPRUNTIME)
   if (use_viz_fmp_with_timeout_) {
-    if (visible && initial_set_visible_) {
-      // Ignore initial set visible as it's only for viz preparing
-      visible_ = false;
-      initial_set_visible_ = false;
-      return;
-    }
     if (visible_ && !first_surface_activated_) {
       notify_first_activation_eventually_task_.Reset(base::BindOnce(
           base::IgnoreResult(
@@ -366,40 +359,79 @@ void DisplayScheduler::OnSurfaceActivatedEx(const SurfaceId& surface_id,
   if (use_viz_fmp_with_timeout_) {
     // Following are on purose on separate blocks to make logic clear
 
+    bool needs_first_surface_activation = false;
     uint32_t timeout_to_post = viz_fmp_timeout_;
 
-    // This is likely keep alive app which has recreated window after
-    // hiding. In this state DisplayScheduler is waiting for fmp activation
-    // but it will never compe because renderer has already seen it
-    if (!seen_first_surface_activation_ && seen_first_contentful_paint) {
-      if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
-        return;
-      TRACE_EVENT_INSTANT0("viz",
-                           "Keepalive app did reset first contentful paint",
-                           TRACE_EVENT_SCOPE_THREAD);
-      visible_ = true;
-      is_first_contentful_paint = true;
-      seen_first_surface_activation_ = false;
-      timeout_to_post = 4 * 16;
+    if (!seen_first_surface_activation_) {
+      if (seen_first_contentful_paint) {
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+          return;
+
+        // This is likely keep alive app which has recreated window after
+        // hiding. In this state DisplayScheduler is waiting for fmp activation
+        // but it will never come because renderer has already seen it
+        TRACE_EVENT_INSTANT0("viz",
+                             "Keepalive app did reset first contentful paint",
+                             TRACE_EVENT_SCOPE_THREAD);
+        visible_ = true;
+        needs_first_surface_activation = true;
+        // Set flag false to block rendering for few milliseconds
+        first_surface_activated_ = false;
+        timeout_to_post = 4 * 16;
+      }
+
+      if (did_reset_container_state) {
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+          return;
+
+        TRACE_EVENT_INSTANT0("viz",
+                             "Container did reset first contentful paint",
+                             TRACE_EVENT_SCOPE_THREAD);
+        first_surface_activated_ = false;
+      }
+
+      if (is_first_contentful_paint) {
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+          return;
+
+        TRACE_EVENT_INSTANT0("viz", "First contentful paint",
+                             TRACE_EVENT_SCOPE_THREAD);
+        first_surface_activated_ = false;
+        needs_first_surface_activation = true;
+      }
+    } else {
+      if (did_reset_container_state) {
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+          return;
+
+        TRACE_EVENT_INSTANT0("viz",
+                             "Container did reset first contentful paint",
+                             TRACE_EVENT_SCOPE_THREAD);
+
+        first_surface_activated_ = false;
+      }
+
+      if (is_first_contentful_paint) {
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+          return;
+
+        TRACE_EVENT_INSTANT0("viz", "Renderer was relaunched",
+                             TRACE_EVENT_SCOPE_THREAD);
+        first_surface_activated_ = false;
+        needs_first_surface_activation = true;
+        timeout_to_post = 4 * 16;
+      }
     }
 
-    // Container app did reset state and we expect to get fmp again
-    if (did_reset_container_state) {
-      if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
-        return;
-      TRACE_EVENT_INSTANT0("viz", "Container did reset first contentful paint",
-                           TRACE_EVENT_SCOPE_THREAD);
-      seen_first_surface_activation_ = false;
-      first_surface_activated_ = false;
-    }
-
-    if (!seen_first_surface_activation_ && is_first_contentful_paint) {
+    if (!pending_first_surface_activation_ && needs_first_surface_activation) {
       if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
         return;
 
-      if (viz_fmp_timeout_ > 0) {
+      pending_first_surface_activation_ = true;
+
+      if (timeout_to_post > 0) {
         TRACE_EVENT_INSTANT1(
-            "viz", "Release swaps after first contentful paint",
+            "viz", "Unblock swaps after first contentful paint",
             TRACE_EVENT_SCOPE_THREAD, "timeout", timeout_to_post);
         seen_first_surface_activation_ = true;
         task_runner_->PostDelayedTask(
@@ -409,7 +441,7 @@ void DisplayScheduler::OnSurfaceActivatedEx(const SurfaceId& surface_id,
             base::TimeDelta::FromMilliseconds(timeout_to_post));
       } else {
         TRACE_EVENT_INSTANT0("viz",
-                             "Release swaps after first contentful paint",
+                             "Unblock swaps after first contentful paint",
                              TRACE_EVENT_SCOPE_THREAD);
         NotifyFirstSurfaceActivation();
       }
@@ -422,6 +454,7 @@ void DisplayScheduler::NotifyFirstSurfaceActivation() {
   // set true in case call comes from notify_first_activation_eventually_task_
   seen_first_surface_activation_ = true;
   first_surface_activated_ = true;
+  pending_first_surface_activation_ = false;
 
   if (visible_) {
     MaybeStartObservingBeginFrames();
@@ -431,6 +464,10 @@ void DisplayScheduler::NotifyFirstSurfaceActivation() {
 
 void DisplayScheduler::NotifyFirstSetVisibleActivationTimeout() {
   NotifyFirstSurfaceActivation();
+}
+
+void DisplayScheduler::RenderProcessGone() {
+  first_surface_activated_ = false;
 }
 #endif
 

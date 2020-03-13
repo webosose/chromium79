@@ -838,6 +838,20 @@ int WebAppWindow::GetHeight() const {
   return widget_ ? widget_->GetWindowBoundsInScreen().height() : 0;
 }
 
+void WebAppWindow::BeginPrepareStackForWebApp() {
+  if (!host_)
+    return;
+
+  host_->AsWindowTreeHost()->BeginPrepareStackForWebApp();
+}
+
+void WebAppWindow::FinishPrepareStackForWebApp() {
+  if (!host_)
+    return;
+
+  host_->AsWindowTreeHost()->FinishPrepareStackForWebApp();
+}
+
 void WebAppWindow::CreateGroup(const WindowGroupConfiguration& config) {
   if (!host_)
     return;

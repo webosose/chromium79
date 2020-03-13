@@ -19,6 +19,7 @@
 #include <unordered_map>
 
 #include "base/unguessable_token.h"
+#include "components/viz/common/switches.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
@@ -34,10 +35,6 @@
 #include "ui/display/display.h"
 #include "ui/display/screen.h"
 #include "webos/common/webos_event.h"
-
-#if defined(OS_WEBOS)
-#include "components/viz/common/switches.h"
-#endif
 
 namespace {
 
@@ -764,8 +761,8 @@ void WebViewBase::SetV8ExtraFlags(const std::string& v8_extra_flags) {
 
 void WebViewBase::DidLoadingEnd() {
   if (switches::UseVizFMPWithTimeout()) {
-    CallLoadVisuallyCommitted();
     DidSwapCompositorFrame();
+    CallLoadVisuallyCommitted();
   } else if (notify_on_first_paint_)
     CallLoadVisuallyCommitted();
 }

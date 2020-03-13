@@ -1290,6 +1290,25 @@ void DesktopWindowTreeHostOzone::DetachGroup() {
   platform_window_->DetachGroup();
 }
 
+void DesktopWindowTreeHostOzone::BeginPrepareStackForWebApp() {
+#if defined(USE_NEVA_APPRUNTIME)
+  // Hide compositor
+  if (compositor()) {
+    compositor()->SetDisplayVisibilityEnabled(false);
+    compositor()->SetVisible(false);
+  }
+  // But kick scheduling loop to prepare ui stack
+  desktop_native_widget_aura_->content_window()->Show();
+#endif
+}
+
+void DesktopWindowTreeHostOzone::FinishPrepareStackForWebApp() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (compositor())
+    compositor()->SetDisplayVisibilityEnabled(true);
+#endif
+}
+
 void DesktopWindowTreeHostOzone::OnShowIme() {
   platform_window_->ShowInputPanel();
 }
