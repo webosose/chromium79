@@ -109,7 +109,6 @@ class GpuProcessTransportFactory : public ui::ContextFactory,
 
 #if defined(USE_NEVA_APPRUNTIME)
   void ForceImmediateDrawAndSwapIfPossible(ui::Compositor* compositor) override;
-  void RenderProcessGone(ui::Compositor* compositor) override;
 #endif
 
   // ImageTransportFactory implementation.

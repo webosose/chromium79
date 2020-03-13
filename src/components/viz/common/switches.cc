@@ -86,7 +86,6 @@ base::Optional<uint32_t> GetDeadlineToSynchronizeSurfaces() {
   return activation_deadline_in_frames;
 }
 
-#if defined(USE_NEVA_APPRUNTIME)
 bool UseVizFMPWithTimeout() {
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   return command_line->HasSwitch(switches::kUseVizFMPWithTimeout);
@@ -106,6 +105,5 @@ uint32_t GetVizFMPTimeout() {
   }
   return use_viz_fmp_with_timeout;
 }
-#endif
 
 }  // namespace switches

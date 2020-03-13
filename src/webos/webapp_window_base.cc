@@ -132,8 +132,13 @@ void WebAppWindowBase::InitWindow(int width, int height) {
   webapp_window_ = new WebAppWindow(params);
   webapp_window_->SetDelegate(this);
 #if defined(OS_WEBOS)
-  if (switches::UseVizFMPWithTimeout())
-    webapp_window_->PrepareStackForVizFMP();
+  if (switches::UseVizFMPWithTimeout()) {
+    // webOS has moved FMP handling to cc and viz layers so we can
+    // call this here since viz fmp will ignore first show but prepare
+    // rest of the stack
+    webapp_window_->Activate();
+    webapp_window_->Show();
+  }
 #endif
 }
 

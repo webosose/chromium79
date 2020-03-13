@@ -155,7 +155,6 @@ class COMPOSITOR_EXPORT ContextFactoryPrivate {
 #if defined(USE_NEVA_APPRUNTIME)
   virtual void ForceImmediateDrawAndSwapIfPossible(
       ui::Compositor* compositor) {}
-  virtual void RenderProcessGone(ui::Compositor* compositor) {}
 #endif
 
   // Adds an observer for vsync parameter changes.
@@ -451,7 +450,6 @@ class COMPOSITOR_EXPORT Compositor : public cc::LayerTreeHostClient,
 #if defined(USE_NEVA_APPRUNTIME)
   void SuspendDrawing();
   void ResumeDrawing();
-  void RenderProcessGone();
 #endif
 
   ScrollInputHandler* scroll_input_handler() const {
@@ -504,7 +502,7 @@ class COMPOSITOR_EXPORT Compositor : public cc::LayerTreeHostClient,
   float device_scale_factor_ = 0.f;
 
 #if defined(USE_NEVA_APPRUNTIME)
-  bool disable_drawing_ = true;
+  bool disable_drawing_ = false;
 #endif
 
   LayerAnimatorCollection layer_animator_collection_;

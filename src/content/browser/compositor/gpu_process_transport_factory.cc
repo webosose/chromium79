@@ -187,7 +187,7 @@ GpuProcessTransportFactory::GpuProcessTransportFactory(
   if (command_line->HasSwitch(switches::kRunAllCompositorStagesBeforeDraw))
     wait_for_all_pipeline_stages_before_draw_ = true;
 
-#if defined(USE_NEVA_APPRUNTIME)
+#if defined(OS_WEBOS)
   use_viz_fmp_with_timeout_ = switches::UseVizFMPWithTimeout();
   viz_fmp_timeout_ = switches::GetVizFMPTimeout();
 #endif
@@ -751,17 +751,6 @@ void GpuProcessTransportFactory::ForceImmediateDrawAndSwapIfPossible(
 
   if (data->display)
     data->display->ForceImmediateDrawAndSwapIfPossible();
-}
-
-void GpuProcessTransportFactory::RenderProcessGone(ui::Compositor* compositor) {
-  PerCompositorDataMap::iterator it = per_compositor_data_.find(compositor);
-  if (it == per_compositor_data_.end())
-    return;
-  PerCompositorData* data = it->second.get();
-  DCHECK(data);
-
-  if (data->display)
-    data->display->RenderProcessGone();
 }
 #endif
 

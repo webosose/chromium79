@@ -1293,7 +1293,7 @@ int BrowserMainLoop::BrowserThreadsStarted() {
     params.shared_bitmap_manager = server_shared_bitmap_manager_.get();
     params.activation_deadline_in_frames =
         switches::GetDeadlineToSynchronizeSurfaces();
-#if defined(USE_NEVA_APPRUNTIME)
+#if defined(OS_WEBOS)
     params.use_viz_fmp_with_timeout = switches::UseVizFMPWithTimeout();
     params.viz_fmp_timeout = switches::GetVizFMPTimeout();
 #endif

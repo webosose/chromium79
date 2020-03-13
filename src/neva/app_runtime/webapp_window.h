@@ -104,7 +104,6 @@ class WebAppWindow : public views::NativeEventDelegate,
                           XInputEventType eventType);
   int GetWidth() const;
   int GetHeight() const;
-  void PrepareStackForVizFMP();
 
   // Overridden from NativeEventDelegate
   void CompositorBuffersSwapped() override;

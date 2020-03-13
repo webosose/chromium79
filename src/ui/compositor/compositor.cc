@@ -737,11 +737,6 @@ void Compositor::ResumeDrawing() {
   disable_drawing_ = false;
   host_->SetVisible(true);
 }
-
-void Compositor::RenderProcessGone() {
-  if (context_factory_private_)
-    context_factory_private_->RenderProcessGone(this);
-}
 #endif
 
 }  // namespace ui

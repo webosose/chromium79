@@ -62,7 +62,6 @@ class AURA_EXPORT WindowTreeHostNeva {
   virtual void FocusGroupOwner() {}
   virtual void FocusGroupLayer() {}
   virtual void DetachGroup() {}
-  virtual void PrepareStackForVizFMP(){};
 };
 
 }  // namespace aura

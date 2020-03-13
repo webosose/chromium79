@@ -441,13 +441,6 @@ bool Display::IsRootFrameMissing() const {
   return !surface || !surface->HasActiveFrame();
 }
 
-#if defined(USE_NEVA_APPRUNTIME)
-void Display::RenderProcessGone() {
-  if (scheduler_)
-    scheduler_->RenderProcessGone();
-}
-#endif
-
 void Display::UpdateRootFrameMissing() {
   if (scheduler_)
     scheduler_->SetRootFrameMissing(IsRootFrameMissing());
