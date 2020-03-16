@@ -196,7 +196,7 @@ WaylandDisplay::WaylandDisplay()
 #endif
       egl_implementation_(new GLOzoneEGLWayland(this)),
 #if defined(USE_NEVA_MEDIA)
-      video_window_controller_impl_(new ui::VideoWindowControllerImpl(this)),
+      video_window_controller_impl_(new ui::VideoWindowControllerImpl()),
 #endif
       weak_ptr_factory_(this) {
 }
@@ -967,8 +967,8 @@ void WaylandDisplay::BindVideoWindowController(
   video_window_controller_impl_->Bind(std::move(receiver));
 }
 
-// Called from overlay processor
-ui::VideoWindowController* WaylandDisplay::GetVideoWindowController() {
+// Called from overlay processor and ozonewayland to communicate
+ui::VideoWindowControllerImpl* WaylandDisplay::GetVideoWindowControllerImpl() {
   return video_window_controller_impl_.get();
 }
 #endif

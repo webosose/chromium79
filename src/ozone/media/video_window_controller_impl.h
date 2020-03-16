@@ -36,17 +36,12 @@
 #include "ui/platform_window/neva/video_window_controller.h"
 
 namespace ui {
-class VideoWindowSupport {
- public:
-  virtual ui::VideoWindowController* GetVideoWindowController() = 0;
-};
-
 /* VideoWindowControllerImpl lives in gpu process and it request
  * creating/destroying/geomtry-update VideoWindow to VideoWindowProvider */
 class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
                                   public VideoWindowController {
  public:
-  VideoWindowControllerImpl(VideoWindowSupport*);
+  VideoWindowControllerImpl();
   ~VideoWindowControllerImpl() override;
   // Implements ui::mojom::VideoWindowController
   void CreateVideoWindow(
@@ -82,7 +77,6 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
 
   using VideoWindowInfoList = std::vector<std::unique_ptr<VideoWindowInfo>>;
 
-  VideoWindowSupport* support_ = nullptr;
   std::unique_ptr<VideoWindowProvider> provider_;
   std::map<base::UnguessableToken, gfx::AcceleratedWidget> id_to_widget_map_;
   std::map<gfx::AcceleratedWidget, VideoWindowInfoList> video_windows_;

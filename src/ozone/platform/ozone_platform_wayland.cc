@@ -91,7 +91,7 @@ class OzonePlatformWayland : public OzonePlatform {
     return video_window_controller_host_impl_.get();
   }
   ui::VideoWindowController* GetVideoWindowController() override {
-    return wayland_display_->GetVideoWindowController();
+    return wayland_display_->GetVideoWindowControllerImpl();
   }
 #endif
 

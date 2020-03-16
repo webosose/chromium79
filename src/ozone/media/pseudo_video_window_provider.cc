@@ -56,14 +56,11 @@ class PseudoVideoWindow : public ui::mojom::VideoWindow,
   mojo::Receiver<ui::mojom::VideoWindow> receiver_{this};
 };
 
-std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create(
-    VideoWindowSupport* support) {
-  return std::make_unique<PseudoVideoWindowProvider>(support);
+std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create() {
+  return std::make_unique<PseudoVideoWindowProvider>();
 }
 
-PseudoVideoWindowProvider::PseudoVideoWindowProvider(
-    VideoWindowSupport* support)
-    : support_(support) {}
+PseudoVideoWindowProvider::PseudoVideoWindowProvider() = default;
 
 PseudoVideoWindowProvider::~PseudoVideoWindowProvider() = default;
 

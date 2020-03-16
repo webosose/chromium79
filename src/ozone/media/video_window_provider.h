@@ -28,8 +28,6 @@
 
 namespace ui {
 
-class VideoWindowSupport;
-
 struct VideoWindow {
   base::UnguessableToken window_id_;
   std::string native_window_name_;
@@ -44,7 +42,7 @@ class VideoWindowProvider {
  public:
   enum class Event { kCreated, kDestroyed };
 
-  static std::unique_ptr<VideoWindowProvider> Create(VideoWindowSupport*);
+  static std::unique_ptr<VideoWindowProvider> Create();
 
   using WindowEventCb = base::RepeatingCallback<
       void(gfx::AcceleratedWidget, const base::UnguessableToken&, Event)>;

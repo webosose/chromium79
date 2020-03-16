@@ -27,12 +27,11 @@
 #include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
 
 namespace ui {
-class VideoWindowSupport;
 class PseudoVideoWindow;
 
 class PseudoVideoWindowProvider : public VideoWindowProvider {
  public:
-  PseudoVideoWindowProvider(VideoWindowSupport*);
+  PseudoVideoWindowProvider();
   ~PseudoVideoWindowProvider() override;
   base::UnguessableToken CreateNativeVideoWindow(
       gfx::AcceleratedWidget w,
@@ -56,8 +55,6 @@ class PseudoVideoWindowProvider : public VideoWindowProvider {
   friend class PseudoVideoWindow;
   void UpdateNativeVideoWindowGeometry(const base::UnguessableToken& window_id);
   PseudoVideoWindow* FindWindow(const base::UnguessableToken& window_id);
-
-  VideoWindowSupport* support_;
 
   std::map<base::UnguessableToken, std::unique_ptr<PseudoVideoWindow>>
       pseudo_windows_;

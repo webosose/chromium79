@@ -62,10 +62,10 @@ WaylandWindow::~WaylandWindow() {
 
 #if defined(USE_NEVA_MEDIA)
   // Cleanup video window created with this accelerated widget handle.
-  ui::VideoWindowController* video_window_controller =
-      WaylandDisplay::GetInstance()->GetVideoWindowController();
-  if (video_window_controller) {
-    video_window_controller->AcceleratedWidgetDeleted(handle_);
+  ui::VideoWindowControllerImpl* video_window_controller_impl =
+      WaylandDisplay::GetInstance()->GetVideoWindowControllerImpl();
+  if (video_window_controller_impl) {
+    video_window_controller_impl->AcceleratedWidgetDeleted(handle_);
   }
 #endif
 

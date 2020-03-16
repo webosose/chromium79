@@ -176,14 +176,12 @@ void ForeignVideoWindow::UpdateVideoWindowGeometryWithCrop(
   provider_->NativeVideoWindowGeometryChanged(window_id_, dst, src, ori);
 }
 
-std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create(
-    VideoWindowSupport* support) {
-  return std::make_unique<ForeignVideoWindowProvider>(support);
+std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create() {
+  return std::make_unique<ForeignVideoWindowProvider>();
 }
 
-ForeignVideoWindowProvider::ForeignVideoWindowProvider(
-    VideoWindowSupport* support)
-    : support_(support), task_runner_(base::ThreadTaskRunnerHandle::Get()) {}
+ForeignVideoWindowProvider::ForeignVideoWindowProvider()
+    : task_runner_(base::ThreadTaskRunnerHandle::Get()) {}
 
 ForeignVideoWindowProvider::~ForeignVideoWindowProvider() = default;
 

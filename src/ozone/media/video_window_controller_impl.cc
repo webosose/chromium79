@@ -42,9 +42,8 @@ class VideoWindowControllerImpl::VideoWindowInfo {
   VideoWindowParams params_;
 };
 
-VideoWindowControllerImpl::VideoWindowControllerImpl(
-    VideoWindowSupport* support)
-    : support_(support), provider_(VideoWindowProvider::Create(support)) {}
+VideoWindowControllerImpl::VideoWindowControllerImpl()
+    : provider_(VideoWindowProvider::Create()) {}
 
 VideoWindowControllerImpl::~VideoWindowControllerImpl() = default;
 

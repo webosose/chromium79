@@ -31,12 +31,10 @@
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 namespace ui {
-class VideoWindowSupport;
-
 class ForeignVideoWindow;
 class ForeignVideoWindowProvider : public VideoWindowProvider {
  public:
-  ForeignVideoWindowProvider(VideoWindowSupport*);
+  ForeignVideoWindowProvider();
   ~ForeignVideoWindowProvider() override;
 
   static void HandleExportedWindowAssigned(
@@ -76,8 +74,6 @@ class ForeignVideoWindowProvider : public VideoWindowProvider {
                                     const std::string& value);
   ForeignVideoWindow* FindWindow(struct wl_webos_exported* webos_exported);
   ForeignVideoWindow* FindWindow(const base::UnguessableToken& id);
-
-  VideoWindowSupport* support_;
 
   std::map<base::UnguessableToken, std::unique_ptr<ForeignVideoWindow>>
       foreign_windows_;

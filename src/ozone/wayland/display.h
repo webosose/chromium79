@@ -111,9 +111,6 @@ typedef std::map<unsigned, std::unique_ptr<WaylandWindow>> WindowMap;
 // wl_display, the Wayland server will send different events to register
 // the Wayland compositor, shell, screens, input devices, ...
 class WaylandDisplay : public ui::SurfaceFactoryOzone,
-#if defined(USE_NEVA_MEDIA)
-                       public ui::VideoWindowSupport,
-#endif  // defined(USE_NEVA_MEDIA)
                        public ui::GpuPlatformSupport {
  public:
   WaylandDisplay();
@@ -268,7 +265,7 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
 #if defined(USE_NEVA_MEDIA)
   void BindVideoWindowController(
       mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver);
-  ui::VideoWindowController* GetVideoWindowController() override;
+  ui::VideoWindowControllerImpl* GetVideoWindowControllerImpl();
 #endif
  private:
   typedef std::queue<IPC::Message*> DeferredMessages;
