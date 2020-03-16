@@ -34,7 +34,6 @@ class VideoWindowController {
       const gfx::Rect& rect) = 0;
   virtual void BeginOverlayProcessor(gpu::SurfaceHandle h) = 0;
   virtual void EndOverlayProcessor(gpu::SurfaceHandle h) = 0;
-  virtual void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w) = 0;
 };
 
 }  // namespace ui

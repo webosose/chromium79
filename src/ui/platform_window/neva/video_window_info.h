@@ -15,8 +15,10 @@ struct VideoWindowParams {
   // if true, overlay procssor will be used for setting video window geometry
   // otherwise the client needs to set geomtery manually.
   bool use_overlay_processor_layout = true;
-  // if true, video mute property will be set when video window is invisible
+  // if true, video mute property will be set when video window is out of screen
   bool use_video_mute_on_invisible = true;
+  // if true, video mute property will be set when app is minimized
+  bool use_video_mute_on_app_minimized = true;
 };
 
 }  // namespace ui

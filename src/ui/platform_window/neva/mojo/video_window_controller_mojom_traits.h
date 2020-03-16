@@ -49,6 +49,10 @@ class StructTraits<ui::mojom::VideoWindowParamsDataView,
   static bool use_video_mute_on_invisible(const ui::VideoWindowParams& params) {
     return params.use_video_mute_on_invisible;
   }
+  static bool use_video_mute_on_app_minimized(
+      const ui::VideoWindowParams& params) {
+    return params.use_video_mute_on_app_minimized;
+  }
 
   static bool Read(ui::mojom::VideoWindowParamsDataView data,
                    ui::VideoWindowParams* out_params);

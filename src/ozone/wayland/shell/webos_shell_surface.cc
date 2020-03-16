@@ -222,6 +222,14 @@ void WebosShellSurface::HandleStateChanged(
       LOG(INFO) << __PRETTY_FUNCTION__ << ": state=" << state <<
           ", but no shell surface";
     }
+#if defined(USE_NEVA_MEDIA)
+    ui::VideoWindowControllerImpl* video_window_controller =
+        WaylandDisplay::GetInstance()->GetVideoWindowControllerImpl();
+    if (video_window_controller) {
+      video_window_controller->OwnerWidgetStateChanged(window->Handle(),
+                                                       ToWidgetState(state));
+    }
+#endif  // defined(USE_NEVA_MEDIA)
   } else {
     LOG(INFO) << __PRETTY_FUNCTION__ << ": window is 0";
   }

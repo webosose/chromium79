@@ -55,7 +55,8 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
                                         const gfx::Rect& rect) override;
   void BeginOverlayProcessor(gpu::SurfaceHandle h) override;
   void EndOverlayProcessor(gpu::SurfaceHandle h) override;
-  void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w) override;
+  void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w);
+  void OwnerWidgetStateChanged(gfx::AcceleratedWidget w, ui::WidgetState state);
 
   void Bind(mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
     receiver_.Bind(std::move(receiver));

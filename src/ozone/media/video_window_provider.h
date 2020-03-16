@@ -25,6 +25,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/platform_window/neva/mojo/video_window_controller.mojom.h"
+#include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 namespace ui {
 
@@ -65,6 +66,8 @@ class VideoWindowProvider {
   virtual void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
       bool visibility) = 0;
+  virtual void OwnerWidgetStateChanged(const base::UnguessableToken& window_id,
+                                       ui::WidgetState state) = 0;
   virtual ~VideoWindowProvider() {}
 };
 

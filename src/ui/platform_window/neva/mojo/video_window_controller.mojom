@@ -28,6 +28,7 @@ struct VideoWindowInfo {
 struct VideoWindowParams {
   bool use_overlay_processor_layout = true;
   bool use_video_mute_on_invisible = true;
+  bool use_video_mute_on_app_minimized = true;
 };
 
 interface VideoWindowController {

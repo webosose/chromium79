@@ -81,6 +81,27 @@ uint32_t ConvertToUInt32(ui::ForeignWindowType type) {
   }
 }
 
+const char* WidgetStateToString(ui::WidgetState state) {
+#define STRINGIFY_owner_widget_STATE_CASE(state) \
+  case ui::WidgetState::state:                   \
+    return #state
+
+  switch (state) {
+    STRINGIFY_owner_widget_STATE_CASE(UNINITIALIZED);
+    STRINGIFY_owner_widget_STATE_CASE(SHOW);
+    STRINGIFY_owner_widget_STATE_CASE(HIDE);
+    STRINGIFY_owner_widget_STATE_CASE(FULLSCREEN);
+    STRINGIFY_owner_widget_STATE_CASE(MAXIMIZED);
+    STRINGIFY_owner_widget_STATE_CASE(MINIMIZED);
+    STRINGIFY_owner_widget_STATE_CASE(RESTORE);
+    STRINGIFY_owner_widget_STATE_CASE(ACTIVE);
+    STRINGIFY_owner_widget_STATE_CASE(INACTIVE);
+    STRINGIFY_owner_widget_STATE_CASE(RESIZE);
+    STRINGIFY_owner_widget_STATE_CASE(DESTROYED);
+  }
+  return "null";
+}
+
 }  // namespace
 
 class ForeignVideoWindow : public ui::mojom::VideoWindow,
@@ -106,11 +127,11 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
                                          const gfx::Rect& src,
                                          const gfx::Rect& dst) override;
 
-  ForeignVideoWindowProvider* provider_;
-  gfx::AcceleratedWidget widget_;
+  ForeignVideoWindowProvider* provider_ = nullptr;
+  gfx::AcceleratedWidget owner_widget_ = gfx::kNullAcceleratedWidget;
   ui::VideoWindowParams params_;
-  struct wl_webos_exported* webos_exported_;
-  ui::ForeignWindowType type_;
+  struct wl_webos_exported* webos_exported_ = nullptr;
+  ui::ForeignWindowType type_ = ui::ForeignWindowType::INVALID;
   VideoWindowProvider::WindowEventCb window_event_cb_;
   base::CancelableOnceCallback<void()> notify_geometry_cb_;
   base::Optional<gfx::Rect> ori_rect_ = base::nullopt;
@@ -119,6 +140,8 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
   gfx::Rect dst_rect_;
   base::Time last_updated_ = base::Time::Now();
   State state_ = State::kNone;
+  bool owner_widget_shown_ = true;
+  bool visible_in_screen_ = true;
 
   mojo::Remote<ui::mojom::VideoWindowClient> client_;
   mojo::Receiver<ui::mojom::VideoWindow> receiver_{this};
@@ -130,7 +153,7 @@ ForeignVideoWindow::ForeignVideoWindow(ForeignVideoWindowProvider* provider,
                                        const ui::VideoWindowParams& params,
                                        ui::ForeignWindowType type,
                                        wl_surface* surface)
-    : provider_(provider), widget_(w), params_(params), type_(type) {
+    : provider_(provider), owner_widget_(w), params_(params), type_(type) {
   window_id_ = window_id;
   ozonewayland::WaylandDisplay* display =
       ozonewayland::WaylandDisplay::GetInstance();
@@ -225,7 +248,7 @@ void ForeignVideoWindowProvider::OnCreatedForeignWindow(
   }
 
   window->client_->OnVideoWindowCreated({window->window_id_, native_window_id});
-  window->window_event_cb_.Run(window->widget_, window->window_id_,
+  window->window_event_cb_.Run(window->owner_widget_, window->window_id_,
                                ui::VideoWindowProvider::Event::kCreated);
 }
 
@@ -417,13 +440,57 @@ void ForeignVideoWindowProvider::NativeVideoWindowVisibilityChanged(
     return;
   }
 
+  if (win->visible_in_screen_ == visibility) {
+    VLOG(1) << __func__ << " window_id=" << window_id
+            << " notified the same visibility";
+    return;
+  }
+
   if (win->params_.use_video_mute_on_invisible)
     NativeVideoWindowSetProperty(window_id, kMute,
                                  visibility ? kMuteOff : kMuteOn);
 
+  win->visible_in_screen_ = visibility;
+
   if (!win->notify_geometry_cb_.IsCancelled()) {
     UpdateNativeVideoWindowGeometry(window_id);
   }
+}
+
+void ForeignVideoWindowProvider::OwnerWidgetStateChanged(
+    const base::UnguessableToken& window_id,
+    ui::WidgetState state) {
+  VLOG(1) << __func__ << " window_id=" << window_id
+          << " widget_state=" << WidgetStateToString(state);
+
+  ForeignVideoWindow* win = FindWindow(window_id);
+  if (!win) {
+    LOG(ERROR) << __func__ << " failed to find windows for id=" << window_id;
+    return;
+  }
+
+  bool new_value = win->owner_widget_shown_;
+  switch (state) {
+    case ui::WidgetState::MINIMIZED:
+      new_value = false;
+      break;
+    case ui::WidgetState::MAXIMIZED:
+    case ui::WidgetState::FULLSCREEN:
+      new_value = true;
+      break;
+    default:
+      break;
+  }
+
+  if (win->owner_widget_shown_ == new_value)
+    return;
+
+  win->owner_widget_shown_ = new_value;
+
+  // No need to change video mute steate for already muted video.
+  if (win->params_.use_video_mute_on_app_minimized && win->visible_in_screen_)
+    NativeVideoWindowSetProperty(window_id, kMute,
+                                 win->owner_widget_shown_ ? kMuteOff : kMuteOn);
 }
 
 void ForeignVideoWindowProvider::DestroyNativeVideoWindow(

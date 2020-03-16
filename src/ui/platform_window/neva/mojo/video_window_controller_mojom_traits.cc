@@ -41,6 +41,8 @@ bool StructTraits<ui::mojom::VideoWindowParamsDataView, ui::VideoWindowParams>::
          ui::VideoWindowParams* out_info) {
   out_info->use_overlay_processor_layout = data.use_overlay_processor_layout();
   out_info->use_video_mute_on_invisible = data.use_video_mute_on_invisible();
+  out_info->use_video_mute_on_app_minimized =
+      data.use_video_mute_on_app_minimized();
 
   return true;
 }

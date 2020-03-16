@@ -231,4 +231,14 @@ void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
     provider_->DestroyNativeVideoWindow(w, w_info->id_);
 }
 
+void VideoWindowControllerImpl::OwnerWidgetStateChanged(
+    gfx::AcceleratedWidget w,
+    ui::WidgetState state) {
+  auto it = video_windows_.find(w);
+  if (it == video_windows_.end())
+    return;
+  for (auto const& w_info : it->second)
+    provider_->OwnerWidgetStateChanged(w_info->id_, state);
+}
+
 }  // namespace ui
