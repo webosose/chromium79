@@ -152,7 +152,7 @@ class URLRequestContextFactory {
 
   std::unique_ptr<PrefProxyConfigTracker> pref_proxy_config_tracker_impl_;
 
-  net::NetLog* net_log_;
+  net::NetLog* net_log_ = nullptr;
 };
 
 }  // namespace neva_app_runtime
