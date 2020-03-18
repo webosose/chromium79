@@ -50,6 +50,8 @@ class PseudoVideoWindowProvider : public VideoWindowProvider {
   void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
       bool visibility) override;
+  void OwnerWidgetStateChanged(const base::UnguessableToken& window_id,
+                               ui::WidgetState state) override;
 
  private:
   friend class PseudoVideoWindow;

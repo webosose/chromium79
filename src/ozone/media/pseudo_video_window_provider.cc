@@ -165,6 +165,10 @@ void PseudoVideoWindowProvider::NativeVideoWindowVisibilityChanged(
   win->client_->OnVideoWindowVisibilityChanged(visibility);
 }
 
+void PseudoVideoWindowProvider::OwnerWidgetStateChanged(
+    const base::UnguessableToken& window_id,
+    ui::WidgetState state) {}
+
 void PseudoVideoWindowProvider::DestroyNativeVideoWindow(
     gfx::AcceleratedWidget w,
     const base::UnguessableToken& id) {
