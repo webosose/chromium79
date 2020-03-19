@@ -1,4 +1,4 @@
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -424,6 +424,12 @@ void MediaPlayerUMS::OnTimeUpdated(base::TimeDelta current_time) {
   current_time_ = current_time;
   if (client_)
     client_->OnTimeUpdate(current_time_, base::TimeTicks::Now());
+}
+
+bool MediaPlayerUMS::Send(const std::string& message) const {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  FUNC_LOG(1);
+  return umedia_client_->Send(message);
 }
 
 }  // namespace media

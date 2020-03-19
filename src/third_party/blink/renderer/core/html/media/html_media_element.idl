@@ -104,5 +104,7 @@ enum CanPlayTypeResult { "" /* empty string */, "maybe", "probably" };
     [RuntimeEnabled=UMSExtension] readonly attribute DOMString mediaId;
     [RuntimeEnabled=MediaTimelineOffset] Date getStartDate();
     [RuntimeEnabled=CustomEventExtension] readonly attribute DOMString cameraId;
+    // TODO: Return Promise instead of boolean
+    [RuntimeEnabled=SendMethod] boolean send(DOMString message);
     ///@}
 };

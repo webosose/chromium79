@@ -1,4 +1,4 @@
-// Copyright 2017-2019 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -135,6 +135,8 @@ class MediaPlayerNeva {
   virtual void SetMediaLayerId(const std::string& media_layer_id) {}
 
   virtual Ranges<base::TimeDelta> GetBufferedTimeRanges() const;
+
+  virtual bool Send(const std::string& message) const { return false; }
 
   virtual ~MediaPlayerNeva() {}
 };

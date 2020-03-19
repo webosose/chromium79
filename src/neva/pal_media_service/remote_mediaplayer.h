@@ -93,6 +93,7 @@ class RemoteMediaPlayer : public mojom::MediaPlayer,
   void SetMediaLayerId(const std::string& media_layer_id) override;
   void RequireMediaResource(RequireMediaResourceCallback callback) override;
   void GetBufferedTimeRanges(GetBufferedTimeRangesCallback callback) override;
+  void Send(const std::string& message, SendCallback callback) override;
 
   //-----------------------------------------------------------------
   // media::MediaPlayerNevaClient implementations

@@ -1,4 +1,4 @@
-// Copyright 2014-2018 LG Electronics, Inc.
+// Copyright 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -288,6 +288,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   bool RenderTexture() {
     return render_mode_ == blink::WebMediaPlayer::RenderModeTexture;
   }
+  bool Send(const std::string& message) override;
 
  private:
   // void OnPipelinePlaybackStateChanged(bool playing);

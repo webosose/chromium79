@@ -1,4 +1,4 @@
-// Copyright 2017-2019 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ class HTMLMediaElement {
   // Neva audio focus extensions
   bool webosMediaFocus() const;
   void setWebosMediaFocus(bool focus);
+
+  bool send(const String& message);
 
  protected:
   void ScheduleEvent(const AtomicString& event_name, const String& detail);
@@ -246,6 +248,17 @@ void HTMLMediaElement<original_t>::SetMaxTimeupdateEventFrequency() {
           settings->GetMaxTimeupdateEventFrequency());
     }
   }
+}
+
+template <typename original_t>
+bool HTMLMediaElement<original_t>::send(const String& message) {
+  const original_t* self(static_cast<const original_t*>(this));
+  DCHECK(RuntimeEnabledFeatures::SendMethodEnabled());
+
+  if (self->GetWebMediaPlayer())
+    return self->GetWebMediaPlayer()->Send(std::string(message.Utf8().data()));
+
+  return false;
 }
 
 template <typename original_t>

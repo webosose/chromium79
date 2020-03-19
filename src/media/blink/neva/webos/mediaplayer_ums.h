@@ -1,4 +1,4 @@
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ class MediaPlayerUMS : public WebOSMediaClient::EventListener,
   void SetDisableAudio(bool) override;
   Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
   void SetMediaLayerId(const std::string& media_layer_id) override;
+  bool Send(const std::string& message) const override;
   // end of media::RendererMediaBuiltinPlayerManagerInterface
   //-----------------------------------------------------------------
 

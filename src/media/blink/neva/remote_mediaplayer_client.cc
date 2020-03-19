@@ -423,4 +423,12 @@ void RemoteMediaPlayerClient::OnSubscribeRespond(
   listener_binding_.Bind(std::move(request));
 }
 
+bool RemoteMediaPlayerClient::Send(const std::string& message) const {
+  DVLOG(1) << __func__ << " , message: " << message;
+  bool result;
+  if (media_player_ && media_player_->Send(message, &result))
+    return result;
+  return false;
+}
+
 }  // namespace media

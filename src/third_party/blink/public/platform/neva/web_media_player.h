@@ -1,4 +1,4 @@
-// Copyright 2017-2018 LG Electronics, Inc.
+// Copyright 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ class WebMediaPlayer {
   virtual void SetAudioFocus(bool focus) {}
   virtual void SetRenderMode(RenderMode mode) {}
   virtual void SetDisableAudio(bool disable) {}
+  // Send subtitle realted message to UMediaServer. Received message will
+  // be in JSON format. JSON has 'command' and 'Parameter' pair. Command
+  // describes type of message like 'SetInternalSubtitle' and Parameter
+  // describes value of attributes like 'index'.
+  virtual bool Send(const std::string& message) { return false; }
 };
 
 }  // namespace neva

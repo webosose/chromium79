@@ -332,6 +332,11 @@ void RemoteMediaPlayer::OnAudioFocusChanged() {
   });
 }
 
+void RemoteMediaPlayer::Send(const std::string& message,
+                             SendCallback callback) {
+  std::move(callback).Run(media_player_neva_->Send(message));
+}
+
 MediaPlayerProviderImpl::MediaPlayerProviderImpl() {}
 MediaPlayerProviderImpl::~MediaPlayerProviderImpl() {}
 

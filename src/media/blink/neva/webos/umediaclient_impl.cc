@@ -1,4 +1,4 @@
-// Copyright 2018 LG Electronics, Inc.
+// Copyright 2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -244,6 +244,10 @@ void UMediaClientImpl::Suspend(SuspendReason reason) {
     uMediaServer::uMediaClient::notifyBackground();
   }
 
+  if (!system_media_manager_->GetSubtitleEnableMessage().empty()) {
+    uMediaServer::uMediaClient::setSubtitleEnable(false);
+  }
+
   system_media_manager_->AppStateChanged(
       SystemMediaManager::AppState::kBackground);
 }
@@ -263,11 +267,26 @@ void UMediaClientImpl::Resume() {
     }
     updated_payload_ = UpdateMediaOption(updated_payload_, current_time_);
     LoadInternal();
+    std::string enableSubtitle =
+        system_media_manager_->GetSubtitleEnableMessage();
+    std::string backupSubtitle =
+        system_media_manager_->GetBackupSubtitleMessage();
+    std::string subtitleInfo = system_media_manager_->GetSubtitleInfoMessage();
+
+    if (!enableSubtitle.empty())
+      system_media_manager_->SendCustomMessage(enableSubtitle);
+    if (!backupSubtitle.empty())
+      system_media_manager_->SendCustomMessage(backupSubtitle);
+    if (!subtitleInfo.empty())
+      system_media_manager_->SendCustomMessage(subtitleInfo);
+
     return;
   }
 
   if (use_pipeline_preload_ && !is_loaded())
     return;
+
+  system_media_manager_->ResumeSubtitle();
 
   NotifyForeground();
   system_media_manager_->AppStateChanged(

@@ -1,4 +1,4 @@
-// Copyright 2018 LG Electronics, Inc.
+// Copyright 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ class WebOSMediaClient {
   virtual bool CheckUseMediaPlayerManager(const std::string& media_option) = 0;
   virtual void SetDisableAudio(bool) = 0;
   virtual void SetMediaLayerId(const std::string& media_layer_id) {}
+  virtual bool Send(const std::string& message) { return false; }
 };
 
 }  // namespace media

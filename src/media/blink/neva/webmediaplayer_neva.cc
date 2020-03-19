@@ -1,4 +1,4 @@
-// Copyright 2014-2019 LG Electronics, Inc.
+// Copyright 2014-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1351,6 +1351,15 @@ void WebMediaPlayerNeva::OnFrameShown() {
     return;
 
   OnResume();
+}
+
+bool WebMediaPlayerNeva::Send(const std::string& message) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  FUNC_LOG(1) << "message:  " <<  message;
+  if (message.empty())
+    return false;
+
+  return player_api_->Send(message);
 }
 
 }  // namespace media

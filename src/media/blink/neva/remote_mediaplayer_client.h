@@ -106,6 +106,7 @@ class RemoteMediaPlayerClient
   void SetDisableAudio(bool) override;
   void SetMediaLayerId(const std::string& media_layer_id) override;
   media::Ranges<base::TimeDelta> GetBufferedTimeRanges() const override;
+  bool Send(const std::string& message) const override;
 
   // pal_media::mojom::MediaPlayerListener
   void OnMediaPlayerPlay() override;
