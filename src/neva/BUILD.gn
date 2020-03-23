@@ -1,4 +1,4 @@
-# Copyright 2016-2018 LG Electronics, Inc.
+# Copyright 2016-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -142,5 +142,10 @@ config("config") {
 
   if (enable_network_error_page_controller_webapi) {
     defines += [ "ENABLE_NETWORK_ERROR_PAGE_CONTROLLER_WEBAPI=1" ]
+  }
+
+  if (use_neva_webrtc) {
+    assert(use_neva_media, "use_neva_webrtc is turned on without use_neva_media.")
+    defines += [ "USE_NEVA_WEBRTC=1" ]
   }
 }
