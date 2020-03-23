@@ -298,6 +298,13 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
     return;
   }
 
+  auto display = ozonewayland::WaylandDisplay::GetInstance();
+  auto window = display->GetWindow(static_cast<unsigned>(w->owner_widget_));
+  if (!window) {
+    LOG(ERROR) << __func__ << " window is nullptr";
+    return;
+  }
+
   if (!w->notify_geometry_cb_.IsCancelled())
     w->notify_geometry_cb_.Cancel();
 
@@ -305,47 +312,57 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
   gfx::Rect dest = w->dst_rect_;
   base::Optional<gfx::Rect> ori = w->ori_rect_;
 
-  auto display = ozonewayland::WaylandDisplay::GetInstance();
-  auto screen = display->PrimaryScreen();
-  if (screen) {
-    gfx::Rect screen_bounds = screen->Geometry();
-    if (!screen_bounds.Contains(dest)) {
-      // Adjust for original_rect/source/dest rect
-      gfx::Rect original_rect = w->natural_video_size_
-                                    ? gfx::Rect(w->natural_video_size_.value())
-                                    : screen_bounds;
+  // set_exported_window is not work correctly with punch-through in below cases
+  // 1. only part of dst video is located in the window
+  // 2. the ratio of video width/height is differect from the ratio of dst rect
+  //    width/height
+  // So we will use set_crop_region basically for the general cases.
+#if defined(USE_GST_MEDIA)
+  // When we are using texture mode, we should use set_exported_window only.
+  bool use_set_crop_region = false;
+#else
+  bool use_set_crop_region = true;
+#endif
 
-      gfx::Rect visible_rect = gfx::IntersectRects(dest, screen_bounds);
+  gfx::Rect window_bounds = window->GetBounds();
+  // Always use set_exported_window to keep the original video w/h ratio in
+  // fullscreen.
+  // set_exported_window always keeps the ratio even though dest is not match
+  // with the ratio.
+  bool fullscreen = (window_bounds == dest);
+  if (!fullscreen && use_set_crop_region) {
+    // Adjust for original_rect/source/dest rect
+    gfx::Rect original_rect = w->natural_video_size_
+                                  ? gfx::Rect(w->natural_video_size_.value())
+                                  : window_bounds;
 
-      if (visible_rect != dest) {
-        DCHECK(visible_rect.width() != 0 && visible_rect.height() != 0);
+    gfx::Rect visible_rect = gfx::IntersectRects(dest, window_bounds);
 
-        int source_x = visible_rect.x() - dest.x();
-        int source_y = visible_rect.y() - dest.y();
+    DCHECK(visible_rect.width() != 0 && visible_rect.height() != 0);
 
-        float scale_width =
-            static_cast<float>(original_rect.width()) / dest.width();
-        float scale_height =
-            static_cast<float>(original_rect.height()) / dest.height();
+    int source_x = visible_rect.x() - dest.x();
+    int source_y = visible_rect.y() - dest.y();
 
-        gfx::Rect source_rect(source_x, source_y, visible_rect.width(),
-                              visible_rect.height());
-        source_rect = gfx::ScaleToEnclosingRectSafe(source_rect, scale_width,
-                                                    scale_height);
-        // source_rect must be inside of original_rect
-        if (!original_rect.Contains(source_rect)) {
-          LOG(ERROR)
-              << __func__
-              << " some part of source rect are outside of original rect."
-              << "  original rect: " << original_rect.ToString()
-              << "  / source rect: " << source_rect.ToString();
-          source_rect.Intersect(original_rect);
-        }
-        ori = original_rect;
-        source = source_rect;
-        dest = visible_rect;
-      }
+    float scale_width =
+        static_cast<float>(original_rect.width()) / dest.width();
+    float scale_height =
+        static_cast<float>(original_rect.height()) / dest.height();
+
+    gfx::Rect source_rect(source_x, source_y, visible_rect.width(),
+                          visible_rect.height());
+    source_rect =
+        gfx::ScaleToEnclosingRectSafe(source_rect, scale_width, scale_height);
+    // source_rect must be inside of original_rect
+    if (!original_rect.Contains(source_rect)) {
+      LOG(ERROR) << __func__
+                 << " some part of source rect are outside of original rect."
+                 << "  original rect: " << original_rect.ToString()
+                 << "  / source rect: " << source_rect.ToString();
+      source_rect.Intersect(original_rect);
     }
+    ori = original_rect;
+    source = source_rect;
+    dest = visible_rect;
   }
 
   wl_compositor* wlcompositor = display->GetCompositor();
