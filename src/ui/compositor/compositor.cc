@@ -243,8 +243,10 @@ Compositor::Compositor(const viz::FrameSinkId& frame_sink_id,
         ScopedAnimationDurationScaleMode::SLOW_DURATION);
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
   if (switches::UseVizFMPWithTimeout())
     disable_drawing_ = false;
+#endif
 }
 
 Compositor::~Compositor() {
