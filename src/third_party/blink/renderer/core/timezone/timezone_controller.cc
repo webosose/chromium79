@@ -55,7 +55,14 @@ bool SetIcuTimeZoneAndNotifyV8(const String& timezone_id) {
   CHECK(timezone);
 
   if (*timezone == icu::TimeZone::getUnknown())
+#if defined(OS_WEBOS)
+  {
+    NotifyTimezoneChangeToV8(V8PerIsolateData::MainThreadIsolate());
     return false;
+  }
+#else
+    return false;
+#endif
 
   icu::TimeZone::adoptDefault(timezone.release());
 
