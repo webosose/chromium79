@@ -54,6 +54,8 @@ const gfx::Point lsm_cursor_restore_location(255, 255);
 namespace ui {
 namespace {
 
+extern const char kDefaultDisplayId[] = "-1";
+
 scoped_refptr<base::RefCountedBytes> ReadFileData(const base::FilePath& path) {
   if (path.empty())
     return 0;
@@ -120,7 +122,7 @@ OzoneWaylandWindow::OzoneWaylandWindow(PlatformWindowDelegate* delegate,
       type_(WidgetType::WINDOWFRAMELESS),
       state_(WidgetState::UNINITIALIZED),
       region_(NULL),
-      display_id_("-1"),
+      display_id_(kDefaultDisplayId),
       init_window_(false),
       weak_factory_(this) {
   static int opaque_handle = 0;
@@ -521,8 +523,12 @@ void OzoneWaylandWindow::SizeConstraintsChanged() {
 void OzoneWaylandWindow::SetWindowProperty(const std::string& name,
                                            const std::string& value) {
   // FIXME : We should have separated API for set display ID.
-  if (name == "displayAffinity")
+  if (name == "displayAffinity" && display_id_ != value) {
+    std::string prev_display_id = display_id_;
     display_id_ = value;
+    window_manager_->OnRootWindowDisplayChanged(prev_display_id, display_id_,
+                                                this);
+  }
 
   sender_->Send(new WaylandDisplay_SetWindowProperty(handle_, name, value));
 }
