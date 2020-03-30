@@ -45,50 +45,21 @@ namespace media {
 // static
 std::unique_ptr<WebOSMediaClient> WebOSMediaClient::Create(
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
-    const std::string& app_id) {
-  return std::make_unique<UMediaClientImpl>(main_task_runner, app_id);
+    const std::string& app_id,
+    base::WeakPtr<WebOSMediaClient::EventListener> event_listener) {
+  return std::make_unique<UMediaClientImpl>(main_task_runner, app_id,
+                                            std::move(event_listener));
 }
 
 UMediaClientImpl::UMediaClientImpl(
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
-    const std::string& app_id)
+    const std::string& app_id,
+    base::WeakPtr<WebOSMediaClient::EventListener> event_listener)
     : uMediaClient(app_id),
-      duration_(0.0f),
-      current_time_(0.0f),
-      buffer_end_at_last_didLoadingProgress_(0.0f),
-      buffer_remaining_(0),
-      start_date_(std::numeric_limits<double>::quiet_NaN()),
-      video_(false),
-      seekable_(true),
-      ended_(false),
-      has_video_(false),
-      has_audio_(false),
-      fullscreen_(false),
-      is_local_source_(false),
-      is_seeking_(false),
-      is_suspended_(false),
-      use_umsinfo_(false),
-      use_backward_trick_(false),
-      use_pipeline_preload_(false),
-      use_set_uri_(false),
-      use_dass_control_(false),
-      updated_source_info_(false),
-      buffering_(false),
-      requests_play_(false),
-      requests_pause_(false),
-      released_media_resource_(false),
-      pixel_aspect_ratio_(1, 1),
-      playback_rate_(0),
-      playback_rate_on_eos_(0),
-      playback_rate_on_paused_(1.0f),
-      volume_(1.0),
+      event_listener_(std::move(event_listener)),
       main_task_runner_(main_task_runner),
       system_media_manager_(
-          SystemMediaManager::Create(AsWeakPtr(), main_task_runner)),
-      preload_(PreloadNone),
-      loading_state_(LOADING_STATE_NONE),
-      pending_loading_action_(LOADING_ACTION_NONE),
-      audio_disabled_(false) {
+          SystemMediaManager::Create(AsWeakPtr(), main_task_runner)) {
   // NOTE: AsWeakPtr() will create new valid WeakPtr even after it is
   // invalidated.
   // On our case, UMediaClientImpl will invalidate weakptr on its dtor
@@ -121,22 +92,7 @@ void UMediaClientImpl::Load(bool video,
                             const std::string& referrer,
                             const std::string& user_agent,
                             const std::string& cookies,
-                            const std::string& payload,
-                            const PlaybackStateCB& playback_state_cb,
-                            const base::Closure& ended_cb,
-                            const media::PipelineStatusCB& seek_cb,
-                            const media::PipelineStatusCB& error_cb,
-                            const BufferingStateCB& buffering_state_cb,
-                            const base::Closure& duration_change_cb,
-                            const base::Closure& video_size_change_cb,
-                            const base::Closure& video_display_window_change_cb,
-                            const AddAudioTrackCB& add_audio_track_cb,
-                            const AddVideoTrackCB& add_video_track_cb,
-                            const UpdateUMSInfoCB& update_ums_info_cb,
-                            const base::Closure& focus_cb,
-                            const ActiveRegionCB& active_region_cb,
-                            const base::Closure& waiting_for_decryption_key_cb,
-                            const EncryptedCB& encrypted_cb) {
+                            const std::string& payload) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1) << " url=" << url << " payload=" << payload;
 
@@ -150,22 +106,7 @@ void UMediaClientImpl::Load(bool video,
   user_agent_ = user_agent;
   cookies_ = cookies;
   buffering_state_have_meta_data_ = false;
-  playback_state_cb_ = playback_state_cb;
 
-  ended_cb_ = ended_cb;
-  seek_cb_ = seek_cb;
-  error_cb_ = error_cb;
-  buffering_state_cb_ = buffering_state_cb;
-  duration_change_cb_ = duration_change_cb;
-  video_size_change_cb_ = video_size_change_cb;
-  video_display_window_change_cb_ = video_display_window_change_cb;
-  update_ums_info_cb_ = update_ums_info_cb;
-  add_audio_track_cb_ = add_audio_track_cb;
-  add_video_track_cb_ = add_video_track_cb;
-  waiting_for_decryption_key_cb_ = waiting_for_decryption_key_cb;
-  encrypted_cb_ = encrypted_cb;
-  focus_cb_ = focus_cb;
-  active_region_cb_ = active_region_cb;
 
   VLOG(2) << "currentTime: " << current_time_;
   updated_payload_ = UpdateMediaOption(payload, current_time_);
@@ -177,7 +118,11 @@ void UMediaClientImpl::Load(bool video,
   set_video_info_callback(std::bind(&UMediaClientImpl::onVideoInfo, this, _1));
   set_audio_info_callback(std::bind(&UMediaClientImpl::onAudioInfo, this, _1));
 #endif
-  system_media_manager_->Initialize(video, app_id_, active_region_cb_);
+  system_media_manager_->Initialize(
+      video, app_id_,
+      base::BindRepeating(
+          &WebOSMediaClient::EventListener::OnActiveRegionChanged,
+          event_listener_));
 
   if (use_pipeline_preload_) {
     PreloadInternal(url_.c_str(), kMedia, updated_payload_.c_str());
@@ -521,13 +466,12 @@ void UMediaClientImpl::DispatchPlaying() {
   requests_play_ = false;
   ended_ = false;
 
-  if (!playback_state_cb_.is_null())
-    playback_state_cb_.Run(true);
+  if (event_listener_)
+    event_listener_->OnPlaybackStateChanged(true);
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(PlaybackNotificationToJson(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(PlaybackNotificationToJson(
         MediaId(), PlaybackNotification::NotifyPlaying));
-
 }
 
 bool UMediaClientImpl::onPaused() {
@@ -549,11 +493,11 @@ void UMediaClientImpl::DispatchPaused() {
   system_media_manager_->PlayStateChanged(
       SystemMediaManager::PlayState::kPaused);
 
-  if (!playback_state_cb_.is_null())
-    playback_state_cb_.Run(false);
+  if (event_listener_)
+    event_listener_->OnPlaybackStateChanged(false);
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(PlaybackNotificationToJson(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(PlaybackNotificationToJson(
         MediaId(), PlaybackNotification::NotifyPaused));
 }
 
@@ -572,8 +516,8 @@ void UMediaClientImpl::DispatchSeekDone() {
 
   if (!seek_cb_.is_null())
     std::move(seek_cb_).Run(media::PIPELINE_OK);
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(PlaybackNotificationToJson(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(PlaybackNotificationToJson(
         MediaId(), PlaybackNotification::NotifySeekDone));
 }
 
@@ -598,16 +542,16 @@ void UMediaClientImpl::DispatchEndOfStream(bool isForward) {
       current_time_ = (playback_rate_ < 0.0f) ? 0.0f : duration_;
     system_media_manager_->PlayStateChanged(
         SystemMediaManager::PlayState::kPaused);
-    if (!ended_cb_.is_null())
-      ended_cb_.Run();
+    if (event_listener_)
+      event_listener_->OnPlaybackEnded();
   }
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     PlaybackNotification notification =
         playback_rate_on_eos_ >= 0.0f
             ? PlaybackNotification::NotifyEndOfStreamForward
             : PlaybackNotification::NotifyEndOfStreamBackward;
-    update_ums_info_cb_.Run(
+    event_listener_->OnUMSInfoUpdated(
         PlaybackNotificationToJson(MediaId(), notification));
   }
 }
@@ -641,11 +585,11 @@ void UMediaClientImpl::DispatchLoadCompleted() {
 
   // TODO(neva): if we need to callback only when re-loading after unloaded
   // add flag to check.
-  if (!video_display_window_change_cb_.is_null())
-    video_display_window_change_cb_.Run();
+  if (event_listener_)
+    event_listener_->OnDisplayWindowChanged();
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(PlaybackNotificationToJson(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(PlaybackNotificationToJson(
         MediaId(), PlaybackNotification::NotifyLoadCompleted));
 
   if (IsNotSupportedSourceInfo()) {
@@ -653,9 +597,10 @@ void UMediaClientImpl::DispatchLoadCompleted() {
     has_video_ = video_;
     updated_source_info_ = true;
     system_media_manager_->SourceInfoUpdated(has_video_, has_audio_);
-    if (!buffering_state_cb_.is_null()) {
+    if (event_listener_) {
       buffering_state_have_meta_data_ = true;
-      buffering_state_cb_.Run(UMediaClientImpl::kHaveMetadata);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kHaveMetadata);
     }
   }
 
@@ -664,8 +609,8 @@ void UMediaClientImpl::DispatchLoadCompleted() {
 
   SetPlaybackVolume(volume_, true);
 
-  if (updated_source_info_ && !buffering_state_cb_.is_null())
-    buffering_state_cb_.Run(UMediaClientImpl::kLoadCompleted);
+  if (updated_source_info_ && event_listener_)
+    event_listener_->OnBufferingStatusChanged(UMediaClientImpl::kLoadCompleted);
 
   if (use_pipeline_preload_) {
     if (playback_rate_ == 0.0f)
@@ -695,8 +640,8 @@ void UMediaClientImpl::DispatchPreloadCompleted() {
 
   loading_state_ = LOADING_STATE_PRELOADED;
 
-  if (IsRequiredUMSInfo())
-    update_ums_info_cb_.Run(PlaybackNotificationToJson(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(PlaybackNotificationToJson(
         MediaId(), PlaybackNotification::NotifyPreloadCompleted));
 
   if (IsNotSupportedSourceInfo()) {
@@ -704,16 +649,18 @@ void UMediaClientImpl::DispatchPreloadCompleted() {
     has_video_ = video_;
     updated_source_info_ = true;
     system_media_manager_->SourceInfoUpdated(has_video_, has_audio_);
-    if (!buffering_state_cb_.is_null()) {
+    if (event_listener_) {
       FUNC_LOG(2) << " buffering_state_have_meta_data_="
                   << buffering_state_have_meta_data_;
       buffering_state_have_meta_data_ = true;
-      buffering_state_cb_.Run(UMediaClientImpl::kHaveMetadata);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kHaveMetadata);
     }
   }
 
-  if (updated_source_info_ && !buffering_state_cb_.is_null())
-    buffering_state_cb_.Run(UMediaClientImpl::kPreloadCompleted);
+  if (updated_source_info_ && event_listener_)
+    event_listener_->OnBufferingStatusChanged(
+        UMediaClientImpl::kPreloadCompleted);
 }
 
 bool UMediaClientImpl::onUnloadCompleted() {
@@ -785,13 +732,14 @@ void UMediaClientImpl::DispatchBufferRange(
 #endif
   buffer_start_ = std::max(0.0, std::min(current_time_, buffer_start_));
 
-  if (buffer_remaining_ != bufferRange.remainingTime &&
-      !buffering_state_cb_.is_null()) {
+  if (buffer_remaining_ != bufferRange.remainingTime && event_listener_) {
     buffer_remaining_ = bufferRange.remainingTime;
     if (bufferRange.remainingTime > 0)
-      buffering_state_cb_.Run(UMediaClientImpl::kWebOSNetworkStateLoading);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kWebOSNetworkStateLoading);
     else if (bufferRange.remainingTime == -1)
-      buffering_state_cb_.Run(UMediaClientImpl::kWebOSNetworkStateLoaded);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kWebOSNetworkStateLoaded);
   }
 }
 
@@ -827,8 +775,8 @@ void UMediaClientImpl::DispatchSourceInfo(
       double updated_duration = sourceInfo.duration / 1000.;
       if (duration_ != updated_duration) {
         duration_ = updated_duration;
-        if (!duration_change_cb_.is_null())
-          duration_change_cb_.Run();
+        if (event_listener_)
+          event_listener_->OnDurationChanged();
       }
     }
 
@@ -848,32 +796,34 @@ void UMediaClientImpl::DispatchSourceInfo(
 
         if (natural_video_size_ != naturalVideoSize) {
           natural_video_size_ = naturalVideoSize;
-          if (!video_size_change_cb_.is_null())
-            video_size_change_cb_.Run();
+          if (event_listener_)
+            event_listener_->OnVideoSizeChanged();
         }
       }
     }
   }
-  if (!buffering_state_cb_.is_null()) {
+  if (event_listener_) {
     buffering_state_have_meta_data_ = true;
-    buffering_state_cb_.Run(UMediaClientImpl::kHaveMetadata);
+    event_listener_->OnBufferingStatusChanged(UMediaClientImpl::kHaveMetadata);
   }
 
-  if (!updated_source_info_) {
+  if (!updated_source_info_ && event_listener_) {
     if (is_loaded())
-      buffering_state_cb_.Run(UMediaClientImpl::kLoadCompleted);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kLoadCompleted);
     else if (loading_state_ == LOADING_STATE_PRELOADED)
-      buffering_state_cb_.Run(UMediaClientImpl::kPreloadCompleted);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kPreloadCompleted);
   }
   updated_source_info_ = true;
   system_media_manager_->SourceInfoUpdated(has_video_, has_audio_);
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     std::string json_string = SourceInfoToJson(MediaId(), sourceInfo);
 
     if (previous_source_info_ != json_string) {
       previous_source_info_ = json_string;
-      update_ums_info_cb_.Run(json_string);
+      event_listener_->OnUMSInfoUpdated(json_string);
     }
   }
 }
@@ -882,8 +832,8 @@ void UMediaClientImpl::DispatchAudioInfo(
     const struct ums::audio_info_t& audioInfo) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   has_audio_ = true;
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(AudioInfoToJson(MediaId(), audioInfo));
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(AudioInfoToJson(MediaId(), audioInfo));
 
   system_media_manager_->AudioInfoUpdated(audioInfo);
 }
@@ -897,16 +847,16 @@ void UMediaClientImpl::DispatchVideoInfo(
 
   if (natural_video_size_ != naturalVideoSize) {
     natural_video_size_ = naturalVideoSize;
-    if (!video_size_change_cb_.is_null())
-      video_size_change_cb_.Run();
+    if (event_listener_)
+      event_listener_->OnVideoSizeChanged();
   }
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     std::string json_string = VideoInfoToJson(MediaId(), videoInfo);
 
     if (previous_video_info_ != json_string) {
       previous_video_info_ = json_string;
-      update_ums_info_cb_.Run(json_string);
+      event_listener_->OnUMSInfoUpdated(json_string);
     }
   }
 
@@ -947,10 +897,10 @@ void UMediaClientImpl::DispatchSourceInfo(
 
     if (duration_ != duration) {
       duration_ = duration;
-      if (!duration_change_cb_.is_null()) {
+      if (event_listener_) {
         VLOG(1) << "duration change - " << duration_
                 << ", currentTime: " << current_time_;
-        duration_change_cb_.Run();
+        event_listener_->OnDurationChanged();
       }
     }
 
@@ -990,8 +940,8 @@ void UMediaClientImpl::DispatchSourceInfo(
       audio_track_ids_[id] = static_cast<int32_t>(i);
     }
 
-    if (!add_audio_track_cb_.is_null() && audio_track_info.size() > 0)
-      add_audio_track_cb_.Run(audio_track_info);
+    if (event_listener_ && audio_track_info.size() > 0)
+      event_listener_->OnAudioTrackAdded(audio_track_info);
 
     if (sourceInfo.programInfo[0].numVideoTracks > 0) {
       // Support only single track.
@@ -1008,8 +958,8 @@ void UMediaClientImpl::DispatchSourceInfo(
           id = std::to_string(sourceInfo.programInfo[0].videoTrackInfo[0].ctag);
       }
 
-      if (!add_video_track_cb_.is_null())
-        add_video_track_cb_.Run(id, kind, "", true);
+      if (event_listener_)
+        event_listener_->OnVideoTrackAdded(id, kind, "", true);
     }
 
     if (IsInsufficientSourceInfo()) {
@@ -1031,31 +981,33 @@ void UMediaClientImpl::DispatchSourceInfo(
       if (natural_video_size_ != naturalVideoSize || video_size_ != videoSize) {
         video_size_ = videoSize;
         natural_video_size_ = naturalVideoSize;
-        if (!video_size_change_cb_.is_null())
-          video_size_change_cb_.Run();
+        if (event_listener_)
+          event_listener_->OnVideoSizeChanged();
       }
     }
   }
-  if (!buffering_state_cb_.is_null()) {
+  if (event_listener_) {
     buffering_state_have_meta_data_ = true;
-    buffering_state_cb_.Run(UMediaClientImpl::kHaveMetadata);
+    event_listener_->OnBufferingStatusChanged(UMediaClientImpl::kHaveMetadata);
   }
 
-  if (!updated_source_info_) {
+  if (!updated_source_info_ && event_listener_) {
     if (is_loaded())
-      buffering_state_cb_.Run(UMediaClientImpl::kLoadCompleted);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kLoadCompleted);
     else if (loading_state_ == LOADING_STATE_PRELOADED)
-      buffering_state_cb_.Run(UMediaClientImpl::kPreloadCompleted);
+      event_listener_->OnBufferingStatusChanged(
+          UMediaClientImpl::kPreloadCompleted);
   }
   updated_source_info_ = true;
   system_media_manager_->SourceInfoUpdated(has_video_, has_audio_);
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     std::string json_string = SourceInfoToJson(MediaId(), sourceInfo);
 
     if (previous_source_info_ != json_string) {
       previous_source_info_ = json_string;
-      update_ums_info_cb_.Run(json_string);
+      event_listener_->OnUMSInfoUpdated(json_string);
     }
   }
 }
@@ -1072,8 +1024,8 @@ void UMediaClientImpl::DispatchAudioInfo(
     const struct uMediaServer::audio_info_t& audioInfo) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   has_audio_ = true;
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(AudioInfoToJson(MediaId(), audioInfo));
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(AudioInfoToJson(MediaId(), audioInfo));
 
   system_media_manager_->AudioInfoUpdated(audioInfo);
 }
@@ -1101,15 +1053,15 @@ void UMediaClientImpl::DispatchVideoInfo(
   if (natural_video_size_ != naturalVideoSize || video_size_ != videoSize) {
     video_size_ = videoSize;
     natural_video_size_ = naturalVideoSize;
-    if (!video_size_change_cb_.is_null())
-      video_size_change_cb_.Run();
+    if (event_listener_)
+      event_listener_->OnVideoSizeChanged();
   }
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     std::string json_string = VideoInfoToJson(MediaId(), video_info);
 
     if (previous_video_info_ != json_string) {
       previous_video_info_ = json_string;
-      update_ums_info_cb_.Run(json_string);
+      event_listener_->OnUMSInfoUpdated(json_string);
     }
   }
 
@@ -1143,11 +1095,12 @@ void UMediaClientImpl::DispatchError(int64_t errorCode,
         SystemMediaManager::PlayState::kUnloaded);
   }
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(ErrorInfoToJson(MediaId(), errorCode, errorText));
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(
+        ErrorInfoToJson(MediaId(), errorCode, errorText));
 
-  if (status != media::PIPELINE_OK && !error_cb_.is_null())
-    std::move(error_cb_).Run(status);
+  if (status != media::PIPELINE_OK && event_listener_)
+    event_listener_->OnError(status);
 }
 
 bool UMediaClientImpl::onExternalSubtitleTrackInfo(
@@ -1162,8 +1115,8 @@ bool UMediaClientImpl::onExternalSubtitleTrackInfo(
 void UMediaClientImpl::DispatchExternalSubtitleTrackInfo(
     const struct uMediaServer::external_subtitle_track_info_t& trackInfo) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null())
-    update_ums_info_cb_.Run(
+  if (IsRequiredUMSInfo() && event_listener_)
+    event_listener_->OnUMSInfoUpdated(
         ExternalSubtitleTrackInfoToJson(MediaId(), trackInfo));
 }
 
@@ -1262,14 +1215,14 @@ void UMediaClientImpl::DispatchUserDefinedChanged(const std::string& message) {
     system_media_manager_->EofReceived();
   }
 
-  if (IsRequiredUMSInfo() && !update_ums_info_cb_.is_null()) {
+  if (IsRequiredUMSInfo() && event_listener_) {
     std::string json_string = UserDefinedInfoToJson(MediaId(), message);
 
     if (previous_user_defined_changed_ == json_string)
       return;
 
     previous_user_defined_changed_ = json_string;
-    update_ums_info_cb_.Run(json_string);
+    event_listener_->OnUMSInfoUpdated(json_string);
   }
 }
 
@@ -1287,8 +1240,10 @@ void UMediaClientImpl::DispatchBufferingStart() {
     return;
 
   buffering_ = true;
-  if (!buffering_state_cb_.is_null())
-    buffering_state_cb_.Run(UMediaClientImpl::kWebOSBufferingStart);
+  if (event_listener_) {
+    event_listener_->OnBufferingStatusChanged(
+        UMediaClientImpl::kWebOSBufferingStart);
+  }
 }
 
 bool UMediaClientImpl::onBufferingEnd() {
@@ -1302,8 +1257,10 @@ void UMediaClientImpl::DispatchBufferingEnd() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
   buffering_ = false;
-  if (!buffering_state_cb_.is_null())
-    buffering_state_cb_.Run(UMediaClientImpl::kWebOSBufferingEnd);
+  if (event_listener_) {
+    event_listener_->OnBufferingStatusChanged(
+        UMediaClientImpl::kWebOSBufferingEnd);
+  }
 }
 
 std::string UMediaClientImpl::UpdateMediaOption(const std::string& mediaOption,

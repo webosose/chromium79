@@ -21,7 +21,8 @@ namespace media {
 // static
 std::unique_ptr<WebOSMediaClient> WebOSMediaClient::Create(
     const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
-    const std::string& app_id) {
+    const std::string& app_id,
+    base::WeakPtr<WebOSMediaClient::EventListener> event_listener) {
   return std::make_unique<WebOSMediaClientStub>();
 }
 
@@ -29,32 +30,16 @@ WebOSMediaClientStub::WebOSMediaClientStub() {}
 
 WebOSMediaClientStub::~WebOSMediaClientStub() {}
 
-void WebOSMediaClientStub::Load(
-    bool video,
-    double current_time,
-    bool is_local_source,
-    const std::string& app_id,
-    const std::string& url,
-    const std::string& mime_type,
-    const std::string& referrer,
-    const std::string& user_agent,
-    const std::string& cookies,
-    const std::string& payload,
-    const PlaybackStateCB& playback_state_cb,
-    const base::Closure& ended_cb,
-    const media::PipelineStatusCB& seek_cb,
-    const media::PipelineStatusCB& error_cb,
-    const BufferingStateCB& buffering_state_cb,
-    const base::Closure& duration_change_cb,
-    const base::Closure& video_size_change_cb,
-    const base::Closure& video_display_window_change_cb,
-    const AddAudioTrackCB& add_audio_track_cb,
-    const AddVideoTrackCB& add_video_track_cb,
-    const UpdateUMSInfoCB& update_ums_info_cb,
-    const base::Closure& focus_cb,
-    const ActiveRegionCB& active_region_cb,
-    const base::Closure& waiting_for_decryption_key_cb,
-    const EncryptedCB& encrypted_cb) {}
+void WebOSMediaClientStub::Load(bool video,
+                                double current_time,
+                                bool is_local_source,
+                                const std::string& app_id,
+                                const std::string& url,
+                                const std::string& mime_type,
+                                const std::string& referrer,
+                                const std::string& user_agent,
+                                const std::string& cookies,
+                                const std::string& payload) {}
 
 void WebOSMediaClientStub::Seek(base::TimeDelta time,
                                 const media::PipelineStatusCB& seek_cb) {}

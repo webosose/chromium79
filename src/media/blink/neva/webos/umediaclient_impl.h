@@ -44,7 +44,8 @@ class UMediaClientImpl : public WebOSMediaClient,
  public:
   UMediaClientImpl(
       const scoped_refptr<base::SingleThreadTaskRunner>& task_runner,
-      const std::string& app_id);
+      const std::string& app_id,
+      base::WeakPtr<WebOSMediaClient::EventListener> event_listener);
   ~UMediaClientImpl();
 
   // WebOSMediaClient implementations
@@ -57,22 +58,7 @@ class UMediaClientImpl : public WebOSMediaClient,
             const std::string& referrer,
             const std::string& user_agent,
             const std::string& cookies,
-            const std::string& payload,
-            const PlaybackStateCB& playback_state_cb,
-            const base::Closure& ended_cb,
-            const media::PipelineStatusCB& seek_cb,
-            const media::PipelineStatusCB& error_cb,
-            const BufferingStateCB& buffering_state_cb,
-            const base::Closure& duration_change_cb,
-            const base::Closure& video_size_change_cb,
-            const base::Closure& video_display_window_change_cb,
-            const AddAudioTrackCB& add_audio_track_cb,
-            const AddVideoTrackCB& add_video_track_cb,
-            const UpdateUMSInfoCB& update_ums_info_cb,
-            const base::Closure& focus_cb,
-            const ActiveRegionCB& active_region_cb,
-            const base::Closure& waiting_for_decryption_key_cb,
-            const EncryptedCB& encrypted_cb) override;
+            const std::string& payload) override;
   void Seek(base::TimeDelta time,
             const media::PipelineStatusCB& seek_cb) override;
   float GetPlaybackRate() const override;
@@ -227,58 +213,45 @@ class UMediaClientImpl : public WebOSMediaClient,
   inline bool is_loaded() { return loading_state_ == LOADING_STATE_LOADED; }
   void ResetPlayerState();
 
-  PlaybackStateCB playback_state_cb_;
-  base::Closure ended_cb_;
+  base::WeakPtr<WebOSMediaClient::EventListener> event_listener_;
   media::PipelineStatusCB seek_cb_;
-  media::PipelineStatusCB error_cb_;
-  base::Closure duration_change_cb_;
-  base::Closure video_size_change_cb_;
-  base::Closure video_display_window_change_cb_;
-  AddAudioTrackCB add_audio_track_cb_;
-  AddVideoTrackCB add_video_track_cb_;
-  UpdateUMSInfoCB update_ums_info_cb_;
-  BufferingStateCB buffering_state_cb_;
-  base::Closure focus_cb_;
   bool buffering_state_have_meta_data_ = false;
-  ActiveRegionCB active_region_cb_;
-  base::Closure waiting_for_decryption_key_cb_;
-  EncryptedCB encrypted_cb_;
-  double duration_;
-  double current_time_;
+  double duration_ = 0.0f;
+  double current_time_ = 0.0f;
   double buffer_start_ = 0.0f;
   double buffer_end_ = 0.0f;
-  double buffer_end_at_last_didLoadingProgress_;
-  int64_t buffer_remaining_;
-  double start_date_;
-  bool video_;
-  bool seekable_;
-  bool ended_;
-  bool has_video_;
-  bool has_audio_;
-  bool fullscreen_;
+  double buffer_end_at_last_didLoadingProgress_ = 0.0f;
+  int64_t buffer_remaining_ = 0;
+  double start_date_ = std::numeric_limits<double>::quiet_NaN();
+  bool video_ = false;
+  bool seekable_ = true;
+  bool ended_ = false;
+  bool has_video_ = false;
+  bool has_audio_ = false;
+  bool fullscreen_ = false;
   std::map<std::string, int32_t> audio_track_ids_;
-  bool is_local_source_;
+  bool is_local_source_ = false;
   bool is_usb_file_ = false;
-  bool is_seeking_;
-  bool is_suspended_;
-  bool use_umsinfo_;
-  bool use_backward_trick_;
-  bool use_pipeline_preload_;
-  bool use_set_uri_;
-  bool use_dass_control_;
-  bool updated_source_info_;
-  bool buffering_;
-  bool requests_play_;
-  bool requests_pause_;
-  bool released_media_resource_;
+  bool is_seeking_ = false;
+  bool is_suspended_ = false;
+  bool use_umsinfo_ = false;
+  bool use_backward_trick_ = false;
+  bool use_pipeline_preload_ = false;
+  bool use_set_uri_ = false;
+  bool use_dass_control_ = false;
+  bool updated_source_info_ = false;
+  bool buffering_ = false;
+  bool requests_play_ = false;
+  bool requests_pause_ = false;
+  bool released_media_resource_ = false;
   std::string media_transport_type_;
   gfx::Size natural_video_size_;
   gfx::Size video_size_;
-  gfx::Size pixel_aspect_ratio_;
-  float playback_rate_;
-  float playback_rate_on_eos_;
-  float playback_rate_on_paused_;
-  double volume_;
+  gfx::Size pixel_aspect_ratio_{1, 1};
+  float playback_rate_ = 0.0f;
+  float playback_rate_on_eos_ = 0.0f;
+  float playback_rate_on_paused_ = 1.0f;
+  double volume_ = 1.0f;
   const scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
   std::string app_id_;
   std::string url_;
@@ -297,13 +270,14 @@ class UMediaClientImpl : public WebOSMediaClient,
   mutable base::Lock lock_;
   media::Ranges<base::TimeDelta> seekable_ranges_;
 
-  Preload preload_;
+  Preload preload_ = PreloadNone;
 
-  LoadingState loading_state_;  // unloaded, loading, loaded, unloading
-  LoadingAction pending_loading_action_;
+  LoadingState loading_state_ =
+      LOADING_STATE_NONE;  // unloaded, loading, loaded, unloading
+  LoadingAction pending_loading_action_ = LOADING_ACTION_NONE;
 
   base::WeakPtr<UMediaClientImpl> weak_ptr_;
-  bool audio_disabled_;
+  bool audio_disabled_ = false;
   std::string media_layer_id_;
 
   DISALLOW_COPY_AND_ASSIGN(UMediaClientImpl);

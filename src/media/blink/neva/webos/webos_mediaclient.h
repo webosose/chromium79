@@ -19,6 +19,7 @@
 
 #include "base/callback.h"
 #include "base/callback_forward.h"
+#include "base/memory/weak_ptr.h"
 #include "base/threading/thread.h"
 #include "base/time/time.h"
 #include "media/base/neva/media_constants.h"
@@ -48,31 +49,36 @@ class WebOSMediaClient {
     PreloadAuto,
   };
 
-  // common callbacks
-  typedef base::Callback<void(const std::string& detail)> UpdateUMSInfoCB;
-  typedef base::Callback<void(WebOSMediaClient::BufferingState)>
-      BufferingStateCB;
-  typedef base::Callback<void(bool playing)> PlaybackStateCB;
-
-  typedef base::Callback<void(const gfx::Rect&)> ActiveRegionCB;
-
-  typedef base::Callback<void(
-      const std::vector<MediaTrackInfo>& audio_track_info)>
-      AddAudioTrackCB;
-  typedef base::Callback<void(const std::string& id,
-                              const std::string& kind,
-                              const std::string& language,
-                              bool enabled)>
-      AddVideoTrackCB;
-  typedef base::Callback<void(const std::string& type,
-                              const std::vector<uint8_t>& init_data)>
-      EncryptedCB;
+  class EventListener {
+   public:
+    virtual void OnPlaybackStateChanged(bool playing) = 0;
+    virtual void OnPlaybackEnded() = 0;
+    virtual void OnBufferingStatusChanged(BufferingState status) = 0;
+    virtual void OnError(PipelineStatus error) = 0;
+    virtual void OnDurationChanged() = 0;
+    virtual void OnVideoSizeChanged() = 0;
+    virtual void OnDisplayWindowChanged() = 0;
+    virtual void OnAudioTrackAdded(
+        const std::vector<MediaTrackInfo>& audio_track_info) = 0;
+    virtual void OnVideoTrackAdded(const std::string& id,
+                                   const std::string& kind,
+                                   const std::string& language,
+                                   bool enabled) = 0;
+    virtual void OnUMSInfoUpdated(const std::string& detail) = 0;
+    virtual void OnAudioFocusChanged() = 0;
+    virtual void OnActiveRegionChanged(const gfx::Rect& active_region) = 0;
+    virtual void OnWaitingForDecryptionKey() = 0;
+    virtual void OnEncryptedMediaInitData(
+        const std::string& init_data_type,
+        const std::vector<uint8_t>& init_data) = 0;
+  };
 
   virtual ~WebOSMediaClient() {}
 
   static std::unique_ptr<WebOSMediaClient> Create(
       const scoped_refptr<base::SingleThreadTaskRunner>& main_task_runner,
-      const std::string& app_id);
+      const std::string& app_id,
+      base::WeakPtr<EventListener> event_listener);
 
   virtual void Load(bool video,
                     double current_time,
@@ -83,22 +89,7 @@ class WebOSMediaClient {
                     const std::string& referrer,
                     const std::string& user_agent,
                     const std::string& cookies,
-                    const std::string& payload,
-                    const PlaybackStateCB& playback_state_cb,
-                    const base::Closure& ended_cb,
-                    const media::PipelineStatusCB& seek_cb,
-                    const media::PipelineStatusCB& error_cb,
-                    const BufferingStateCB& buffering_state_cb,
-                    const base::Closure& duration_change_cb,
-                    const base::Closure& video_size_change_cb,
-                    const base::Closure& video_display_window_change_cb,
-                    const AddAudioTrackCB& add_audio_track_cb,
-                    const AddVideoTrackCB& add_video_track_cb,
-                    const UpdateUMSInfoCB& update_ums_info_cb,
-                    const base::Closure& focus_cb,
-                    const ActiveRegionCB& active_region_cb,
-                    const base::Closure& waiting_for_decryption_key_cb,
-                    const EncryptedCB& encrypted_cb) = 0;
+                    const std::string& payload) = 0;
   virtual void Seek(base::TimeDelta time,
                     const media::PipelineStatusCB& seek_cb) = 0;
   virtual float GetPlaybackRate() const = 0;

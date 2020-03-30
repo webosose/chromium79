@@ -96,7 +96,8 @@ MediaPlayerUMS::MediaPlayerUMS(
       is_video_offscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(ERROR) << __func__;
-  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
+  umedia_client_ =
+      WebOSMediaClient::Create(main_task_runner_, app_id, AsWeakPtr());
 }
 
 MediaPlayerUMS::~MediaPlayerUMS() {
@@ -117,24 +118,8 @@ void MediaPlayerUMS::Initialize(const bool is_video,
   FUNC_LOG(1) << __func__ << " app_id: " << app_id << " / url: " << url
               << " / media_option: " << media_option;
 
-  umedia_client_->Load(
-      is_video, current_time, false, app_id, url, mime_type, referrer,
-      user_agent, cookies, media_option,
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnPlaybackStateChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnStreamEnded),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnSeekDone),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnError),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnBufferingState),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnDurationChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnVideoSizeChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnVideoDisplayWindowChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnAddAudioTrack),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnAddVideoTrack),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::UpdateUMSInfo),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnAudioFocusChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::ActiveRegionChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnWaitingForDecryptionKey),
-      BIND_TO_RENDER_LOOP(&MediaPlayerUMS::OnEncryptedMediaInitData));
+  umedia_client_->Load(is_video, current_time, false, app_id, url, mime_type,
+                       referrer, user_agent, cookies, media_option);
 }
 
 void MediaPlayerUMS::Start() {
@@ -328,7 +313,7 @@ void MediaPlayerUMS::OnPlaybackStateChanged(bool playing) {
     client_->OnMediaPlayerPause();
 }
 
-void MediaPlayerUMS::OnStreamEnded() {
+void MediaPlayerUMS::OnPlaybackEnded() {
   FUNC_LOG(1);
   time_update_timer_.Stop();
   client_->OnPlaybackComplete();
@@ -349,7 +334,7 @@ void MediaPlayerUMS::OnError(PipelineStatus error) {
   client_->OnMediaError(convertToMediaError(error));
 }
 
-void MediaPlayerUMS::OnBufferingState(
+void MediaPlayerUMS::OnBufferingStatusChanged(
     WebOSMediaClient::BufferingState buffering_state) {
   FUNC_LOG(2) << " state:" << buffering_state;
 
@@ -380,38 +365,38 @@ void MediaPlayerUMS::OnBufferingState(
   }
 }
 
-void MediaPlayerUMS::OnDurationChange() {
+void MediaPlayerUMS::OnDurationChanged() {
   FUNC_LOG(1);
 }
 
-void MediaPlayerUMS::OnVideoSizeChange() {
+void MediaPlayerUMS::OnVideoSizeChanged() {
   FUNC_LOG(1);
   gfx::Size size = umedia_client_->GetNaturalVideoSize();
   client_->OnVideoSizeChanged(size.width(), size.height());
 }
 
-void MediaPlayerUMS::OnVideoDisplayWindowChange() {
+void MediaPlayerUMS::OnDisplayWindowChanged() {
   FUNC_LOG(1);
   umedia_client_->SetDisplayWindow(display_window_out_rect_,
                                    display_window_in_rect_, fullscreen_, true);
 }
 
-void MediaPlayerUMS::UpdateUMSInfo(const std::string& detail) {
+void MediaPlayerUMS::OnUMSInfoUpdated(const std::string& detail) {
   FUNC_LOG(1);
   if (!detail.empty())
     client_->OnCustomMessage(
         blink::WebMediaPlayer::kMediaEventUpdateUMSMediaInfo, detail);
 }
 
-void MediaPlayerUMS::OnAddAudioTrack(
+void MediaPlayerUMS::OnAudioTrackAdded(
     const std::vector<MediaTrackInfo>& audio_track_info) {
   client_->OnAudioTracksUpdated(audio_track_info);
 }
 
-void MediaPlayerUMS::OnAddVideoTrack(const std::string& id,
-                                     const std::string& kind,
-                                     const std::string& language,
-                                     bool enabled) {
+void MediaPlayerUMS::OnVideoTrackAdded(const std::string& id,
+                                       const std::string& kind,
+                                       const std::string& language,
+                                       bool enabled) {
   NOTIMPLEMENTED();
 }
 
@@ -420,7 +405,7 @@ void MediaPlayerUMS::OnAudioFocusChanged() {
   client_->OnAudioFocusChanged();
 }
 
-void MediaPlayerUMS::ActiveRegionChanged(const gfx::Rect& active_region) {
+void MediaPlayerUMS::OnActiveRegionChanged(const gfx::Rect& active_region) {
   FUNC_LOG(1) << gfx::Rect(active_region).ToString();
 
   if (active_video_region_ != active_region) {

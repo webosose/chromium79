@@ -34,6 +34,7 @@ class GURL;
 namespace media {
 
 class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
+                          public WebOSMediaClient::EventListener,
                           public media::MediaPlayerNeva {
  public:
   explicit MediaPlayerCamera(
@@ -89,27 +90,30 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
   void SetDisableAudio(bool) override {}
   void SetMediaLayerId(const std::string& media_layer_id) override;
 
- private:
-  void OnPlaybackStateChanged(bool playing);
-  void OnStreamEnded();
-  void OnSeekDone(PipelineStatus status) {}
-  void OnError(PipelineStatus error) {}
-  void OnBufferingState(WebOSMediaClient::BufferingState buffering_state);
-  void OnDurationChange() {}
-  void OnVideoSizeChange();
-  void OnVideoDisplayWindowChange();
-  void OnAddAudioTrack(const std::vector<MediaTrackInfo>& audio_track_info);
-  void OnAddVideoTrack(const std::string& id,
-                       const std::string& kind,
-                       const std::string& language,
-                       bool enabled);
-  void OnUpdateUMSInfo(const std::string& detail);
-  void OnAudioFocusChanged() {}
-  void OnActiveRegionChanged(const gfx::Rect& active_region);
-  void OnWaitingForDecryptionKey() {}
+  // Implement WebOSMediaClient::EventListener
+  void OnPlaybackStateChanged(bool playing) override;
+  void OnPlaybackEnded() override;
+  void OnBufferingStatusChanged(
+      WebOSMediaClient::BufferingState buffering_state) override;
+  void OnError(PipelineStatus error) override {}
+  void OnDurationChanged() override {}
+  void OnVideoSizeChanged() override;
+  void OnDisplayWindowChanged() override;
+  void OnAudioTrackAdded(
+      const std::vector<MediaTrackInfo>& audio_track_info) override {}
+  void OnVideoTrackAdded(const std::string& id,
+                         const std::string& kind,
+                         const std::string& language,
+                         bool enabled) override {}
+  void OnUMSInfoUpdated(const std::string& detail) override;
+  void OnAudioFocusChanged() override {}
+  void OnActiveRegionChanged(const gfx::Rect& active_region) override;
+  void OnWaitingForDecryptionKey() override {}
   void OnEncryptedMediaInitData(const std::string& init_data_type,
-                                const std::vector<uint8_t>& init_data);
+                                const std::vector<uint8_t>& init_data) override;
+  // End of implement WebOSMediaClient::EventListener
 
+ private:
   base::TimeDelta GetCurrentTime();
   void OnTimeUpdateTimerFired();
 

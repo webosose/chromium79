@@ -43,7 +43,8 @@ MediaPlayerCamera::MediaPlayerCamera(
       fullscreen_(false),
       main_task_runner_(main_task_runner) {
   LOG(INFO) << __func__;
-  umedia_client_ = WebOSMediaClient::Create(main_task_runner_, app_id);
+  umedia_client_ =
+      WebOSMediaClient::Create(main_task_runner_, app_id, AsWeakPtr());
 }
 
 MediaPlayerCamera::~MediaPlayerCamera() {
@@ -72,24 +73,8 @@ void MediaPlayerCamera::Initialize(const bool is_video,
   url_ = GURL(url, parsed, true);
   mime_type_ = mime_type;
 
-  umedia_client_->Load(
-      is_video, current_time, false, app_id, url, mime_type, referrer,
-      user_agent, cookies, custom_option,
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnPlaybackStateChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnStreamEnded),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnSeekDone),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnError),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnBufferingState),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnDurationChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnVideoSizeChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnVideoDisplayWindowChange),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnAddAudioTrack),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnAddVideoTrack),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnUpdateUMSInfo),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnAudioFocusChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnActiveRegionChanged),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnWaitingForDecryptionKey),
-      BIND_TO_RENDER_LOOP(&MediaPlayerCamera::OnEncryptedMediaInitData));
+  umedia_client_->Load(is_video, current_time, false, app_id, url, mime_type,
+                       referrer, user_agent, cookies, custom_option);
 }
 
 void MediaPlayerCamera::Start() {
@@ -203,12 +188,12 @@ void MediaPlayerCamera::OnPlaybackStateChanged(bool playing) {
                            writer.write(root));
 }
 
-void MediaPlayerCamera::OnStreamEnded() {
+void MediaPlayerCamera::OnPlaybackEnded() {
   FUNC_LOG(1);
   time_update_timer_.Stop();
 }
 
-void MediaPlayerCamera::OnBufferingState(
+void MediaPlayerCamera::OnBufferingStatusChanged(
     WebOSMediaClient::BufferingState buffering_state) {
   switch (buffering_state) {
     case WebOSMediaClient::kHaveMetadata: {
@@ -233,31 +218,19 @@ void MediaPlayerCamera::OnBufferingState(
   }
 }
 
-void MediaPlayerCamera::OnVideoSizeChange() {
+void MediaPlayerCamera::OnVideoSizeChanged() {
   FUNC_LOG(1);
   gfx::Size size = umedia_client_->GetNaturalVideoSize();
   client_->OnVideoSizeChanged(size.width(), size.height());
 }
 
-void MediaPlayerCamera::OnVideoDisplayWindowChange() {
+void MediaPlayerCamera::OnDisplayWindowChanged() {
   FUNC_LOG(1);
   umedia_client_->SetDisplayWindow(display_window_out_rect_,
                                    display_window_in_rect_, fullscreen_, true);
 }
 
-void MediaPlayerCamera::OnAddAudioTrack(
-    const std::vector<MediaTrackInfo>& audio_track_info) {
-  NOTIMPLEMENTED();
-}
-
-void MediaPlayerCamera::OnAddVideoTrack(const std::string& id,
-                                        const std::string& kind,
-                                        const std::string& language,
-                                        bool enabled) {
-  NOTIMPLEMENTED();
-}
-
-void MediaPlayerCamera::OnUpdateUMSInfo(const std::string& detail) {
+void MediaPlayerCamera::OnUMSInfoUpdated(const std::string& detail) {
   FUNC_LOG(1);
 
   if (!client_ || detail.empty())

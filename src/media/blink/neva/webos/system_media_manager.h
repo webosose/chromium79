@@ -53,7 +53,7 @@ class UMediaClientImpl;
 // as acb.
 class SystemMediaManager {
  public:
-  using ActiveRegionCB = WebOSMediaClient::ActiveRegionCB;
+  using ActiveRegionCB = base::Callback<void(const gfx::Rect&)>;
 
   enum class PlayState {
     kUnloaded,
