@@ -118,6 +118,7 @@ void MediaPlayerUMS::Initialize(const bool is_video,
   FUNC_LOG(1) << __func__ << " app_id: " << app_id << " / url: " << url
               << " / media_option: " << media_option;
 
+  current_time_ = base::TimeDelta::FromSecondsD(current_time);
   umedia_client_->Load(is_video, current_time, false, app_id, url, mime_type,
                        referrer, user_agent, cookies, media_option);
 }
@@ -127,22 +128,14 @@ void MediaPlayerUMS::Start() {
   FUNC_LOG(1);
   umedia_client_->SetPlaybackRate(playback_rate_);
   paused_ = false;
-
-  if (!time_update_timer_.IsRunning()) {
-    time_update_timer_.Start(
-        FROM_HERE,
-        base::TimeDelta::FromMilliseconds(media::kTimeUpdateInterval), this,
-        &MediaPlayerUMS::OnTimeUpdateTimerFired);
-  }
 }
 
 void MediaPlayerUMS::Pause() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
   umedia_client_->SetPlaybackRate(0.0f);
-  time_update_timer_.Stop();
   paused_ = true;
-  paused_time_ = base::TimeDelta::FromSecondsD(umedia_client_->GetCurrentTime());
+  paused_time_ = current_time_;
 }
 
 void MediaPlayerUMS::Seek(const base::TimeDelta& time) {
@@ -315,7 +308,6 @@ void MediaPlayerUMS::OnPlaybackStateChanged(bool playing) {
 
 void MediaPlayerUMS::OnPlaybackEnded() {
   FUNC_LOG(1);
-  time_update_timer_.Stop();
   client_->OnPlaybackComplete();
 }
 
@@ -428,16 +420,10 @@ void MediaPlayerUMS::OnEncryptedMediaInitData(
   NOTIMPLEMENTED();
 }
 
-base::TimeDelta MediaPlayerUMS::GetCurrentTime() {
-  DCHECK(main_task_runner_->BelongsToCurrentThread());
-  FUNC_LOG(2);
-  return base::TimeDelta::FromSecondsD(umedia_client_->GetCurrentTime());
-}
-
-void MediaPlayerUMS::OnTimeUpdateTimerFired() {
-  FUNC_LOG(2);
+void MediaPlayerUMS::OnTimeUpdated(base::TimeDelta current_time) {
+  current_time_ = current_time;
   if (client_)
-    client_->OnTimeUpdate(GetCurrentTime(), base::TimeTicks::Now());
+    client_->OnTimeUpdate(current_time_, base::TimeTicks::Now());
 }
 
 }  // namespace media

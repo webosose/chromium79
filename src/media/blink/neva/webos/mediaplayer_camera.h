@@ -111,12 +111,10 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
   void OnWaitingForDecryptionKey() override {}
   void OnEncryptedMediaInitData(const std::string& init_data_type,
                                 const std::vector<uint8_t>& init_data) override;
+  void OnTimeUpdated(base::TimeDelta current_time) override;
   // End of implement WebOSMediaClient::EventListener
 
  private:
-  base::TimeDelta GetCurrentTime();
-  void OnTimeUpdateTimerFired();
-
   std::unique_ptr<WebOSMediaClient> umedia_client_;
   MediaPlayerNevaClient* client_;
 
@@ -132,8 +130,6 @@ class MediaPlayerCamera : public base::SupportsWeakPtr<MediaPlayerCamera>,
   gfx::Rect display_window_out_rect_;
   gfx::Rect display_window_in_rect_;
   gfx::Rect active_video_region_;
-
-  base::RepeatingTimer time_update_timer_;
 
   scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
   DISALLOW_COPY_AND_ASSIGN(MediaPlayerCamera);

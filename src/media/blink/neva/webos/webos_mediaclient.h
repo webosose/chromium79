@@ -71,6 +71,7 @@ class WebOSMediaClient {
     virtual void OnEncryptedMediaInitData(
         const std::string& init_data_type,
         const std::vector<uint8_t>& init_data) = 0;
+    virtual void OnTimeUpdated(base::TimeDelta current_time) = 0;
   };
 
   virtual ~WebOSMediaClient() {}

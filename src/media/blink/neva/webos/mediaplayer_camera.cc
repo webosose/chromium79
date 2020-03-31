@@ -82,18 +82,11 @@ void MediaPlayerCamera::Start() {
   FUNC_LOG(2);
 
   umedia_client_->SetPlaybackRate(playback_rate_);
-  if (!time_update_timer_.IsRunning()) {
-    time_update_timer_.Start(FROM_HERE, base::TimeDelta::FromMilliseconds(
-                                            media::kTimeUpdateInterval),
-                             this, &MediaPlayerCamera::OnTimeUpdateTimerFired);
-  }
 }
 
 void MediaPlayerCamera::Pause() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(2);
-
-  time_update_timer_.Stop();
 }
 
 bool MediaPlayerCamera::IsPreloadable(const std::string& content_media_option) {
@@ -190,7 +183,6 @@ void MediaPlayerCamera::OnPlaybackStateChanged(bool playing) {
 
 void MediaPlayerCamera::OnPlaybackEnded() {
   FUNC_LOG(1);
-  time_update_timer_.Stop();
 }
 
 void MediaPlayerCamera::OnBufferingStatusChanged(
@@ -267,16 +259,8 @@ void MediaPlayerCamera::OnEncryptedMediaInitData(
   NOTIMPLEMENTED();
 }
 
-base::TimeDelta MediaPlayerCamera::GetCurrentTime() {
-  DCHECK(main_task_runner_->BelongsToCurrentThread());
-  FUNC_LOG(2);
-  return base::TimeDelta::FromSecondsD(umedia_client_->GetCurrentTime());
-}
-
-void MediaPlayerCamera::OnTimeUpdateTimerFired() {
-  FUNC_LOG(2);
-  if (client_)
-    client_->OnTimeUpdate(GetCurrentTime(), base::TimeTicks::Now());
+void MediaPlayerCamera::OnTimeUpdated(base::TimeDelta current_time) {
+  client_->OnTimeUpdate(current_time, base::TimeTicks::Now());
 }
 
 }  // namespace media

@@ -134,13 +134,11 @@ class MediaPlayerUMS : public WebOSMediaClient::EventListener,
   void OnWaitingForDecryptionKey() override;
   void OnEncryptedMediaInitData(const std::string& init_data_type,
                                 const std::vector<uint8_t>& init_data) override;
+  void OnTimeUpdated(base::TimeDelta current_time) override;
   // End of implement WebOSMediaClient::EventListener
+
  private:
   void OnSeekDone(PipelineStatus status);
-
-  void OnTimeUpdateTimerFired();
-
-  base::TimeDelta GetCurrentTime();
 
   std::unique_ptr<WebOSMediaClient> umedia_client_;
   MediaPlayerNevaClient* client_;
@@ -157,7 +155,7 @@ class MediaPlayerUMS : public WebOSMediaClient::EventListener,
 
   bool is_video_offscreen_;
 
-  base::RepeatingTimer time_update_timer_;
+  base::TimeDelta current_time_;
 
   scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
 

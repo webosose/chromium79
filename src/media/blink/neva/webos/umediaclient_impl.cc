@@ -704,6 +704,9 @@ void UMediaClientImpl::DispatchCurrentTime(int64_t currentTime) {
     return;
   }
   current_time_ = static_cast<double>(currentTime) / 1000.0;
+  if (event_listener_)
+    event_listener_->OnTimeUpdated(
+        base::TimeDelta::FromMilliseconds(currentTime));
 }
 
 bool UMediaClientImpl::onBufferRange(
