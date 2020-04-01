@@ -18,6 +18,7 @@
 #define NEVA_APP_RUNTIME_BROWSER_NET_APP_RUNTIME_NETWORK_CHANGE_NOTIFIER_H_
 
 #include "base/macros.h"
+#include "base/timer/timer.h"
 #include "net/base/network_change_notifier.h"
 
 namespace neva_app_runtime {
@@ -34,7 +35,12 @@ class AppRuntimeNetworkChangeNotifier : public net::NetworkChangeNotifier {
   static AppRuntimeNetworkChangeNotifier* GetInstance();
 
  private:
+  void Notify();
+
   bool network_connected_ = true;
+
+  // Used to delay notifications so duplicates can be combined.
+  base::OneShotTimer timer_;
 
   DISALLOW_COPY_AND_ASSIGN(AppRuntimeNetworkChangeNotifier);
 };

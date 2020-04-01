@@ -20,6 +20,10 @@
 
 namespace neva_app_runtime {
 
+namespace {
+const int kOfflineToOnlineTransitionDelayMs = 500;
+}
+
 net::NetworkChangeNotifier::ConnectionType
 AppRuntimeNetworkChangeNotifier::GetCurrentConnectionType() const {
   return network_connected_ ? net::NetworkChangeNotifier::CONNECTION_UNKNOWN
@@ -30,10 +34,20 @@ void AppRuntimeNetworkChangeNotifier::OnNetworkStateChanged(
     bool is_connected) {
   if (network_connected_ != is_connected) {
     network_connected_ = is_connected;
-    net::NetworkChangeNotifier::NotifyObserversOfMaxBandwidthChange(
-        network_connected_ ? std::numeric_limits<double>::infinity() : 0.0,
-        GetCurrentConnectionType());
+
+    base::TimeDelta delay = network_connected_
+                                ? base::TimeDelta::FromMilliseconds(0)
+                                : base::TimeDelta::FromMilliseconds(
+                                      kOfflineToOnlineTransitionDelayMs);
+    timer_.Start(FROM_HERE, delay, this,
+                 &AppRuntimeNetworkChangeNotifier::Notify);
   }
+}
+
+void AppRuntimeNetworkChangeNotifier::Notify() {
+  net::NetworkChangeNotifier::NotifyObserversOfMaxBandwidthChange(
+      network_connected_ ? std::numeric_limits<double>::infinity() : 0.0,
+      GetCurrentConnectionType());
 }
 
 // static
