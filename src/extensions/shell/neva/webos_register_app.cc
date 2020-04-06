@@ -92,12 +92,9 @@ void RegisterApp::OnResponse(pal::luna::Client::ResponseStatus,
         content::RenderFrameHost* r = contents->GetMainFrame();
         std::string js_line =
             R"JS(
-                var v = document.getElementsByTagName("webview")[0];
-                var e_tab_open = new CustomEvent("newwindow", {});
-                e_tab_open.windowOpenDisposition = "new_foreground_tab";
-                e_tab_open.targetUrl = ")JS" +
-            *target + R"JS(";
-                v.dispatchEvent(e_tab_open);)JS";
+                var e_tab_open = new CustomEvent("webOSRelaunch", {detail: {url: ")JS" +
+            *target + R"JS("}});
+                document.dispatchEvent(e_tab_open);)JS";
 
         if (r)
           r->ExecuteJavaScript(base::UTF8ToUTF16(js_line),
