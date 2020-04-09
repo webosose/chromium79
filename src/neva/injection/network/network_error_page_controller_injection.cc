@@ -1,4 +1,4 @@
-// Copyright (c) 2017 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,14 +89,13 @@ void NetworkErrorPageControllerInjection::Uninstall(
 }
 
 bool NetworkErrorPageControllerInjection::SettingsButtonClick(
-    const gin::Arguments& args) {
-  if (args.PeekNext().IsEmpty() && !args.PeekNext()->IsInt32())
+    gin::Arguments* args) {
+  int target_id;
+  int display_id;
+  if (!args->GetNext(&target_id) || !args->GetNext(&display_id))
     return false;
 
-  controller_->LaunchNetworkSettings(
-      args.PeekNext()
-          ->Int32Value(args.GetHolderCreationContext())
-          .FromMaybe(0));
+  controller_->LaunchNetworkSettings(target_id, display_id);
   return true;
 }
 

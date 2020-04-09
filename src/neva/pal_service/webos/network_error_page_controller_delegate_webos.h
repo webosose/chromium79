@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class NetworkErrorPageControllerDelegateWebOS
   NetworkErrorPageControllerDelegateWebOS();
   ~NetworkErrorPageControllerDelegateWebOS() override;
 
-  void LaunchNetworkSettings(int target_id) override;
+  void LaunchNetworkSettings(int target_id, int display_id) override;
 
  private:
   void OnLaunchNetworkSettings(luna::Client::ResponseStatus,

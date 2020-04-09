@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ const char kLaunchingMethod[] = "launch";
 const char kSettingsApplicationId[] = "com.palm.app.settings";
 const char kParams[] = "params";
 const char kTarget[] = "target";
+const char kDisplayId[] = "displayAffinity";
 
 enum LAUNCH_TARGET {
   NETWORK = 1,
@@ -60,20 +61,22 @@ NetworkErrorPageControllerDelegateWebOS::
     ~NetworkErrorPageControllerDelegateWebOS() {}
 
 void NetworkErrorPageControllerDelegateWebOS::LaunchNetworkSettings(
-    int target_id) {
+    int target_id,
+    int display_id) {
   std::string target_string = MapTargetIdToString(target_id);
   if (target_string.empty())
     return;
 
   const std::unique_ptr<base::DictionaryValue> resource(
       new base::DictionaryValue());
-  resource->SetString("id", kSettingsApplicationId);
+  resource->SetStringPath("id", kSettingsApplicationId);
 
   const std::unique_ptr<base::DictionaryValue> params(
       new base::DictionaryValue());
   const std::unique_ptr<base::DictionaryValue> target(
       new base::DictionaryValue());
-  target->SetString(kTarget, target_string);
+  target->SetStringPath(kTarget, target_string);
+  target->SetIntPath(kDisplayId, display_id);
   resource->Set(kParams, base::Value::ToUniquePtrValue(target->Clone()));
 
   std::string payload;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 LG Electronics, Inc.
+// Copyright (c) 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -189,9 +189,13 @@ var onExitApp = function() {
   window.close();
 }
 
+function getDisplayId() {
+  return JSON.parse(window.webOSSystem.launchParams).displayAffinity;
+}
+
 var onLaunchSetting = function(button_type, target) {
   if (window.errorPageController) {
-    errorPageController.settingsButtonClick(target);
+    errorPageController.settingsButtonClick(target, getDisplayId());
   }
 }
 

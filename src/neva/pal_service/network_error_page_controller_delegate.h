@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ class NetworkErrorPageControllerDelegate {
  public:
   virtual ~NetworkErrorPageControllerDelegate() {}
 
-  virtual void LaunchNetworkSettings(int target_id) = 0;
+  virtual void LaunchNetworkSettings(int target_id, int display_id) = 0;
 };
 
 }  // namespace pal

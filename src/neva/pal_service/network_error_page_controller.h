@@ -1,4 +1,4 @@
-// Copyright 2017 LG Electronics, Inc.
+// Copyright (c) 2017-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class NetworkErrorPageControllerImpl
 
   // mojom::NetworkErrorPageController
   void Connect() override;
-  void LaunchNetworkSettings(int target_id) override;
+  void LaunchNetworkSettings(int target_id, int display_id) override;
 
  private:
   std::unique_ptr<NetworkErrorPageControllerDelegate> delegate_;
