@@ -166,6 +166,12 @@ class MEDIA_EXPORT VideoFrameMetadata {
     // Use Get/SetTimeTicks() for this key.
     DECODE_TIME,
 
+#if defined(USE_NEVA_WEBRTC)
+    // This is a boolean that indicates that the frame is a key frame or not
+    // Use Get/SetBoolean for this key.
+    KEY_FRAME,
+#endif
+
     NUM_KEYS
   };
 

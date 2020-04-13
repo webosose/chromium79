@@ -24,6 +24,10 @@
 #include "media/base/neva/media_type_restriction.h"
 #include "third_party/jsoncpp/source/include/json/json.h"
 
+#if defined(USE_NEVA_WEBRTC)
+#include "media/base/video_codecs.h"
+#endif
+
 namespace media {
 
 class MEDIA_EXPORT MediaPlatformPrefs {
@@ -46,6 +50,12 @@ class MEDIA_EXPORT MediaPlatformPrefs {
   base::Optional<MediaTypeRestriction> GetMediaRestriction(
       const std::string& type);
   void SetMediaCodecCapability(const std::string& media_codec_capability);
+
+#if defined(USE_NEVA_WEBRTC)
+  // TODO: Further future refactoring of audio/video codec type supported
+  // and MediaTypeRestriction support is planned as mentioned in PLAT-106543
+  bool IsCodecSupported(VideoCodec codec);
+#endif
 
  protected:
   MediaPlatformPrefs();

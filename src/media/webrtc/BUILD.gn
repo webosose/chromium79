@@ -52,6 +52,11 @@ component("webrtc") {
 
     public_configs = [ ":audio_processing_build_flag" ]
   }
+
+  if (use_neva_webrtc) {
+    import ("//media/webrtc/neva/build.gni")
+    sources += rebase_path(neva.sources, ".")
+  }
 }
 
 source_set("unit_tests") {

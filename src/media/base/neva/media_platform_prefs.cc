@@ -17,6 +17,7 @@
 #include "media/base/neva/media_platform_prefs.h"
 
 #include "base/logging_pmlog.h"
+#include "base/strings/string_util.h"
 #include "third_party/jsoncpp/source/include/json/json.h"
 
 namespace media {
@@ -97,5 +98,13 @@ void MediaPlatformPrefs::SetMediaCodecCapability(
     }
   }
 }
+
+#if defined(USE_NEVA_WEBRTC)
+bool MediaPlatformPrefs::IsCodecSupported(VideoCodec codec) {
+  base::Optional<MediaTypeRestriction> restriction =
+      GetMediaRestriction(base::ToUpperASCII(GetCodecName(codec)));
+  return restriction.has_value();
+}
+#endif
 
 }  // namespace media
