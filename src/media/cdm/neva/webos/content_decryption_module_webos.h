@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef MEDIA_CDM_API_OLD_CONTENT_DECRYPTION_MODULE_8_H_
-#define MEDIA_CDM_API_OLD_CONTENT_DECRYPTION_MODULE_8_H_
+#ifndef MEDIA_CDM_NEVA_WEBOS_CONTENT_DECRYPTION_MODULE_WEBOS_H_
+#define MEDIA_CDM_NEVA_WEBOS_CONTENT_DECRYPTION_MODULE_WEBOS_H_
 
 #include "media/cdm/api/content_decryption_module.h"
 
-// Data types and interfaces for content_decryption_module v8.
-// This file was deperecated in upstream chromium, but we added this
-// for integrating with existing media components in webOS.
+// Data types and interfaces for content_decryption_module.
 // NOTE: DO NOT MODIFY THIS HEADER ONLY. Many subcomponents such as
 // widevine-modular or mediadrm depend on definitions in this header.
 
@@ -29,14 +27,12 @@
 // path is managed as own repository(git) in upstream chromium. So we
 // added this file at here for managing easily.
 
-#if defined(OS_WEBOS)
 // We maintain this macro for backward compatibility only.
 #define INITIALIZE_CDM_MODULE_WEBOS InitializeCdmModule
 
 extern "C" {
 CDM_API void INITIALIZE_CDM_MODULE_WEBOS();
 }  // extern "C"
-#endif  // defined(OS_WEBOS)
 
 namespace cdm {
 // This must at least contain the exceptions defined in the spec:
@@ -64,9 +60,7 @@ struct InputBuffer {
   const uint8_t* data;  // Pointer to the beginning of the input data.
   uint32_t data_size;   // Size (in bytes) of |data|.
 
-#if defined(USE_NEVA_MEDIA)
   EncryptionScheme encryption_scheme;
-#endif
 
   const uint8_t* key_id;  // Key ID to identify the decryption key.
   uint32_t key_id_size;   // Size (in bytes) of |key_id|.
@@ -79,12 +73,10 @@ struct InputBuffer {
 
   int64_t timestamp;  // Presentation timestamp in microseconds.
 
-#if defined(USE_NEVA_MEDIA)
   Pattern pattern;  // |pattern| is required if |encryption_scheme| specifies
                     // pattern encryption.
 
   uint32_t is_video;  // Indicates if the buffer contains video data.
-#endif
 };
 
 struct AudioDecoderConfig {
@@ -115,13 +107,232 @@ struct VideoDecoderConfig {
   uint32_t extra_data_size;
 };
 
-#if defined(USE_NEVA_MEDIA)
 enum KeySystem {
   kPlayReady = 1,
   kWidevine,
   kNoKeySystem,
 };
-#endif
+
+// ContentDecryptionModule interface that all CDMs need to implement.
+// The interface is versioned for backward compatibility.
+// Note: ContentDecryptionModule implementations must use the allocator
+// provided in CreateCdmInstance() to allocate any Buffer that needs to
+// be passed back to the caller. Implementations must call Buffer::Destroy()
+// when a Buffer is created that will never be returned to the caller.
+class CDM_CLASS_API ContentDecryptionModule_10 {
+ public:
+  static const int kVersion = 10;
+  static const bool kIsStable = true;
+  typedef Host_10 Host;
+
+  // Initializes the CDM instance, providing information about permitted
+  // functionalities. The CDM must respond by calling Host::OnInitialized()
+  // with whether the initialization succeeded. No other calls will be made by
+  // the host before Host::OnInitialized() returns.
+  // If |allow_distinctive_identifier| is false, messages from the CDM,
+  // such as message events, must not contain a Distinctive Identifier,
+  // even in an encrypted form.
+  // If |allow_persistent_state| is false, the CDM must not attempt to
+  // persist state. Calls to CreateFileIO() will fail.
+  // If |use_hw_secure_codecs| is true, the CDM must ensure the decryption key
+  // and video buffers (compressed and uncompressed) are securely protected by
+  // hardware.
+  virtual void Initialize(bool allow_distinctive_identifier,
+                          bool allow_persistent_state,
+                          bool use_hw_secure_codecs) = 0;
+
+  // Gets the key status if the CDM has a hypothetical key with the |policy|.
+  // The CDM must respond by calling either Host::OnResolveKeyStatusPromise()
+  // with the result key status or Host::OnRejectPromise() if an unexpected
+  // error happened or this method is not supported.
+  virtual void GetStatusForPolicy(uint32_t promise_id,
+                                  const Policy& policy) = 0;
+
+  // SetServerCertificate(), CreateSessionAndGenerateRequest(), LoadSession(),
+  // UpdateSession(), CloseSession(), and RemoveSession() all accept a
+  // |promise_id|, which must be passed to the completion Host method
+  // (e.g. Host::OnResolveNewSessionPromise()).
+
+  // Provides a server certificate to be used to encrypt messages to the
+  // license server. The CDM must respond by calling either
+  // Host::OnResolvePromise() or Host::OnRejectPromise().
+  // If the CDM does not support server certificates, the promise should be
+  // rejected with kExceptionNotSupportedError. If |server_certificate_data|
+  // is empty, reject with kExceptionTypeError. Any other error should be
+  // rejected with kExceptionInvalidStateError or kExceptionQuotaExceededError.
+  // TODO(crbug.com/796417): Add support for the promise to return true or
+  // false, rather than using kExceptionNotSupportedError to mean false.
+  virtual void SetServerCertificate(uint32_t promise_id,
+                                    const uint8_t* server_certificate_data,
+                                    uint32_t server_certificate_data_size) = 0;
+
+  // Creates a session given |session_type|, |init_data_type|, and |init_data|.
+  // The CDM must respond by calling either Host::OnResolveNewSessionPromise()
+  // or Host::OnRejectPromise().
+  virtual void CreateSessionAndGenerateRequest(uint32_t promise_id,
+                                               SessionType session_type,
+                                               InitDataType init_data_type,
+                                               const uint8_t* init_data,
+                                               uint32_t init_data_size) = 0;
+
+  // Loads the session of type |session_type| specified by |session_id|.
+  // The CDM must respond by calling either Host::OnResolveNewSessionPromise()
+  // or Host::OnRejectPromise(). If the session is not found, call
+  // Host::OnResolveNewSessionPromise() with session_id = NULL.
+  virtual void LoadSession(uint32_t promise_id,
+                           SessionType session_type,
+                           const char* session_id,
+                           uint32_t session_id_size) = 0;
+
+  // Updates the session with |response|. The CDM must respond by calling
+  // either Host::OnResolvePromise() or Host::OnRejectPromise().
+  virtual void UpdateSession(uint32_t promise_id,
+                             const char* session_id,
+                             uint32_t session_id_size,
+                             const uint8_t* response,
+                             uint32_t response_size) = 0;
+
+  // Requests that the CDM close the session. The CDM must respond by calling
+  // either Host::OnResolvePromise() or Host::OnRejectPromise() when the request
+  // has been processed. This may be before the session is closed. Once the
+  // session is closed, Host::OnSessionClosed() must also be called.
+  virtual void CloseSession(uint32_t promise_id,
+                            const char* session_id,
+                            uint32_t session_id_size) = 0;
+
+  // Removes any stored session data associated with this session. Will only be
+  // called for persistent sessions. The CDM must respond by calling either
+  // Host::OnResolvePromise() or Host::OnRejectPromise() when the request has
+  // been processed.
+  virtual void RemoveSession(uint32_t promise_id,
+                             const char* session_id,
+                             uint32_t session_id_size) = 0;
+
+  // Performs scheduled operation with |context| when the timer fires.
+  virtual void TimerExpired(void* context) = 0;
+
+  // Decrypts the |encrypted_buffer|.
+  //
+  // Returns kSuccess if decryption succeeded, in which case the callee
+  // should have filled the |decrypted_buffer| and passed the ownership of
+  // |data| in |decrypted_buffer| to the caller.
+  // Returns kNoKey if the CDM did not have the necessary decryption key
+  // to decrypt.
+  // Returns kDecryptError if any other error happened.
+  // If the return value is not kSuccess, |decrypted_buffer| should be ignored
+  // by the caller.
+  virtual Status Decrypt(const InputBuffer_2& encrypted_buffer,
+                         DecryptedBlock* decrypted_buffer,
+                         StreamType decoder_type) = 0;
+
+  // Initializes the CDM audio decoder with |audio_decoder_config|. This
+  // function must be called before DecryptAndDecodeSamples() is called.
+  //
+  // Returns kSuccess if the |audio_decoder_config| is supported and the CDM
+  // audio decoder is successfully initialized.
+  // Returns kInitializationError if |audio_decoder_config| is not supported.
+  // The CDM may still be able to do Decrypt().
+  // Returns kDeferredInitialization if the CDM is not ready to initialize the
+  // decoder at this time. Must call Host::OnDeferredInitializationDone() once
+  // initialization is complete.
+  virtual Status InitializeAudioDecoder(
+      const AudioDecoderConfig_2& audio_decoder_config) = 0;
+
+  // Initializes the CDM video decoder with |video_decoder_config|. This
+  // function must be called before DecryptAndDecodeFrame() is called.
+  //
+  // Returns kSuccess if the |video_decoder_config| is supported and the CDM
+  // video decoder is successfully initialized.
+  // Returns kInitializationError if |video_decoder_config| is not supported.
+  // The CDM may still be able to do Decrypt().
+  // Returns kDeferredInitialization if the CDM is not ready to initialize the
+  // decoder at this time. Must call Host::OnDeferredInitializationDone() once
+  // initialization is complete.
+  virtual Status InitializeVideoDecoder(
+      const VideoDecoderConfig_2& video_decoder_config) = 0;
+
+  // De-initializes the CDM decoder and sets it to an uninitialized state. The
+  // caller can initialize the decoder again after this call to re-initialize
+  // it. This can be used to reconfigure the decoder if the configuration
+  // changes.
+  virtual void DeinitializeDecoder(StreamType decoder_type) = 0;
+
+  // Resets the CDM decoder to an initialized clean state. All internal buffers
+  // MUST be flushed.
+  virtual void ResetDecoder(StreamType decoder_type) = 0;
+
+  // Decrypts the |encrypted_buffer| and decodes the decrypted buffer into a
+  // |video_frame|. Upon end-of-stream, the caller should call this function
+  // repeatedly with empty |encrypted_buffer| (|data| == NULL) until
+  // kNeedMoreData is returned.
+  //
+  // Returns kSuccess if decryption and decoding both succeeded, in which case
+  // the callee will have filled the |video_frame| and passed the ownership of
+  // |frame_buffer| in |video_frame| to the caller.
+  // Returns kNoKey if the CDM did not have the necessary decryption key
+  // to decrypt.
+  // Returns kNeedMoreData if more data was needed by the decoder to generate
+  // a decoded frame (e.g. during initialization and end-of-stream).
+  // Returns kDecryptError if any decryption error happened.
+  // Returns kDecodeError if any decoding error happened.
+  // If the return value is not kSuccess, |video_frame| should be ignored by
+  // the caller.
+  virtual Status DecryptAndDecodeFrame(const InputBuffer_2& encrypted_buffer,
+                                       VideoFrame* video_frame) = 0;
+
+  // Decrypts the |encrypted_buffer| and decodes the decrypted buffer into
+  // |audio_frames|. Upon end-of-stream, the caller should call this function
+  // repeatedly with empty |encrypted_buffer| (|data| == NULL) until only empty
+  // |audio_frames| is produced.
+  //
+  // Returns kSuccess if decryption and decoding both succeeded, in which case
+  // the callee will have filled |audio_frames| and passed the ownership of
+  // |data| in |audio_frames| to the caller.
+  // Returns kNoKey if the CDM did not have the necessary decryption key
+  // to decrypt.
+  // Returns kNeedMoreData if more data was needed by the decoder to generate
+  // audio samples (e.g. during initialization and end-of-stream).
+  // Returns kDecryptError if any decryption error happened.
+  // Returns kDecodeError if any decoding error happened.
+  // If the return value is not kSuccess, |audio_frames| should be ignored by
+  // the caller.
+  virtual Status DecryptAndDecodeSamples(const InputBuffer_2& encrypted_buffer,
+                                         AudioFrames* audio_frames) = 0;
+
+  // Called by the host after a platform challenge was initiated via
+  // Host::SendPlatformChallenge().
+  virtual void OnPlatformChallengeResponse(
+      const PlatformChallengeResponse& response) = 0;
+
+  // Called by the host after a call to Host::QueryOutputProtectionStatus(). The
+  // |link_mask| is a bit mask of OutputLinkTypes and |output_protection_mask|
+  // is a bit mask of OutputProtectionMethods. If |result| is kQueryFailed,
+  // then |link_mask| and |output_protection_mask| are undefined and should
+  // be ignored.
+  virtual void OnQueryOutputProtectionStatus(
+      QueryResult result,
+      uint32_t link_mask,
+      uint32_t output_protection_mask) = 0;
+
+  // Called by the host after a call to Host::RequestStorageId(). If the
+  // version of the storage ID requested is available, |storage_id| and
+  // |storage_id_size| are set appropriately. |version| will be the same as
+  // what was requested, unless 0 (latest) was requested, in which case
+  // |version| will be the actual version number for the |storage_id| returned.
+  // If the requested version is not available, null/zero will be provided as
+  // |storage_id| and |storage_id_size|, respectively, and |version| should be
+  // ignored.
+  virtual void OnStorageId(uint32_t version,
+                           const uint8_t* storage_id,
+                           uint32_t storage_id_size) = 0;
+
+  // Destroys the object in the same context as it was created.
+  virtual void Destroy() = 0;
+
+ protected:
+  ContentDecryptionModule_10() {}
+  virtual ~ContentDecryptionModule_10() {}
+};
 
 class CDM_CLASS_API Host_8;
 
@@ -203,27 +414,22 @@ class CDM_CLASS_API ContentDecryptionModule_8 {
   // Performs scheduled operation with |context| when the timer fires.
   virtual void TimerExpired(void* context) = 0;
 
-// Decrypts the |encrypted_buffer|.
-//
-// Returns kSuccess if decryption succeeded, in which case the callee
-// should have filled the |decrypted_buffer| and passed the ownership of
-// |data| in |decrypted_buffer| to the caller.
-// Returns kNoKey if the CDM did not have the necessary decryption key
-// to decrypt.
-// Returns kDecryptError if any other error happened.
-// If the return value is not kSuccess, |decrypted_buffer| should be ignored
-// by the caller.
-#if defined(USE_NEVA_MEDIA)
+  // Decrypts the |encrypted_buffer|.
+  //
+  // Returns kSuccess if decryption succeeded, in which case the callee
+  // should have filled the |decrypted_buffer| and passed the ownership of
+  // |data| in |decrypted_buffer| to the caller.
+  // Returns kNoKey if the CDM did not have the necessary decryption key
+  // to decrypt.
+  // Returns kDecryptError if any other error happened.
+  // If the return value is not kSuccess, |decrypted_buffer| should be ignored
+  // by the caller.
   virtual Status Decrypt(const InputBuffer& encrypted_buffer,
                          DecryptedBlock* decrypted_buffer) = 0;
 
   virtual Status Decrypt(bool use_clear_buffer,
                          const InputBuffer& encrypted_buffer,
                          DecryptedBlock* decrypted_buffer) = 0;
-#else
-  virtual Status Decrypt(const InputBuffer& encrypted_buffer,
-                         DecryptedBlock* decrypted_buffer) = 0;
-#endif  // define(USE_NEVA_MEDIA)
 
   // Initializes the CDM audio decoder with |audio_decoder_config|. This
   // function must be called before DecryptAndDecodeSamples() is called.
@@ -466,4 +672,4 @@ class CDM_CLASS_API Host_8 {
 
 }  // namespace cdm
 
-#endif  // MEDIA_CDM_API_OLD_CONTENT_DECRYPTION_MODULE_8_H_
+#endif  // MEDIA_CDM_NEVA_WEBOS_CONTENT_DECRYPTION_MODULE_WEBOS_H_

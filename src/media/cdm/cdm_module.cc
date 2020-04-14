@@ -17,7 +17,7 @@
 #endif  // BUILDFLAG(ENABLE_CDM_HOST_VERIFICATION)
 
 #if defined(USE_NEVA_MEDIA)
-#include "media/cdm/api_old/content_decryption_module_8.h"
+#include "media/cdm/neva/webos/content_decryption_module_webos.h"
 #endif
 
 // INITIALIZE_CDM_MODULE is a macro in api/content_decryption_module.h.

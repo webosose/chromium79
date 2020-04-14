@@ -10,7 +10,7 @@
 #include "media/base/media_export.h"
 #include "media/cdm/api/content_decryption_module.h"
 #if defined(USE_NEVA_MEDIA)
-#include "media/cdm/api_old/content_decryption_module_8.h"
+#include "media/cdm/neva/webos/content_decryption_module_webos.h"
 #endif
 
 // A library CDM interface is "supported" if it's implemented by CdmAdapter and
@@ -38,7 +38,7 @@ struct SupportedVersion {
 #if defined(USE_NEVA_MEDIA)
 constexpr std::array<SupportedVersion, 3> kSupportedCdmInterfaceVersions = {{
     {8, true},
-    {10, false},
+    {10, true},
     {11, false},
 }};
 #else

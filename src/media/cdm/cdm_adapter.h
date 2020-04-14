@@ -31,7 +31,7 @@
 #include "ui/gfx/geometry/size.h"
 
 #if defined(USE_NEVA_MEDIA)
-#include "media/cdm/api_old/content_decryption_module_8.h"
+#include "media/cdm/neva/webos/content_decryption_module_webos.h"
 #endif
 
 namespace media {

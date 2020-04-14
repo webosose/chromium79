@@ -109,8 +109,8 @@ source_set("cdm") {
 
     if (use_neva_media) {
       sources += [
-        "api_old/content_decryption_module_8.cc",
-        "api_old/content_decryption_module_8.h",
+        "neva/webos/content_decryption_module_webos.cc",
+        "neva/webos/content_decryption_module_webos.h",
       ]
     }
   }

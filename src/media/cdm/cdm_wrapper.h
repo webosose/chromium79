@@ -15,7 +15,7 @@
 #include "base/macros.h"
 #include "media/base/media_switches.h"
 #if defined(USE_NEVA_MEDIA)
-#include "media/cdm/api_old/content_decryption_module_8.h"
+#include "media/cdm/neva/webos/content_decryption_module_webos.h"
 #endif
 #include "media/cdm/api/content_decryption_module.h"
 #include "media/cdm/cdm_helpers.h"
@@ -442,6 +442,16 @@ cdm::Status CdmWrapperImpl<10>::InitializeVideoDecoder(
   return cdm_->InitializeVideoDecoder(
       ToVideoDecoderConfig_2(video_decoder_config));
 }
+
+#if defined(USE_NEVA_MEDIA)
+template <>
+cdm::Status CdmWrapperImpl<10>::Decrypt(
+    const cdm::InputBuffer_2& encrypted_buffer,
+    cdm::DecryptedBlock* decrypted_buffer,
+    const cdm::StreamType decoder_type) {
+  return cdm_->Decrypt(encrypted_buffer, decrypted_buffer, decoder_type);
+}
+#endif  // defined(USE_NEVA_MEDIA)
 
 // static
 CdmWrapper* CdmWrapper::Create(CreateCdmFunc create_cdm_func,
