@@ -120,6 +120,11 @@ gfx::Size VideoFrame::SampleSize(VideoPixelFormat format, size_t plane) {
         case PIXEL_FORMAT_YUV444P10:
         case PIXEL_FORMAT_YUV444P12:
         case PIXEL_FORMAT_Y16:
+#if defined(USE_NEVA_WEBRTC)
+        case PIXEL_FORMAT_VP8:
+        case PIXEL_FORMAT_VP9:
+        case PIXEL_FORMAT_H264:
+#endif
           return gfx::Size(1, 1);
 
         case PIXEL_FORMAT_I422:
@@ -202,6 +207,11 @@ static bool RequiresEvenSizeAllocation(VideoPixelFormat format) {
     case PIXEL_FORMAT_YUV444P12:
     case PIXEL_FORMAT_I420A:
     case PIXEL_FORMAT_P016LE:
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264:
+#endif
       return true;
     case PIXEL_FORMAT_UNKNOWN:
       break;
@@ -251,6 +261,14 @@ static base::Optional<VideoFrameLayout> GetDefaultLayout(
       };
       break;
     }
+
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264: {
+      return VideoFrameLayout::Create(format, coded_size);
+    }
+#endif
 
     default:
       // TODO(miu): This function should support any pixel format.
@@ -312,7 +330,11 @@ bool VideoFrame::IsValidConfig(VideoPixelFormat format,
     return true;
 
   // Make sure new formats are properly accounted for in the method.
+#if defined(USE_NEVA_WEBRTC)
+  static_assert(PIXEL_FORMAT_MAX == 36,
+#else
   static_assert(PIXEL_FORMAT_MAX == 32,
+#endif
                 "Added pixel format, please review IsValidConfig()");
 
   if (format == PIXEL_FORMAT_UNKNOWN) {
@@ -443,6 +465,9 @@ scoped_refptr<VideoFrame> VideoFrame::WrapExternalDataWithLayout(
 
   for (size_t i = 0; i < layout.planes().size(); ++i) {
     frame->data_[i] = data + layout.planes()[i].offset;
+#if defined(USE_NEVA_WEBRTC)
+    frame->data_size_[i] = data_size;
+#endif
   }
 
   return frame;
@@ -916,6 +941,11 @@ int VideoFrame::BytesPerElement(VideoPixelFormat format, size_t plane) {
     case PIXEL_FORMAT_I444:
       return 1;
     case PIXEL_FORMAT_MJPEG:
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264:
+#endif
       return 0;
     case PIXEL_FORMAT_UNKNOWN:
       break;

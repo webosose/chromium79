@@ -76,9 +76,19 @@ enum VideoPixelFormat {
 
   PIXEL_FORMAT_BGRA = 32,  // 32bpp ARGB (byte-order), 1 plane.
 
+#if defined(USE_NEVA_WEBRTC)
+  PIXEL_FORMAT_VP8 = 34,   // VP8 encoded frame
+  PIXEL_FORMAT_VP9 = 35,   // VP9 encoded frame
+  PIXEL_FORMAT_H264 = 36,  // H264 encoded frame
+#endif
+
   // Please update UMA histogram enumeration when adding new formats here.
   PIXEL_FORMAT_MAX =
+#if defined(USE_NEVA_WEBRTC)
+      PIXEL_FORMAT_H264,  // Must always be equal to largest entry logged.
+#else
       PIXEL_FORMAT_BGRA,  // Must always be equal to largest entry logged.
+#endif
 };
 
 // Returns the name of a Format as a string.
@@ -102,6 +112,10 @@ MEDIA_EXPORT bool IsOpaque(VideoPixelFormat format);
 
 // Returns the number of significant bits per channel.
 MEDIA_EXPORT size_t BitDepth(VideoPixelFormat format);
+
+#if defined(USE_NEVA_WEBRTC)
+MEDIA_EXPORT bool IsEncodedData(VideoPixelFormat format);
+#endif
 
 }  // namespace media
 

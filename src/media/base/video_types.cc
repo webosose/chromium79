@@ -69,6 +69,14 @@ std::string VideoPixelFormatToString(VideoPixelFormat format) {
       return "PIXEL_FORMAT_XB30";
     case PIXEL_FORMAT_BGRA:
       return "PIXEL_FORMAT_BGRA";
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+      return "PIXEL_FORMAT_VP8";
+    case PIXEL_FORMAT_VP9:
+      return "PIXEL_FORMAT_VP9";
+    case PIXEL_FORMAT_H264:
+      return "PIXEL_FORMAT_H264";
+#endif
   }
   NOTREACHED() << "Invalid VideoPixelFormat provided: " << format;
   return "";
@@ -123,6 +131,11 @@ bool IsYuvPlanar(VideoPixelFormat format) {
     case PIXEL_FORMAT_XR30:
     case PIXEL_FORMAT_XB30:
     case PIXEL_FORMAT_BGRA:
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264:
+#endif
       return false;
   }
   return false;
@@ -155,6 +168,11 @@ bool IsOpaque(VideoPixelFormat format) {
     case PIXEL_FORMAT_P016LE:
     case PIXEL_FORMAT_XR30:
     case PIXEL_FORMAT_XB30:
+#if defined(USE_NEVA_WEBRTC)
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264:
+#endif
       return true;
     case PIXEL_FORMAT_I420A:
     case PIXEL_FORMAT_ARGB:
@@ -207,5 +225,19 @@ size_t BitDepth(VideoPixelFormat format) {
   NOTREACHED();
   return 0;
 }
+
+#if defined(USE_NEVA_WEBRTC)
+bool IsEncodedData(VideoPixelFormat format) {
+  switch (format) {
+    case PIXEL_FORMAT_VP8:
+    case PIXEL_FORMAT_VP9:
+    case PIXEL_FORMAT_H264:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+#endif
 
 }  // namespace media
