@@ -139,7 +139,7 @@ declare_args() {
   # hardware decoders. To do so, you will also need to update ffmpeg build files
   # in order to define which decoders to build in.
   enable_ffmpeg_video_decoders =
-      media_use_ffmpeg && !is_android && !use_gst_media
+      media_use_ffmpeg && !is_android && (!use_gst_media || use_neva_webrtc)
 }
 
 # Enables the use of library CDMs that implements the interface defined at
