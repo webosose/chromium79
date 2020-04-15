@@ -126,8 +126,10 @@ class BLINK_MODULES_EXPORT WebMediaPlayerMS
   media::PaintCanvasVideoRenderer* GetPaintCanvasVideoRenderer();
   void ResetCanvasCache();
 
+#if !defined(USE_NEVA_WEBRTC)
   // Methods to trigger resize event.
   void TriggerResize();
+#endif
 
   // True if the loaded media has a playable video/audio track.
   bool HasVideo() const override;
@@ -177,10 +179,23 @@ class BLINK_MODULES_EXPORT WebMediaPlayerMS
   void OnVolumeMultiplierUpdate(double multiplier) override;
   void OnBecamePersistentVideo(bool value) override;
 
+#if defined(USE_NEVA_WEBRTC)
+  void EnqueueHoleFrame(scoped_refptr<media::VideoFrame>& hole_frame);
+
+  virtual bool HandleVideoFrame(
+      const scoped_refptr<media::VideoFrame>& video_frame) { return false; }
+
+  virtual void TriggerResize();
+  virtual void OnFirstFrameReceived(media::VideoRotation video_rotation,
+                                    bool is_opaque);
+  virtual void OnRotationChanged(media::VideoRotation video_rotation);
+#else
   void OnFirstFrameReceived(media::VideoRotation video_rotation,
                             bool is_opaque);
-  void OnOpacityChanged(bool is_opaque);
   void OnRotationChanged(media::VideoRotation video_rotation);
+#endif
+
+  void OnOpacityChanged(bool is_opaque);
 
   bool CopyVideoTextureToPlatformTexture(
       gpu::gles2::GLES2Interface* gl,
@@ -233,7 +248,11 @@ class BLINK_MODULES_EXPORT WebMediaPlayerMS
 
   void OnDisplayTypeChanged(WebMediaPlayer::DisplayType) override;
 
+#if defined(USE_NEVA_WEBRTC)
+ protected:
+#else
  private:
+#endif
   friend class WebMediaPlayerMSTest;
 
 #if defined(OS_WIN)

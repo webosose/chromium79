@@ -126,6 +126,11 @@ class WebMediaPlayerMS::FrameDeliverer {
   void OnVideoFrame(scoped_refptr<media::VideoFrame> frame) {
     DCHECK_CALLED_ON_VALID_THREAD(io_thread_checker_);
 
+#if defined(USE_NEVA_WEBRTC)
+    if (player_->HandleVideoFrame(frame))
+      return;
+#endif
+
 // On Android, stop passing frames.
 #if defined(OS_ANDROID)
     if (render_frame_suspended_)
@@ -954,6 +959,19 @@ void WebMediaPlayerMS::OnVolumeMultiplierUpdate(double multiplier) {
 void WebMediaPlayerMS::OnBecamePersistentVideo(bool value) {
   get_client()->OnBecamePersistentVideo(value);
 }
+
+#if defined(USE_NEVA_WEBRTC)
+void WebMediaPlayerMS::EnqueueHoleFrame(
+    scoped_refptr<media::VideoFrame>& hole_frame) {
+  if (frame_deliverer_) {
+    PostCrossThreadTask(
+        *io_task_runner_, FROM_HERE,
+        CrossThreadBindOnce(&FrameDeliverer::EnqueueFrame,
+                            CrossThreadUnretained(frame_deliverer_.get()),
+                            hole_frame));
+  }
+}
+#endif
 
 bool WebMediaPlayerMS::CopyVideoTextureToPlatformTexture(
     gpu::gles2::GLES2Interface* gl,

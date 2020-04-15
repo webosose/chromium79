@@ -858,6 +858,14 @@ bool MediaPlatformAPIWebOSGmp::MakeLoadData(int64_t start_time,
   }
   load_data->ptsToDecode = start_time;
 
+#if defined(USE_NEVA_WEBRTC)
+  // Platform media pipeline uses this flag to move to playing state
+  // immediately after creating the pipeline. Without moving the pipeline
+  // to playing state appsrc element does not consume the data in paused
+  // state in case of live streams.
+  load_data->liveStream = video_config_.is_live_stream();
+#endif
+
   VLOG(1) << " Outgoing codec info audio=" << load_data->audioCodec
           << " video=" << load_data->videoCodec;
 

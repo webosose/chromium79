@@ -63,6 +63,13 @@ neva = {
     sources += webos.sources
   }
 
+  if(use_neva_webrtc) {
+    sources += [
+      "$_dir/webmediaplayer_webrtc.cc",
+      "$_dir/webmediaplayer_webrtc.h",
+    ]
+  }
+
   if(use_neva_media_for_testing) {
     sources -= [
       "$_dir/mediaplayerneva_factory_stub.cc",
