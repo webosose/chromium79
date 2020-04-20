@@ -198,6 +198,7 @@ class VIZ_SERVICE_EXPORT DisplayScheduler : public BeginFrameObserverBase,
   bool first_surface_activated_ = false;
   bool pending_first_surface_activation_ = false;
   base::CancelableOnceClosure notify_first_activation_eventually_task_;
+  base::flat_map<SurfaceId, FrameSinkId> pending_activations_;
 #endif
 
   SurfaceId root_surface_id_;

@@ -126,6 +126,18 @@ void DisplayScheduler::DisplayResized() {
 // that we should just draw immediately.
 void DisplayScheduler::SetNewRootSurface(const SurfaceId& root_surface_id) {
   TRACE_EVENT0("viz", "DisplayScheduler::SetNewRootSurface");
+
+#if defined(USE_NEVA_APPRUNTIME)
+  for (auto const& it : pending_activations_) {
+    if(client_->RootFrameSinkContainsChild(it.second) && visible_ && !first_surface_activated_) {
+      pending_activations_.erase(it.first);
+      seen_first_surface_activation_ = true;
+      first_surface_activated_ = true;
+      pending_first_surface_activation_ = false;
+    }
+  }
+#endif
+
   root_surface_id_ = root_surface_id;
   BeginFrameAck ack;
   ack.has_damage = true;
@@ -364,8 +376,11 @@ void DisplayScheduler::OnSurfaceActivatedEx(const SurfaceId& surface_id,
 
     if (!seen_first_surface_activation_) {
       if (seen_first_contentful_paint) {
-        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id()))
+        if (!client_->RootFrameSinkContainsChild(surface_id.frame_sink_id())) {
+          if (root_frame_missing_)
+            pending_activations_[surface_id] = surface_id.frame_sink_id();
           return;
+        }
 
         // This is likely keep alive app which has recreated window after
         // hiding. In this state DisplayScheduler is waiting for fmp activation

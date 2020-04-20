@@ -17,6 +17,7 @@
 #include "webos/webapp_window_base.h"
 
 #include "base/logging.h"
+#include "components/viz/common/switches.h"
 #include "neva/app_runtime/public/app_runtime_constants.h"
 #include "neva/app_runtime/public/window_group_configuration.h"
 #include "ui/display/display.h"
@@ -131,7 +132,9 @@ void WebAppWindowBase::InitWindow(int width, int height) {
   params.type = views::Widget::InitParams::TYPE_WINDOW_FRAMELESS;
   webapp_window_ = new WebAppWindow(params);
   webapp_window_->SetDelegate(this);
-  webapp_window_->BeginPrepareStackForWebApp();
+
+  if (switches::UseVizFMPWithTimeout())
+    webapp_window_->BeginPrepareStackForWebApp();
 
 }
 
@@ -176,7 +179,9 @@ void WebAppWindowBase::AttachWebContents(void* web_contents) {
   if (webapp_window_) {
     webapp_window_->SetupWebContents(
         static_cast<content::WebContents*>(web_contents));
-    webapp_window_->FinishPrepareStackForWebApp();
+
+    if (switches::UseVizFMPWithTimeout())
+      webapp_window_->FinishPrepareStackForWebApp();
   }
 }
 
