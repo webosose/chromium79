@@ -1986,13 +1986,13 @@ void RenderViewImpl::OnSetRendererPrefs(
                 blink::mojom::kDefaultCaretBlinkIntervalInMilliseconds));
 
 #if defined(USE_NEVA_MEDIA)
-  std::string media_codec_capability = renderer_preferences_.media_codec_capability;
-  if(!media_codec_capability.empty())
-    media::MediaPlatformAPI::SetMediaCodecCapability(media_codec_capability);
+  media::MediaPlatformPrefs* media_prefs = media::MediaPlatformPrefs::Get();
+  if (!renderer_preferences_.media_codec_capability.empty())
+    media_prefs->SetMediaCodecCapability(
+        renderer_preferences_.media_codec_capability);
 
   if (!renderer_preferences_.media_preferences.empty())
-    media::MediaPlatformPrefs::Get()->Update(
-        renderer_preferences_.media_preferences);
+    media_prefs->Update(renderer_preferences_.media_preferences);
 #endif
 
 #if defined(USE_NEVA_APPRUNTIME)

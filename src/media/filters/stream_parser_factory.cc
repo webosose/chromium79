@@ -38,7 +38,7 @@
 #endif
 
 #if defined(USE_NEVA_MEDIA)
-#include "media/base/neva/media_platform_api.h"
+#include "media/base/neva/media_platform_prefs.h"
 #include "media/base/neva/media_type_restriction.h"
 #endif
 
@@ -489,7 +489,7 @@ static SupportsType CheckTypeAndCodecs(
     if (type == type_info.type) {
 #if defined(USE_NEVA_MEDIA)
       base::Optional<MediaTypeRestriction> platform_restriction =
-          MediaPlatformAPI::GetPlatformRestrictionForType(type);
+          MediaPlatformPrefs::Get()->GetMediaRestriction(type);
       if (platform_restriction.has_value() && restriction.has_value() &&
           !platform_restriction->IsSatisfied(restriction.value()))
         return IsNotSupported;

@@ -1,4 +1,4 @@
-# Copyright 2018-2019 LG Electronics, Inc.
+# Copyright 2018-2020 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,12 +45,16 @@ neva = {
     sources += [
       "$_dir/media_platform_api_mock.cc",
       "$_dir/media_platform_api_mock.h",
+      "$_dir/media_platform_prefs_stub.cc",
+      "$_dir/media_platform_prefs_stub.h",
       "$_dir/neva_mime_util_internal_stub.cc",
     ]
   } else {
     sources += [
       "$_dir/media_platform_api_stub.cc",
       "$_dir/media_platform_api_stub.h",
+      "$_dir/media_platform_prefs_stub.cc",
+      "$_dir/media_platform_prefs_stub.h",
       "$_dir/neva_mime_util_internal_stub.cc",
     ]
   }

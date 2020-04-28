@@ -1,4 +1,4 @@
-// Copyright 2018-2019 LG Electronics, Inc.
+// Copyright 2018-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,11 +25,9 @@
 #include "media/base/audio_decoder_config.h"
 #include "media/base/decoder_buffer.h"
 #include "media/base/neva/media_constants.h"
-#include "media/base/neva/media_type_restriction.h"
 #include "media/base/pipeline_status.h"
 #include "media/base/video_decoder_config.h"
 #include "third_party/blink/public/platform/web_rect.h"
-#include "third_party/jsoncpp/source/include/json/json.h"
 #include "ui/gfx/geometry/rect.h"
 
 namespace base {
@@ -116,11 +114,6 @@ class MEDIA_EXPORT MediaPlatformAPI
   virtual void SetPlayerEventCb(const PlayerEventCB& cb) {}
   virtual void SetStatisticsCb(const StatisticsCB& cb) {}
 
-  static base::Optional<MediaTypeRestriction> GetPlatformRestrictionForType(
-      const std::string& type);
-  static void SetMediaCodecCapability(const std::string& codec_info);
-  static Json::Value SupportedCodec() { return supported_codec_; }
-
  protected:
   virtual ~MediaPlatformAPI();
   void UpdateCurrentTime(const base::TimeDelta& time);
@@ -158,8 +151,6 @@ class MEDIA_EXPORT MediaPlatformAPI
   base::Lock current_time_lock_;
 
   std::string media_layer_id_;
-
-  static Json::Value& supported_codec_;
 
   DISALLOW_COPY_AND_ASSIGN(MediaPlatformAPI);
 };

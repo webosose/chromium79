@@ -19,13 +19,16 @@
 
 #include <string>
 
-#include "base/memory/singleton.h"
+#include "base/optional.h"
 #include "media/base/media_export.h"
+#include "media/base/neva/media_type_restriction.h"
+#include "third_party/jsoncpp/source/include/json/json.h"
 
 namespace media {
 
 class MEDIA_EXPORT MediaPlatformPrefs {
  public:
+  // static
   static MediaPlatformPrefs* Get();
 
   /* The "mediaExtension" in app_info.json is passed as below
@@ -36,18 +39,22 @@ class MEDIA_EXPORT MediaPlatformPrefs {
                     "ums":{"fixedAspectRatio":true }
                    }
   */
-  void Update(const std::string& pref_json);
+  virtual void Update(const std::string& pref_json) = 0;
 
   bool IsDisableVideoIntrinsicSizeForMSE();
 
- private:
-  friend struct base::DefaultSingletonTraits<MediaPlatformPrefs>;
+  base::Optional<MediaTypeRestriction> GetMediaRestriction(
+      const std::string& type);
+  void SetMediaCodecCapability(const std::string& media_codec_capability);
 
+ protected:
   MediaPlatformPrefs();
   virtual ~MediaPlatformPrefs();
 
   // MSE Preferences
   bool mse_disable_video_intrinsic_size_ = false;
+
+  Json::Value media_codec_capability_;
 };
 
 }  // namespace media

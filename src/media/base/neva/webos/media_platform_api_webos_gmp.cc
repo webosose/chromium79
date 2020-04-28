@@ -22,8 +22,10 @@
 
 #include "base/callback_helpers.h"
 #include "base/command_line.h"
+#include "base/strings/string_util.h"
 #include "content/public/common/content_switches.h"
 #include "media/base/bind_to_current_loop.h"
+#include "media/base/neva/media_platform_prefs.h"
 
 namespace media {
 
@@ -821,30 +823,20 @@ bool MediaPlatformAPIWebOSGmp::MakeLoadData(int64_t start_time,
 
   if (video_config_.IsValidConfig()) {
     VLOG(1) << " video_codec=" << video_config_.codec();
-    Json::Value supported_codec = SupportedCodec();
-    switch (video_config_.codec()) {
-      case media::kCodecH264:
-        load_data->maxWidth = supported_codec["H264"]["maxWidth"].asInt();
-        load_data->maxHeight = supported_codec["H264"]["maxHeight"].asInt();
-        load_data->maxFrameRate =
-            supported_codec["H264"]["maxFrameRate"].asInt();
-        break;
-      case media::kCodecVP9:
-        load_data->maxWidth = supported_codec["VP9"]["maxWidth"].asInt();
-        load_data->maxHeight = supported_codec["VP9"]["maxHeight"].asInt();
-        load_data->maxFrameRate =
-            supported_codec["VP9"]["maxFrameRate"].asInt();
-        break;
-      case media::kCodecHEVC:
-        load_data->maxWidth = supported_codec["H265"]["maxWidth"].asInt();
-        load_data->maxHeight = supported_codec["H265"]["maxHeight"].asInt();
-        break;
-      default:
-        LOG(ERROR) << "[" << this << "] " << __func__
-                   << " Not Supported Video Codec(" << video_config_.codec()
-                   << ")";
-        return false;
+    std::string codec_type =
+        base::ToUpperASCII(GetCodecName(video_config_.codec()));
+    base::Optional<MediaTypeRestriction> platform_restriction =
+        MediaPlatformPrefs::Get()->GetMediaRestriction(codec_type);
+    if (platform_restriction.has_value()) {
+      load_data->maxWidth = platform_restriction->width;
+      load_data->maxHeight = platform_restriction->height;
+      load_data->maxFrameRate = platform_restriction->frame_rate;
+    } else {
+      LOG(ERROR) << "[" << this << "] " << __func__
+                 << " Not Supported Video Codec(" << codec_type << ")";
+      return false;
     }
+
     load_data->videoCodec = video_codec[video_config_.codec()];
     load_data->width = video_config_.natural_size().width();
     load_data->height = video_config_.natural_size().height();
