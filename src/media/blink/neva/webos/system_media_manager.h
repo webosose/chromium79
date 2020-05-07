@@ -113,10 +113,10 @@ class SystemMediaManager {
   virtual bool SendCustomMessage(const std::string& message) { return true; }
   // Eof recived
   virtual void EofReceived() {}
-  virtual void ResumeSubtitle() {}
-  virtual std::string GetSubtitleEnableMessage() { return std::string(); }
-  virtual std::string GetBackupSubtitleMessage() { return std::string(); }
-  virtual std::string GetSubtitleInfoMessage() { return std::string(); }
+
+  virtual void UpdateSubtitleIfNeeded() {}
+  virtual void SuspendSubtitleIfNeeded() {}
+  virtual void ResumeSubtitleIfNeeded() {}
 };
 
 }  // namespace media
