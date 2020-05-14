@@ -44,4 +44,6 @@ const char kMemPressureGPUCacheSizeReductionFactor[] =
 const char kTileManagerLowMemPolicyBytesLimitReductionFactor[] =
     "tile-manager-low-mem-policy-bytes-limit-reduction-factor";
 
+const char kNevaCertificatesPath[] = "neva-certificates-path";
+
 }  // namespace switches

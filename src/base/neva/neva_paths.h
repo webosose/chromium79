@@ -24,7 +24,11 @@
 
 namespace base {
 
-enum { PATH_NEVA_START = 2000, PATH_NEVA_END };
+enum {
+  PATH_NEVA_START = 2000,
+  DIR_NEVA_CERTIFICATES,  // Path to store trusted certificates.
+  PATH_NEVA_END
+};
 
 bool PathProviderNeva(int key, base::FilePath* result);
 

@@ -37,6 +37,8 @@ BASE_EXPORT extern const char kMemPressureGPUCacheSizeReductionFactor[];
 BASE_EXPORT extern const char
     kTileManagerLowMemPolicyBytesLimitReductionFactor[];
 
+BASE_EXPORT extern const char kNevaCertificatesPath[];
+
 }  // namespace switches
 
 #endif  // BASE_NEVA_BASE_SWITCHES_H_

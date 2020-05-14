@@ -16,12 +16,24 @@
 
 #include "base/neva/neva_paths.h"
 
+#include "base/command_line.h"
 #include "base/files/file_util.h"
+#include "base/neva/base_switches.h"
 
 namespace base {
 
 bool PathProviderNeva(int key, base::FilePath* result) {
   switch (key) {
+    case DIR_NEVA_CERTIFICATES: {
+      FilePath certificates_path =
+          base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(
+              switches::kNevaCertificatesPath);
+      if (!certificates_path.empty()) {
+        *result = certificates_path;
+        return true;
+      }
+      return false;
+    } break;
     default:
       return false;
   }
