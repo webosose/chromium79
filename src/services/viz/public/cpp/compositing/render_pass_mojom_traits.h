@@ -66,6 +66,11 @@ struct StructTraits<viz::mojom::RenderPassDataView,
     return input->has_transparent_background;
   }
 
+  static bool has_transparent_backgrounds_to_root(
+      const std::unique_ptr<viz::RenderPass>& input) {
+    return input->has_transparent_backgrounds_to_root;
+  }
+
   static bool cache_render_pass(const std::unique_ptr<viz::RenderPass>& input) {
     return input->cache_render_pass;
   }

@@ -115,7 +115,8 @@ std::unique_ptr<RenderPass> RenderPass::Copy(int new_id) const {
       Create(shared_quad_state_list.size(), quad_list.size()));
   copy_pass->SetAll(new_id, output_rect, damage_rect, transform_to_root_target,
                     filters, backdrop_filters, backdrop_filter_bounds,
-                    color_space, has_transparent_background, cache_render_pass,
+                    color_space, has_transparent_background,
+                    has_transparent_backgrounds_to_root, cache_render_pass,
                     has_damage_from_contributing_content, generate_mipmap);
   return copy_pass;
 }
@@ -129,7 +130,8 @@ std::unique_ptr<RenderPass> RenderPass::DeepCopy() const {
       Create(shared_quad_state_list.size(), quad_list.size()));
   copy_pass->SetAll(id, output_rect, damage_rect, transform_to_root_target,
                     filters, backdrop_filters, backdrop_filter_bounds,
-                    color_space, has_transparent_background, cache_render_pass,
+                    color_space, has_transparent_background,
+                    has_transparent_backgrounds_to_root, cache_render_pass,
                     has_damage_from_contributing_content, generate_mipmap);
 
   if (shared_quad_state_list.empty()) {
@@ -197,6 +199,7 @@ void RenderPass::SetAll(
     const base::Optional<gfx::RRectF>& backdrop_filter_bounds,
     const gfx::ColorSpace& color_space,
     bool has_transparent_background,
+    bool has_transparent_backgrounds_to_root,
     bool cache_render_pass,
     bool has_damage_from_contributing_content,
     bool generate_mipmap) {
@@ -211,6 +214,8 @@ void RenderPass::SetAll(
   this->backdrop_filter_bounds = backdrop_filter_bounds;
   this->color_space = color_space;
   this->has_transparent_background = has_transparent_background;
+  this->has_transparent_backgrounds_to_root =
+      has_transparent_backgrounds_to_root;
   this->cache_render_pass = cache_render_pass;
   this->has_damage_from_contributing_content =
       has_damage_from_contributing_content;
@@ -226,6 +231,8 @@ void RenderPass::AsValueInto(base::trace_event::TracedValue* value) const {
   cc::MathUtil::AddToTracedValue("damage_rect", damage_rect, value);
 
   value->SetBoolean("has_transparent_background", has_transparent_background);
+  value->SetBoolean("has_transparent_backgrounds_to_root",
+                    has_transparent_backgrounds_to_root);
   value->SetBoolean("cache_render_pass", cache_render_pass);
   value->SetBoolean("has_damage_from_contributing_content",
                     has_damage_from_contributing_content);

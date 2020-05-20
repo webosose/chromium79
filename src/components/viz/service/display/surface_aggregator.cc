@@ -577,7 +577,8 @@ void SurfaceAggregator::EmitSurfaceContent(
         source.transform_to_root_target, source.filters,
         source.backdrop_filters, source.backdrop_filter_bounds,
         output_color_space_.GetBlendingColorSpace(),
-        source.has_transparent_background, source.cache_render_pass,
+        source.has_transparent_background,
+        source.has_transparent_backgrounds_to_root, source.cache_render_pass,
         source.has_damage_from_contributing_content, source.generate_mipmap);
 
     MoveMatchingRequests(source.id, &copy_requests, &copy_pass->copy_requests);
@@ -1156,7 +1157,8 @@ void SurfaceAggregator::CopyPasses(const CompositorFrame& frame,
         remapped_pass_id, output_rect, damage_rect, transform_to_root_target,
         source.filters, source.backdrop_filters, source.backdrop_filter_bounds,
         output_color_space_.GetBlendingColorSpace(),
-        source.has_transparent_background, source.cache_render_pass,
+        source.has_transparent_background,
+        source.has_transparent_backgrounds_to_root, source.cache_render_pass,
         source.has_damage_from_contributing_content, source.generate_mipmap);
 
     CopyQuadsToPass(source.quad_list, source.shared_quad_state_list,

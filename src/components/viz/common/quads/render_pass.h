@@ -94,9 +94,18 @@ class VIZ_COMMON_EXPORT RenderPass {
               const base::Optional<gfx::RRectF>& backdrop_filter_bounds,
               const gfx::ColorSpace& color_space,
               bool has_transparent_background,
+              bool has_transparent_backgrounds_to_root,
               bool cache_render_pass,
               bool has_damage_from_contributing_content,
               bool generate_mipmap);
+
+  void SetTransparentBackgroundsToRoot(bool transparency) {
+    has_transparent_backgrounds_to_root = transparency;
+  }
+
+  bool HasTransparentBackgroundsToRoot() const {
+    return has_transparent_backgrounds_to_root;
+  }
 
   void AsValueInto(base::trace_event::TracedValue* dict) const;
 
@@ -138,6 +147,9 @@ class VIZ_COMMON_EXPORT RenderPass {
 
   // If false, the pixels in the render pass' texture are all opaque.
   bool has_transparent_background = true;
+
+  // If true, the background colors of ancestor are all transparent.
+  bool has_transparent_backgrounds_to_root = false;
 
   // If true we might reuse the texture if there is no damage.
   bool cache_render_pass = false;

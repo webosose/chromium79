@@ -297,6 +297,10 @@ struct GLRenderer::DrawRenderPassDrawQuadParams {
   float backdrop_filter_quality = 1.0;
   // Whether the original background texture is needed for the mask.
   bool mask_for_background = false;
+  // Whether all background colors of ancestor RenderPasses is transparent.
+  // If all background colors are transparent, don't apply backdrop-filter
+  // property
+  bool has_transparent_backgrounds_to_root = true;
 
   bool apply_shader_based_rounded_corner = true;
 };
@@ -752,6 +756,8 @@ bool GLRenderer::ShouldApplyBackdropFilters(
     return false;
   if (params->quad->shared_quad_state->opacity == 0.f)
     return false;
+  if (params->has_transparent_backgrounds_to_root)
+    return false;
   DCHECK(!params->backdrop_filters->IsEmpty());
   return true;
 }
@@ -1158,6 +1164,10 @@ bool GLRenderer::InitializeRPDQParameters(
   local_matrix.postScale(quad->filters_scale.x(), quad->filters_scale.y());
   params->filters = FiltersForPass(quad->render_pass_id);
   params->backdrop_filters = BackdropFiltersForPass(quad->render_pass_id);
+  RenderPass* backdrop_render_pass = FindRenderPassById(
+      *(current_frame()->render_passes_in_draw_order), quad->render_pass_id);
+  params->has_transparent_backgrounds_to_root =
+      backdrop_render_pass->HasTransparentBackgroundsToRoot();
   if (ShouldApplyBackdropFilters(params)) {
     params->backdrop_filter_bounds =
         BackdropFilterBoundsForPass(quad->render_pass_id);
@@ -3999,6 +4009,14 @@ gfx::Size GLRenderer::GetRenderPassBackingPixelSize(
   auto texture_it = render_pass_textures_.find(render_pass_id);
   DCHECK(texture_it != render_pass_textures_.end());
   return texture_it->second.size();
+}
+
+RenderPass* GLRenderer::FindRenderPassById(const RenderPassList& list,
+                                           RenderPassId id) {
+  auto it = std::find_if(
+      list.begin(), list.end(),
+      [id](const std::unique_ptr<RenderPass>& p) { return p->id == id; });
+  return it == list.end() ? nullptr : it->get();
 }
 
 }  // namespace viz

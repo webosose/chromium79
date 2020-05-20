@@ -30,6 +30,8 @@ bool StructTraits<viz::mojom::RenderPassDataView,
   if (!(*out)->id)
     return false;
   (*out)->has_transparent_background = data.has_transparent_background();
+  (*out)->has_transparent_backgrounds_to_root =
+      data.has_transparent_backgrounds_to_root();
   (*out)->cache_render_pass = data.cache_render_pass();
   (*out)->has_damage_from_contributing_content =
       data.has_damage_from_contributing_content();

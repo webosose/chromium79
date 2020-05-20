@@ -96,6 +96,7 @@
 #include "components/viz/common/hit_test/hit_test_region_list.h"
 #include "components/viz/common/quads/compositor_frame.h"
 #include "components/viz/common/quads/compositor_frame_metadata.h"
+#include "components/viz/common/quads/draw_quad.h"
 #include "components/viz/common/quads/frame_deadline.h"
 #include "components/viz/common/quads/render_pass_draw_quad.h"
 #include "components/viz/common/quads/shared_quad_state.h"
@@ -1224,6 +1225,37 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(FrameData* frame) {
   for (size_t i = 0; i + 1 < frame->render_passes.size(); ++i) {
     viz::RenderPass* pass = frame->render_passes[i].get();
     pass->damage_rect = pass->output_rect;
+  }
+
+  // Traverse LayerTree and see if all the ancestors are transparent
+  // TODO: Only traverse this for overlay app
+  bool all_transparent_background = true;
+  for (const PictureLayerImpl* layerImpl : active_tree()->picture_layers()) {
+    const EffectNode* effect_node =
+        active_tree()->property_trees()->effect_tree.Node(
+            layerImpl->effect_tree_index());
+
+    // If this layer contains backdrop-filter applied element,
+    // don't consider this layer for all_transparent_background
+    if (effect_node && effect_node->render_surface_reason ==
+                           RenderSurfaceReason::kBackdropFilter)
+      break;
+
+    if (SkColorGetA(layerImpl->background_color()) != 0) {
+      all_transparent_background = false;
+      break;
+    }
+  }
+
+  // Set transparency of ancestor layers to RenderPasses
+  if (all_transparent_background) {
+    for (size_t i = 0; i + 1 < frame->render_passes.size(); ++i) {
+      viz::RenderPass* pass = frame->render_passes[i].get();
+      if (pass->backdrop_filter_bounds.has_value()) {
+        pass->SetTransparentBackgroundsToRoot(all_transparent_background);
+        break;
+      }
+    }
   }
 
   // When we are displaying the HUD, change the root damage rect to cover the
