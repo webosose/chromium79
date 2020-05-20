@@ -872,7 +872,10 @@ bool MediaPlatformAPIWebOSGmp::MakeLoadData(int64_t start_time,
   return true;
 }
 
-void MediaPlatformAPIWebOSGmp::SetKeySystem(const std::string& key_system) {}
+void MediaPlatformAPIWebOSGmp::SetKeySystem(const std::string& key_system) {
+  DCHECK(media_task_runner_->BelongsToCurrentThread());
+  LOG(INFO) << "Setting key_system: " << key_system;
+}
 
 // private helper functions
 void MediaPlatformAPIWebOSGmp::SetState(State next_state) {

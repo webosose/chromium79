@@ -1510,7 +1510,12 @@ void WebMediaPlayerImpl::SetCdmInternal(
   DCHECK(cdm_context);
 
 #if defined(USE_NEVA_MEDIA)
-  OnSetCdm(cdm);
+  // We give |key_system_| information to CdmContext. Usually(chromium)
+  // CdmContext doesn't need to know key system. But in webOS, sometimes we need
+  // to branch out according to current key system. Key system information in
+  // CdmContext is very useful because CdmContext is shared across all related
+  // components such as external renderer, decrypting demuxer stream, cdm, etc.
+  cdm_context->set_key_system(key_system_);
 #endif
 
   // Keep the reference to the CDM, as it shouldn't be destroyed until

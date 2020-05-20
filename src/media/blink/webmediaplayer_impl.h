@@ -405,7 +405,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerImpl
   // Can return a nullptr.
 #if defined(USE_NEVA_MEDIA)
   virtual scoped_refptr<VideoFrame> GetCurrentFrameFromCompositor() const;
-  virtual void OnSetCdm(blink::WebContentDecryptionModule* cdm) {}
 #else
   // Returns the current video frame from |compositor_|, and asks the compositor
   // to update its frame if it is stale.

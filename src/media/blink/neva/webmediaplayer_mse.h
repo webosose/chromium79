@@ -116,8 +116,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE
 
   scoped_refptr<VideoFrame> GetCurrentFrameFromCompositor() const override;
 
-  void OnSetCdm(blink::WebContentDecryptionModule* cdm) override;
-
   bool UsesIntrinsicSize() const override;
 
  private:

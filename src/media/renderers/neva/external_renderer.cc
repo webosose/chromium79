@@ -120,6 +120,9 @@ void ExternalRenderer::SetCdm(CdmContext* cdm_context,
   cdm_context_ = cdm_context;
   cdm_attached_cb.Run(true);
 
+  if (cdm_context_)
+    media_platform_api_->SetKeySystem(cdm_context_->get_key_system());
+
   if (render_state_ != RenderState::kInitPendingCDM)
     return;
 

@@ -477,13 +477,6 @@ scoped_refptr<VideoFrame> WebMediaPlayerMSE::GetCurrentFrameFromCompositor()
   return video_frame_provider_->GetCurrentFrame();
 }
 
-void WebMediaPlayerMSE::OnSetCdm(blink::WebContentDecryptionModule* cdm) {
-  const std::string ks =
-      media::ToWebContentDecryptionModuleImpl(cdm)->GetKeySystem();
-  LOG(INFO) << "Setting key_system to media APIs : " << ks;
-  media_platform_api_->SetKeySystem(ks);
-}
-
 void WebMediaPlayerMSE::SetRenderMode(blink::WebMediaPlayer::RenderMode mode) {
   if (render_mode_ == mode)
     return;
