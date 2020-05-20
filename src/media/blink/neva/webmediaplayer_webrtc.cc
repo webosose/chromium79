@@ -193,16 +193,7 @@ void WebMediaPlayerWebRtc::OnFrameHidden() {
 
   blink::WebMediaPlayerMS::OnFrameHidden();
 
-  if (is_suspended_)
-    return;
-
-  //TODO::Handle DoSuspend here to make no stream data
-
-  client_->RequestPause();
-
-  is_suspended_ = true;
-
-  OnSuspend();
+  SuspendInternal();
 }
 
 void WebMediaPlayerWebRtc::OnFrameShown() {
@@ -210,60 +201,14 @@ void WebMediaPlayerWebRtc::OnFrameShown() {
 
   blink::WebMediaPlayerMS::OnFrameShown();
 
-  if (!is_suspended_)
-    return;
+  //TODO::Check if we need to request for KeyFrame here;
 
-  is_suspended_ = false;
-
-  //TODO::Handle DoResume here to make no stream data
-  //TODO::Request first frame for video RequestKeyFrame();
-
-  OnResume();
-
-  client_->RequestPlay();
-
-  paused_ = false;
+  ResumeInternal();
 }
 
 void WebMediaPlayerWebRtc::OnFrameClosed() {
   LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
   blink::WebMediaPlayerMS::OnFrameClosed();
-}
-
-void WebMediaPlayerWebRtc::OnSuspend() {
-  LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
-
-  if (is_suspended_) {
-    delegate_->DidMediaSuspended(delegate_id_);
-    return;
-  }
-
-  status_on_suspended_ = Paused() ? StatusOnSuspended::PausedStatus
-                                  : StatusOnSuspended::PlayingStatus;
-
-  if (status_on_suspended_ == StatusOnSuspended::PlayingStatus) {
-    Pause();
-    client_->RequestPause();
-  }
-
-  if (media_platform_api_) {
-    SuspendReason reason = client_->IsSuppressedMediaPlay()
-                               ? SuspendReason::BACKGROUNDED
-                               : SuspendReason::SUSPENDED_BY_POLICY;
-    media_platform_api_->Suspend(reason);
-  }
-
-  is_suspended_ = true;
-  has_activation_permit_ = false;
-
-  // TODO(neva): also need to set STORAGE_BLACK for NEVA_VIDEO_HOLE ?
-  if (HasVideo() && is_render_mode_texture())
-    video_frame_provider_impl_->SetStorageType(media::VideoFrame::STORAGE_BLACK);
-
-  // Usually we wait until OnSuspended(), but send DidMediaSuspended()
-  // immediately when media_platform_api_ is null.
-  if (!media_platform_api_)
-    delegate_->DidMediaSuspended(delegate_id_);
 }
 
 void WebMediaPlayerWebRtc::OnMediaActivationPermitted() {
@@ -277,9 +222,6 @@ void WebMediaPlayerWebRtc::OnMediaActivationPermitted() {
 
   if (is_loading_) {
     OnLoadPermitted();
-    return;
-  } else if (is_suspended_) {
-    OnResume();
     return;
   }
 
@@ -559,6 +501,7 @@ void WebMediaPlayerWebRtc::ReleaseMediaPlatformAPI() {
 
   pipeline_running_ = false;
   pipeline_status_ = media::PIPELINE_OK;
+  has_first_frame_ = false;
 }
 
 void WebMediaPlayerWebRtc::OnPipelineFeed() {
@@ -588,13 +531,39 @@ void WebMediaPlayerWebRtc::OnPipelineFeed() {
   }
 }
 
-void WebMediaPlayerWebRtc::OnResume() {
+void WebMediaPlayerWebRtc::SuspendInternal() {
   LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
 
-  if (!is_suspended_) {
-    delegate_->DidMediaActivated(delegate_id_);
+  if (is_suspended_)
     return;
+
+  status_on_suspended_ = Paused() ? StatusOnSuspended::PausedStatus
+                                  : StatusOnSuspended::PlayingStatus;
+  if (media_platform_api_) {
+    SuspendReason reason = client_->IsSuppressedMediaPlay()
+                               ? SuspendReason::BACKGROUNDED
+                               : SuspendReason::SUSPENDED_BY_POLICY;
+    media_platform_api_->Suspend(reason);
   }
+
+  is_suspended_ = true;
+  has_activation_permit_ = false;
+
+  // TODO(neva): also need to set STORAGE_BLACK for NEVA_VIDEO_HOLE ?
+  if (HasVideo() && is_render_mode_texture())
+    video_frame_provider_impl_->SetStorageType(media::VideoFrame::STORAGE_BLACK);
+
+  // Usually we wait until OnSuspended(), but send DidMediaSuspended()
+  // immediately when media_platform_api_ is null.
+  if (!media_platform_api_)
+    delegate_->DidMediaSuspended(delegate_id_);
+}
+
+void WebMediaPlayerWebRtc::ResumeInternal() {
+  LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
+
+  if (!is_suspended_)
+    return;
 
   is_suspended_ = false;
 
@@ -604,7 +573,7 @@ void WebMediaPlayerWebRtc::OnResume() {
           ? media::MediaPlatformAPI::RESTORE_PAUSED
           : media::MediaPlatformAPI::RESTORE_PLAYING;
 
-  if (media_platform_api_.get()) {
+  if (media_platform_api_) {
     media_platform_api_->Resume(paused_time_, restore_playback_mode);
   } else {
     // Usually we wait until OnResumed(), but send DidMediaActivated()

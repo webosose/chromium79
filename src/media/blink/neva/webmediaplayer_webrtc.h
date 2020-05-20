@@ -94,7 +94,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
   void OnFrameClosed() override;
   void OnVolumeMultiplierUpdate(double multiplier) override {}
   void OnBecamePersistentVideo(bool value) override {}
-  void OnSuspend() override;
   void OnMediaActivationPermitted() override;
 
   // Implements ui::mojom::VideoWindowClient
@@ -135,7 +134,9 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
     return render_mode_ == blink::WebMediaPlayer::RenderModeTexture;
   }
 
-  void OnResume();
+  void SuspendInternal();
+  void ResumeInternal();
+
   void OnLoadPermitted();
   void OnNaturalVideoSizeChanged(const gfx::Size& natural_video_size);
   void OnResumed();
