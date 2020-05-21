@@ -128,7 +128,9 @@ IPC_MESSAGE_CONTROL2(WaylandInput_InputPanelEnter,
 IPC_MESSAGE_CONTROL1(WaylandInput_InputPanelLeave,
                      uint32_t /*device_id*/)
 
-IPC_MESSAGE_CONTROL3(WaylandOutput_ScreenChanged,  // NOLINT(readability/fn_size)
+IPC_MESSAGE_CONTROL5(WaylandOutput_ScreenChanged,  // NOLINT(readability/fn_size)
+                     std::string, /*display_id*/
+                     std::string, /*display_name*/
                      unsigned /*width*/,
                      unsigned /*height*/,
                      int /*rotation*/)

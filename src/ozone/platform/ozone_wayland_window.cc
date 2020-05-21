@@ -120,7 +120,7 @@ OzoneWaylandWindow::OzoneWaylandWindow(PlatformWindowDelegate* delegate,
       type_(WidgetType::WINDOWFRAMELESS),
       state_(WidgetState::UNINITIALIZED),
       region_(NULL),
-      display_id_("default_display"),
+      display_id_("-1"),
       init_window_(false),
       weak_factory_(this) {
   static int opaque_handle = 0;
@@ -571,6 +571,10 @@ void OzoneWaylandWindow::FocusGroupLayer() {
 
 void OzoneWaylandWindow::DetachGroup() {
   sender_->Send(new WaylandDisplay_DetachWindowGroup(handle_));
+}
+
+std::string OzoneWaylandWindow::GetDisplayId() {
+  return display_id_;
 }
 
 void OzoneWaylandWindow::ShowInputPanel() {

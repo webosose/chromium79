@@ -1201,9 +1201,11 @@ void WaylandDisplay::TouchNotify(uint32_t device_id,
   Dispatch(new WaylandInput_TouchNotify(device_id, handle, type, event_info));
 }
 
-void WaylandDisplay::OutputScreenChanged(unsigned width, unsigned height,
+void WaylandDisplay::OutputScreenChanged(const std::string& display_id,
+                                         const std::string& display_name,
+                                         unsigned width, unsigned height,
                                          int rotation) {
-  Dispatch(new WaylandOutput_ScreenChanged(width, height, rotation));
+  Dispatch(new WaylandOutput_ScreenChanged(display_id, display_name, width, height, rotation));
 }
 
 void WaylandDisplay::WindowResized(unsigned handle,
