@@ -54,7 +54,6 @@ class OzoneWaylandWindow : public PlatformWindow,
 
   unsigned GetHandle() const { return handle_; }
   PlatformWindowDelegate* GetDelegate() const { return delegate_; }
-  std::string GetDisplayId() const { return display_id_; }
 
   // PlatformWindow:
   void InitPlatformWindow(PlatformWindowType type,
@@ -111,6 +110,8 @@ class OzoneWaylandWindow : public PlatformWindow,
   void FocusGroupOwner() override;
   void FocusGroupLayer() override;
   void DetachGroup() override;
+
+  std::string GetDisplayId() override;
 
   void ShowInputPanel() override;
   void HideInputPanel(ImeHiddenType) override;
