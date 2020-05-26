@@ -22,8 +22,8 @@
 #include "browser/app_runtime_browser_context_adapter.h"
 #include "components/media_capture_util/devices_dispatcher.h"
 #include "content/browser/child_process_security_policy_impl.h"
-#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/frame_host/frame_tree_node.h"
+#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_view_aura.h"
 #include "content/common/frame_messages.h"
@@ -61,6 +61,7 @@
 #include "neva/app_runtime/webapp_injection_manager.h"
 #include "neva/app_runtime/webview_profile.h"
 #include "neva/logging.h"
+#include "services/network/public/mojom/cookie_manager.mojom.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
 #include "third_party/blink/public/common/page/page_zoom.h"
 #include "ui/aura/client/screen_position_client.h"
@@ -867,18 +868,20 @@ void WebView::SendGetCookiesResponse(
 }
 
 void WebView::RequestGetCookies(const std::string& url) {
-  URLRequestContextFactory* url_request_context_factory =
-      profile_->GetBrowserContextAdapter()->GetUrlRequestContextFactory();
-  net::URLRequestContext* url_request_context =
-      url_request_context_factory->GetMainGetter()->GetURLRequestContext();
-  net::CookieStore* cookie_store = url_request_context->cookie_store();
-
-  if (cookie_store) {
+  content::StoragePartition* storage_partition =
+      content::BrowserContext::GetDefaultStoragePartition(
+          profile_->GetBrowserContextAdapter()->GetBrowserContext());
+  network::mojom::CookieManager* cookie_manager = nullptr;
+  if (storage_partition)
+    cookie_manager = storage_partition->GetCookieManagerForBrowserProcess();
+  if (cookie_manager) {
     net::CookieOptions opt;
     opt.set_include_httponly();
 
-    cookie_store->GetCookieListWithOptionsAsync(
-        GURL(url), opt, base::BindOnce(&WebView::SendGetCookiesResponse, base::Unretained(this)));
+    cookie_manager->GetCookieList(
+        GURL(url), opt,
+        base::BindOnce(&WebView::SendGetCookiesResponse,
+                       base::Unretained(this)));
   }
 }
 

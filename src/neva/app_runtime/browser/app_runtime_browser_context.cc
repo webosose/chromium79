@@ -17,8 +17,8 @@
 #include "neva/app_runtime/browser/app_runtime_browser_context.h"
 
 #include "base/command_line.h"
-#include "base/logging.h"
 #include "base/files/file_path.h"
+#include "base/logging.h"
 #include "base/task/post_task.h"
 #include "browser/app_runtime_browser_context_adapter.h"
 #include "content/public/browser/browser_task_traits.h"
@@ -36,6 +36,7 @@
 #include "net/url_request/url_request_context_getter.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
 #include "neva/app_runtime/browser/url_request_context_factory.h"
+#include "services/network/public/mojom/cookie_manager.mojom.h"
 
 namespace neva_app_runtime {
 
@@ -129,11 +130,10 @@ void AppRuntimeBrowserContext::FlushCookieStore() {
 }
 
 void AppRuntimeBrowserContext::FlushCookieStoreIO() {
-  net::URLRequestContext* url_request_context =
-      url_request_context_factory_->GetMainGetter()->GetURLRequestContext();
-  net::CookieStore* cookie_store = url_request_context->cookie_store();
-  if (cookie_store)
-    cookie_store->FlushStore(base::Closure());
+  content::BrowserContext::GetDefaultStoragePartition(this)
+      ->GetCookieManagerForBrowserProcess()
+      ->FlushCookieStore(
+          network::mojom::CookieManager::FlushCookieStoreCallback());
 }
 
 content::ClientHintsControllerDelegate*
