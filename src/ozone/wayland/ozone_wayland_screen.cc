@@ -60,8 +60,6 @@ void OzoneWaylandScreen::LookAheadOutputGeometry() {
       wl_display_roundtrip(display);
 
     observer_->OnScreenChanged(
-        look_ahead_screen_->GetDisplayId(),
-        look_ahead_screen_->GetDisplayName(),
         look_ahead_screen_->Geometry().width(),
         look_ahead_screen_->Geometry().height(),
         look_ahead_screen_->GetOutputTransformDegrees());
