@@ -89,6 +89,7 @@ namespace extensions {
 namespace {
 #if defined(USE_NEVA_APPRUNTIME)
 const char kCacheStoreFile[] = "Cache";
+const char kCookieStoreFile[] = "Cookies";
 const int kDefaultDiskCacheSize = 16 * 1024 * 1024;  // default size is 16MB
 
 void AuthRequestCallback(
@@ -591,6 +592,8 @@ ShellContentBrowserClient::CreateNetworkContext(
         cmd_line->GetSwitchValueASCII(::switches::kShellDiskCacheSize),
         &disk_cache_size);
 
+  context_params->cookie_path = context->GetPath().Append(kCookieStoreFile);
+  context_params->enable_encrypted_cookies = false;
   context_params->http_cache_max_size = disk_cache_size;
   context_params->http_cache_path = context->GetPath().Append(kCacheStoreFile);
 

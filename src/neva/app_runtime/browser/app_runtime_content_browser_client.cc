@@ -1,4 +1,4 @@
-// Copyright 2016-2020 LG Electronics, Inc.
+// Copyright (c) 2016-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ namespace neva_app_runtime {
 
 namespace {
 const char kCacheStoreFile[] = "Cache";
+const char kCookieStoreFile[] = "Cookies";
 const int kDefaultDiskCacheSize = 16 * 1024 * 1024;  // default size is 16MB
 }  // namespace
 
@@ -560,6 +561,8 @@ AppRuntimeContentBrowserClient::CreateNetworkContext(
     base::StringToInt(cmd_line->GetSwitchValueASCII(kDiskCacheSize),
                       &disk_cache_size);
 
+  context_params->cookie_path = context->GetPath().Append(kCookieStoreFile);
+  context_params->enable_encrypted_cookies = false;
   context_params->custom_proxy_config_client_receiver =
       custom_proxy_config_client_.BindNewPipeAndPassReceiver();
   context_params->network_delegate_request =
