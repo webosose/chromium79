@@ -394,6 +394,11 @@ class AppWindow : public content::WebContentsDelegate,
   std::string GetDisplayId() const { return display_id_; }
   void SetDisplayId(const std::string& id) { display_id_ = id; }
 
+#if defined(OS_WEBOS) && defined(USE_NEVA_MEDIA)
+  std::string GetMediaCapability() const { return media_codec_capability_; }
+  void SetMediaCapability(const base::FilePath& file_path);
+#endif
+
   bool DidFinishFirstNavigation() { return did_finish_first_navigation_; }
 
  protected:
@@ -613,6 +618,11 @@ class AppWindow : public content::WebContentsDelegate,
 
   // display affinity sent to backend
   std::string display_id_;
+
+#if defined(OS_WEBOS) && defined(USE_NEVA_MEDIA)
+  // platform media codec capability sent to backend
+  std::string media_codec_capability_;
+#endif
 
   base::WeakPtrFactory<AppWindow> image_loader_ptr_factory_{this};
 

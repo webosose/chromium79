@@ -63,6 +63,9 @@
 
 #if defined(OS_WEBOS)
 #include "base/command_line.h"
+#if defined(USE_NEVA_MEDIA)
+#include "base/files/file_util.h"
+#endif
 #include "extensions/common/switches.h"
 #include "ui/aura/window.h"
 #include "ui/aura/window_tree_host.h"
@@ -271,6 +274,13 @@ void AppWindow::Init(const GURL& url,
         command_line->GetSwitchValueASCII(switches::kWebOSDisplayId);
     SetDisplayId(display_id);
   }
+#if defined(USE_NEVA_MEDIA)
+  if (command_line->HasSwitch(switches::kMediaCodecCapabilitiesFile)) {
+    std::string codec_capability_file = command_line->GetSwitchValueASCII(
+        switches::kMediaCodecCapabilitiesFile);
+    SetMediaCapability(base::FilePath(codec_capability_file));
+  }
+#endif
 #endif
 
   // Initialize the render interface and web contents
@@ -864,6 +874,22 @@ void AppWindow::DidDownloadFavicon(
   const SkBitmap& largest = bitmaps[largest_index];
   UpdateAppIcon(gfx::Image::CreateFrom1xBitmap(largest));
 }
+
+#if defined(OS_WEBOS) && defined(USE_NEVA_MEDIA)
+void AppWindow::SetMediaCapability(const base::FilePath& file_path) {
+  VLOG(1) << __func__ << " file_path: " << file_path.MaybeAsASCII();
+
+  if (!base::PathExists(file_path)) {
+    LOG(ERROR) << "File does not exist: " << file_path.MaybeAsASCII();
+    return;
+  }
+
+  if (!base::ReadFileToString(file_path, &media_codec_capability_)) {
+    LOG(ERROR) << "Error reading file: " << file_path.MaybeAsASCII();
+    media_codec_capability_.clear();
+  }
+}
+#endif
 
 void AppWindow::SetNativeWindowFullscreen() {
   native_app_window_->SetFullscreen(fullscreen_types_);

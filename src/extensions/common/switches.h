@@ -39,6 +39,9 @@ extern const char kProcessPerGuestWebView[];
 extern const char kWebOSAppId[];
 extern const char kWebOSDisplayId[];
 extern const char kWebOSLunaServiceName[];
+#if defined(USE_NEVA_MEDIA)
+extern const char kMediaCodecCapabilitiesFile[];
+#endif
 #endif
 }  // namespace switches
 

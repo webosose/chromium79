@@ -20,6 +20,8 @@ export OVERRIDE_USER_AGENT_STRING="Mozilla/5.0 (Web0S; Linux) AppleWebKit/537.36
 export MAX_GPU_MEM_LIMIT=60
 # setup 32Mb maximum for DiskCache
 export APPSHELL_DISKCACHE_MAXSIZE=33554432
+# path to file contain platofrm media capability
+export MEDIA_CAPABILITY_FILE="/etc/umediaserver/device_codec_capability_config.json"
 
 while [[ "$1" != ""  &&  "$2" != "" ]]; do
     PARAM=$1
@@ -142,6 +144,7 @@ CHROME_FLAGS=" \
   ${CHROME_LS2_NAME_FLAG}\
   --load-apps=${APP_FOLDER_PATH}\
   --v8-snapshot-blob-path=${APP_FOLDER_PATH}/snapshot_blob.bin\
+  --media-codec-capabilities-file=${MEDIA_CAPABILITY_FILE}\
 "
 
 if [ -f /var/luna/preferences/devmode_enabled -a -f /var/luna/preferences/debug_system_apps ]; then

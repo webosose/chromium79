@@ -98,6 +98,11 @@ const char kWebOSAppId[] = "webos-appid";
 const char kWebOSDisplayId[] = "webos-displayid";
 // Pass luna service name to browser
 const char kWebOSLunaServiceName[] = "webos-luna-service-name";
+
+#if defined(USE_NEVA_MEDIA)
+// Pass path to the file containing media codec capabilities
+const char kMediaCodecCapabilitiesFile[] = "media-codec-capabilities-file";
+#endif
 #endif
 
 }  // namespace switches
