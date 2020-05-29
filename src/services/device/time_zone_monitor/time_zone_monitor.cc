@@ -42,7 +42,7 @@ void TimeZoneMonitor::NotifyClients() {
 #else
   std::unique_ptr<icu::TimeZone> new_zone(icu::TimeZone::detectHostTimeZone());
 #endif
-#if defined(OS_LINUX) && !defined(IS_CHROMECAST)
+#if defined(OS_LINUX) && !defined(IS_CHROMECAST) && !defined(OS_WEBOS)
   // We get here multiple times on Linux per a single tz change, but
   // want to update the ICU default zone and notify renderer only once.
   std::unique_ptr<icu::TimeZone> current_zone(icu::TimeZone::createDefault());
