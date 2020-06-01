@@ -53,12 +53,10 @@ class AppRuntimeBrowserMainExtraParts;
 class AppRuntimeRemoteDebuggingServer;
 class AppRuntimeSharedMemoryManager;
 class BrowserContextAdapter;
-class URLRequestContextFactory;
 
 class AppRuntimeBrowserMainParts : public content::BrowserMainParts {
  public:
-  AppRuntimeBrowserMainParts(
-      URLRequestContextFactory* url_request_context_factory);
+  AppRuntimeBrowserMainParts();
   ~AppRuntimeBrowserMainParts() override;
 
   void AddParts(AppRuntimeBrowserMainExtraParts* parts);
@@ -78,10 +76,6 @@ class AppRuntimeBrowserMainParts : public content::BrowserMainParts {
     return browser_context_adapter_.get();
   }
 
-  URLRequestContextFactory* GetURLRequestContextFactory() const {
-    return url_request_context_factory_;
-  }
-
   void ArmWatchdog(content::BrowserThread::ID thread,
                    watchdog::Watchdog* watchdog);
 
@@ -93,8 +87,6 @@ class AppRuntimeBrowserMainParts : public content::BrowserMainParts {
   void CreateOSCryptConfig();
 
   std::unique_ptr<BrowserContextAdapter> browser_context_adapter_;
-
-  URLRequestContextFactory* const url_request_context_factory_;
 
 #if defined(USE_NEVA_EXTENSIONS)
   std::unique_ptr<PrefService> user_pref_service_;

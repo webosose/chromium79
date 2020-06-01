@@ -24,12 +24,10 @@
 namespace neva_app_runtime {
 
 class AppRuntimeBrowserContext;
-class URLRequestContextFactory;
 
 class BrowserContextAdapter {
  public:
   BrowserContextAdapter(const std::string& storage_name,
-                        URLRequestContextFactory* url_request_context_factory,
                         bool is_default = false);
   virtual ~BrowserContextAdapter();
 
@@ -44,13 +42,10 @@ class BrowserContextAdapter {
 
   void FlushCookieStore();
 
-  URLRequestContextFactory* GetUrlRequestContextFactory();
-
  private:
   std::string storage_name_;
   bool is_default_ = false;
   AppRuntimeBrowserContext* browser_context_;
-  URLRequestContextFactory* const url_request_context_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextAdapter);
 };

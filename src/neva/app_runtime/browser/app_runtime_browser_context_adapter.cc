@@ -21,15 +21,11 @@
 
 namespace neva_app_runtime {
 
-BrowserContextAdapter::BrowserContextAdapter(
-    const std::string& storage_name,
-    URLRequestContextFactory* url_request_context_factory,
-    bool is_default)
+BrowserContextAdapter::BrowserContextAdapter(const std::string& storage_name,
+                                             bool is_default)
     : storage_name_(storage_name),
       is_default_(is_default),
-      browser_context_(
-          new AppRuntimeBrowserContext(this, url_request_context_factory)),
-      url_request_context_factory_(url_request_context_factory) {}
+      browser_context_(new AppRuntimeBrowserContext(this)) {}
 
 BrowserContextAdapter::~BrowserContextAdapter() {
   delete browser_context_;
@@ -59,10 +55,6 @@ bool BrowserContextAdapter::IsDefault() const {
 
 void BrowserContextAdapter::FlushCookieStore() {
   browser_context_->FlushCookieStore();
-}
-
-URLRequestContextFactory* BrowserContextAdapter::GetUrlRequestContextFactory() {
-  return url_request_context_factory_;
 }
 
 }  // namespace neva_app_runtime

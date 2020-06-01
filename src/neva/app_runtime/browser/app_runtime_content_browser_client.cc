@@ -41,7 +41,6 @@
 #include "neva/app_runtime/browser/app_runtime_quota_permission_context.h"
 #include "neva/app_runtime/browser/app_runtime_quota_permission_delegate.h"
 #include "neva/app_runtime/browser/app_runtime_web_contents_view_delegate_creator.h"
-#include "neva/app_runtime/browser/url_request_context_factory.h"
 #include "neva/app_runtime/common/app_runtime_user_agent.h"
 #include "neva/app_runtime/public/proxy_settings.h"
 #include "neva/app_runtime/webview.h"
@@ -178,8 +177,7 @@ void LoadAppsFromCommandLine(extensions::ShellExtensionSystem* extension_system,
 AppRuntimeContentBrowserClient::AppRuntimeContentBrowserClient(
     AppRuntimeQuotaPermissionDelegate* quota_permission_delegate,
     AppRuntimeFileAccessDelegate* file_access_delegate)
-    : url_request_context_factory_(new URLRequestContextFactory()),
-      quota_permission_delegate_(quota_permission_delegate),
+    : quota_permission_delegate_(quota_permission_delegate),
       file_access_delegate_(file_access_delegate) {}
 
 AppRuntimeContentBrowserClient::~AppRuntimeContentBrowserClient() {}
@@ -192,8 +190,7 @@ void AppRuntimeContentBrowserClient::SetBrowserExtraParts(
 std::unique_ptr<content::BrowserMainParts>
 AppRuntimeContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
-  main_parts_ =
-      new AppRuntimeBrowserMainParts(url_request_context_factory_.get());
+  main_parts_ = new AppRuntimeBrowserMainParts();
 
   if (browser_extra_parts_)
     main_parts_->AddParts(browser_extra_parts_);

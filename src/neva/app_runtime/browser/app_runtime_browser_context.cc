@@ -32,20 +32,14 @@
 #include "net/proxy_resolution/proxy_config_service.h"
 #include "net/proxy_resolution/proxy_info.h"
 #include "net/proxy_resolution/proxy_resolution_service.h"
-#include "net/url_request/url_request_context.h"
-#include "net/url_request/url_request_context_getter.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
-#include "neva/app_runtime/browser/url_request_context_factory.h"
 #include "services/network/public/mojom/cookie_manager.mojom.h"
 
 namespace neva_app_runtime {
 
 AppRuntimeBrowserContext::AppRuntimeBrowserContext(
-    const BrowserContextAdapter* adapter,
-    URLRequestContextFactory* url_request_context_factory)
-    : adapter_(adapter),
-      url_request_context_factory_(url_request_context_factory),
-      resource_context_(new content::ResourceContext()) {
+    const BrowserContextAdapter* adapter)
+    : adapter_(adapter), resource_context_(new content::ResourceContext()) {
   BrowserContext::Initialize(this, GetPath());
 #if defined(USE_LOCAL_STORAGE_MANAGER)
   local_storage_manager_ = content::LocalStorageManager::Create().release();

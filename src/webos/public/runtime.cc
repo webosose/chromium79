@@ -31,8 +31,7 @@ Runtime::Runtime()
       platform_delegate_(NULL),
       is_mrcu_paired_(false),
       is_network_connected_(true),
-      is_foreground_app_enyo_(false),
-      is_main_getter_created_(false) {}
+      is_foreground_app_enyo_(false) {}
 
 Runtime::~Runtime() {}
 

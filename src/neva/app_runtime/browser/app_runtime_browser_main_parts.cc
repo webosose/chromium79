@@ -34,7 +34,6 @@
 #include "neva/app_runtime/browser/app_runtime_devtools_manager_delegate.h"
 #include "neva/app_runtime/browser/app_runtime_shared_memory_manager.h"
 #include "neva/app_runtime/browser/net/app_runtime_network_change_notifier.h"
-#include "neva/app_runtime/browser/url_request_context_factory.h"
 #include "ui/base/material_design/material_design_controller.h"
 #include "ui/views/widget/desktop_aura/neva/views_delegate_stub.h"
 
@@ -82,10 +81,7 @@ class AppRuntimeNetworkChangeNotifierFactory
   }
 };
 
-AppRuntimeBrowserMainParts::AppRuntimeBrowserMainParts(
-    URLRequestContextFactory* url_request_context_factory)
-    : BrowserMainParts(),
-      url_request_context_factory_(url_request_context_factory) {}
+AppRuntimeBrowserMainParts::AppRuntimeBrowserMainParts() : BrowserMainParts() {}
 
 AppRuntimeBrowserMainParts::~AppRuntimeBrowserMainParts() {}
 
@@ -149,10 +145,8 @@ void AppRuntimeBrowserMainParts::PostMainMessageLoopStart() {
 }
 
 void AppRuntimeBrowserMainParts::PreMainMessageLoopRun() {
-  url_request_context_factory_->InitializeOnUIThread(nullptr);
 
-  browser_context_adapter_.reset(
-      new BrowserContextAdapter("Default", url_request_context_factory_, true));
+  browser_context_adapter_.reset(new BrowserContextAdapter("Default", true));
   browser_context_adapter_->Initialize();
 
 #if defined(ENABLE_PLUGINS)

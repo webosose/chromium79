@@ -28,11 +28,7 @@ WebViewProfile::WebViewProfile(const std::string& storage_name)
     // FIXME: memory leak. When we create WebViewProfile with default context,
     // we must not destroy this context on dtor. In this ctor we create new
     // BrowserContextAdapter but we never destroy it.
-    : browser_context_adapter_(
-        new BrowserContextAdapter(storage_name,
-                                  GetAppRuntimeContentBrowserClient()
-                                      ->GetMainParts()
-                                          ->GetURLRequestContextFactory())) {}
+    : browser_context_adapter_(new BrowserContextAdapter(storage_name)) {}
 
 WebViewProfile* WebViewProfile::GetDefaultProfile() {
   static WebViewProfile* profile =

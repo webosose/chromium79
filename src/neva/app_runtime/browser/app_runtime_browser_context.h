@@ -24,14 +24,11 @@ namespace neva_app_runtime {
 
 class AppRuntimeContextNetworkDelegate;
 class BrowserContextAdapter;
-class URLRequestContextFactory;
 
 class AppRuntimeBrowserContext : public content::BrowserContext {
  public:
   static AppRuntimeBrowserContext* Get();
-  AppRuntimeBrowserContext(
-      const BrowserContextAdapter* adapter,
-      URLRequestContextFactory* url_request_context_factory);
+  AppRuntimeBrowserContext(const BrowserContextAdapter* adapter);
   ~AppRuntimeBrowserContext() override;
   base::FilePath GetPath() override;
   bool IsOffTheRecord() override;
@@ -70,7 +67,6 @@ class AppRuntimeBrowserContext : public content::BrowserContext {
   void FlushCookieStoreIO();
 
   const BrowserContextAdapter* adapter_;
-  URLRequestContextFactory* const url_request_context_factory_;
   std::unique_ptr<content::ResourceContext> resource_context_;
 #if defined(USE_LOCAL_STORAGE_MANAGER)
   scoped_refptr<content::LocalStorageManager> local_storage_manager_;

@@ -63,11 +63,6 @@ class WEBOS_EXPORT Runtime {
     is_foreground_app_enyo_ = is_enyo;
   }
 
-  bool GetMainGetterCreated() { return is_main_getter_created_; }
-  void SetMainGetterCreated(bool is_main_getter_created) {
-    is_main_getter_created_ = is_main_getter_created;
-  }
-
   std::string GetBoardType() { return board_type_; }
   void SetBoardType(std::string board_type) { board_type_ = board_type; }
 
@@ -89,7 +84,6 @@ class WEBOS_EXPORT Runtime {
   bool is_mrcu_paired_;
   bool is_network_connected_;
   bool is_foreground_app_enyo_;
-  bool is_main_getter_created_;
 
   std::string board_type_;
   std::string foreground_appid_;

@@ -54,7 +54,6 @@
 #include "neva/app_runtime/app/app_runtime_main_delegate.h"
 #include "neva/app_runtime/browser/app_runtime_webview_controller_impl.h"
 #include "neva/app_runtime/browser/app_runtime_webview_host_impl.h"
-#include "neva/app_runtime/browser/url_request_context_factory.h"
 #include "neva/app_runtime/common/app_runtime_user_agent.h"
 #include "neva/app_runtime/public/app_runtime_event.h"
 #include "neva/app_runtime/public/webview_delegate.h"

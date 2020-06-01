@@ -40,7 +40,6 @@ namespace neva_app_runtime {
 class AppRuntimeBrowserMainExtraParts;
 class AppRuntimeFileAccessDelegate;
 class AppRuntimeQuotaPermissionDelegate;
-class URLRequestContextFactory;
 struct ProxySettings;
 
 class AppRuntimeContentBrowserClient : public content::ContentBrowserClient {
@@ -147,12 +146,9 @@ class AppRuntimeContentBrowserClient : public content::ContentBrowserClient {
   void PushCORBDisabledToIOThread(int process_id, bool disabled);
 
  private:
-  class MainURLRequestContextGetter;
-
   void SetCORBDisabledOnIOThread(int process_id, bool disabled);
 
   AppRuntimeBrowserMainExtraParts* browser_extra_parts_ = nullptr;
-  std::unique_ptr<URLRequestContextFactory> url_request_context_factory_;
   AppRuntimeBrowserMainParts* main_parts_ = nullptr;
 
   AppRuntimeQuotaPermissionDelegate* quota_permission_delegate_ = nullptr;
