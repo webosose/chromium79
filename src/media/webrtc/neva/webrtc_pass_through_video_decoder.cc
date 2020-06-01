@@ -16,6 +16,8 @@
 
 #include "media/webrtc/neva/webrtc_pass_through_video_decoder.h"
 
+#include <mutex>
+
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/memory/aligned_memory.h"
@@ -26,6 +28,7 @@
 #include "third_party/blink/renderer/platform/webrtc/webrtc_video_frame_adapter.h"
 #include "third_party/webrtc/api/video_codecs/sdp_video_format.h"
 #include "third_party/webrtc/modules/video_coding/include/video_error_codes.h"
+#include "third_party/webrtc/rtc_base/helpers.h"
 #include "third_party/webrtc/rtc_base/ref_counted_object.h"
 
 namespace media {
@@ -70,11 +73,13 @@ media::VideoPixelFormat ToVideoPixelFormat(
 
 }
 
-// static
-bool WebRtcPassThroughVideoDecoder::media_decoder_free_ = true;
+typedef std::map<uint32_t, WebRtcPassThroughVideoDecoder*> WebRtcDecoderMap;
+WebRtcDecoderMap webrtc_video_decoder_map_;
+std::mutex webrtc_video_decoder_lock_;
 
 // static
-std::unique_ptr<WebRtcPassThroughVideoDecoder> WebRtcPassThroughVideoDecoder::Create(
+std::unique_ptr<WebRtcPassThroughVideoDecoder>
+WebRtcPassThroughVideoDecoder::Create(
     const webrtc::SdpVideoFormat& sdp_format) {
   DVLOG(1) << __func__ << "(" << sdp_format.name << ")";
 
@@ -95,18 +100,46 @@ std::unique_ptr<WebRtcPassThroughVideoDecoder> WebRtcPassThroughVideoDecoder::Cr
       new WebRtcPassThroughVideoDecoder(video_codec, video_pixel_format));
 }
 
+// static
+WebRtcPassThroughVideoDecoder* WebRtcPassThroughVideoDecoder::FromId(
+    uint32_t decoder_id) {
+  LOG(INFO) << __func__ << " Decoder requested for id: " << decoder_id;
+
+  std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
+  WebRtcDecoderMap::iterator it = webrtc_video_decoder_map_.find(decoder_id);
+  if (it == webrtc_video_decoder_map_.end()) {
+    LOG(ERROR) << __func__ << " Decoder not found for id: " << decoder_id;
+    return nullptr;
+  }
+  return it->second;
+}
+
 WebRtcPassThroughVideoDecoder::WebRtcPassThroughVideoDecoder(
     media::VideoCodec video_codec,
     media::VideoPixelFormat video_pixel_format)
     : video_codec_(video_codec),
       video_pixel_format_(video_pixel_format) {
+  decoder_id_ = rtc::CreateRandomNonZeroId();
+  {
+    std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
+    webrtc_video_decoder_map_[decoder_id_] = this;
+  }
+
   LOG(INFO) << __func__ <<  "[" << this << "] "
                         << ", video_pixel_format: " << video_pixel_format
-                        << " codec: " << GetCodecName(video_codec);
+                        << " codec: " << GetCodecName(video_codec)
+                        << " id: " << decoder_id_;
 }
 
 WebRtcPassThroughVideoDecoder::~WebRtcPassThroughVideoDecoder() {
-  LOG(INFO) << __func__ <<  "[" << this << "] ";
+  LOG(INFO) << __func__ <<  "[" << this << "] " << " id: " << decoder_id_;
+  {
+    std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
+    WebRtcDecoderMap::iterator it = webrtc_video_decoder_map_.find(decoder_id_);
+    if (it != webrtc_video_decoder_map_.end())
+      webrtc_video_decoder_map_.erase(it);
+  }
+
   Release();
 }
 
@@ -140,13 +173,12 @@ int32_t WebRtcPassThroughVideoDecoder::Decode(
     return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
   }
 
-  if (!media_decoder_acquired_) {
-    // Fallback to software mode if no free media decoder.
-    if (!media_decoder_free_)
+  if (media_decoder_acquired_) {
+    if (client_ && !client_->HasAvailableResources()) {
+      // Fallback to software mode if no free media decoder.
+      LOG(INFO) << __func__ << " Decoder fallback to s/w, id: " << decoder_id_;
       return WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE;
-
-    media_decoder_acquired_ = true;
-    media_decoder_free_ = false;
+    }
   }
 
   gfx::Size frame_size(input_image._encodedWidth,
@@ -212,10 +244,9 @@ int32_t WebRtcPassThroughVideoDecoder::RegisterDecodeCompleteCallback(
 int32_t WebRtcPassThroughVideoDecoder::Release() {
   VLOG(1) << __func__;
 
-  if (media_decoder_acquired_)
-    media_decoder_free_ = true;
-
   media_decoder_acquired_ = false;
+  key_frame_required_ = true;
+
   initialized_ = false;
 
   return WEBRTC_VIDEO_CODEC_OK;
@@ -223,6 +254,14 @@ int32_t WebRtcPassThroughVideoDecoder::Release() {
 
 const char* WebRtcPassThroughVideoDecoder::ImplementationName() const {
   return kImplementationName;
+}
+
+void WebRtcPassThroughVideoDecoder::RequestKeyFrame() {
+  key_frame_required_ = true;
+}
+
+void WebRtcPassThroughVideoDecoder::SetClient(Client* client) {
+  client_ = client;
 }
 
 int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
@@ -246,16 +285,19 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
               media::VideoFrameLayout::kBufferAddressAlignment)));
   memcpy(encoded_data.get(), input_image.data(), input_image.size());
 
+  // Convert timestamp from 90KHz to ms.
+  base::TimeDelta timestamp_ms = base::TimeDelta::FromInternalValue(
+      base::checked_cast<uint64_t>(input_image.Timestamp()) * 1000 / 90);
+
   // Make a shallow copy.
   scoped_refptr<media::VideoFrame> encoded_frame =
-      media::VideoFrame::WrapExternalData(
-          video_pixel_format_,
-          frame_size_,
-          gfx::Rect(frame_size_),
-          frame_size_,
-          encoded_data.get(),
-          input_image.size(),
-          base::TimeTicks::Now() - start_timestamp_);
+      media::VideoFrame::WrapExternalData(video_pixel_format_,
+                                          frame_size_,
+                                          gfx::Rect(frame_size_),
+                                          frame_size_,
+                                          encoded_data.get(),
+                                          input_image.size(),
+                                          timestamp_ms);
 
   if (!encoded_frame)
     return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
@@ -275,6 +317,13 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
           .set_rotation(webrtc::kVideoRotation_0)
           .build();
   rtc_frame.set_timestamp(input_image.Timestamp());
+  rtc_frame.set_ntp_time_ms(input_image.ntp_time_ms_);
+
+  if (!media_decoder_acquired_) {
+    media_decoder_acquired_ = true;
+    rtc_frame.set_decoder_id(decoder_id_);
+  }
+
   decode_complete_callback_->Decoded(rtc_frame, absl::nullopt, 0);
 
   return WEBRTC_VIDEO_CODEC_OK;

@@ -478,6 +478,11 @@ class MEDIA_EXPORT VideoFrame : public base::RefCountedThreadSafe<VideoFrame> {
     DCHECK(IsMappable());
     return data_size_[plane];
   }
+
+  uint32_t get_decoder_id() const { return decoder_id_; }
+  void set_decoder_id(uint32_t decoder_id) {
+    decoder_id_ = decoder_id;
+  }
 #endif
 
   const base::Optional<gpu::VulkanYCbCrInfo>& ycbcr_info() const {
@@ -667,6 +672,9 @@ class MEDIA_EXPORT VideoFrame : public base::RefCountedThreadSafe<VideoFrame> {
   // This will be most usefull when we have external data wrapped in a
   // video frame using WrapExternalData
   size_t data_size_[kMaxPlanes];
+
+  // Used for associating the decoder with the web media player
+  uint32_t decoder_id_ = 0;
 #endif
 
   // Native texture mailboxes, if this is a IsTexture() frame.

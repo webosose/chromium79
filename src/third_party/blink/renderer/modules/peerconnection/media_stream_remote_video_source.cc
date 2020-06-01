@@ -211,6 +211,11 @@ void MediaStreamRemoteVideoSource::RemoteVideoSourceDelegate::OnFrame(
   video_frame->metadata()->SetTimeTicks(media::VideoFrameMetadata::DECODE_TIME,
                                         base::TimeTicks::Now());
 
+#if defined(USE_NEVA_WEBRTC)
+  if (incoming_frame.get_decoder_id() > 0)
+    video_frame->set_decoder_id(incoming_frame.get_decoder_id());
+#endif
+
   PostCrossThreadTask(
       *io_task_runner_, FROM_HERE,
       CrossThreadBindOnce(&RemoteVideoSourceDelegate::DoRenderFrameOnIOThread,

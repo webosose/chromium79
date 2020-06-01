@@ -191,6 +191,11 @@ class RTC_EXPORT VideoFrame {
     packet_infos_ = std::move(value);
   }
 
+#if defined(USE_NEVA_WEBRTC)
+  uint32_t get_decoder_id() const { return decoder_id_; }
+  void set_decoder_id(uint32_t decoder_id) { decoder_id_ = decoder_id; }
+#endif
+
  private:
   VideoFrame(uint16_t id,
              const rtc::scoped_refptr<VideoFrameBuffer>& buffer,
@@ -218,6 +223,11 @@ class RTC_EXPORT VideoFrame {
   // MediaStreamTrack, in order to implement getContributingSources(). See:
   // https://w3c.github.io/webrtc-pc/#dom-rtcrtpreceiver-getcontributingsources
   RtpPacketInfos packet_infos_;
+
+#if defined(USE_NEVA_WEBRTC)
+  // Used for passing the decoder id to new instance of media VideoFrame
+  uint32_t decoder_id_ = 0;
+#endif
 };
 
 }  // namespace webrtc

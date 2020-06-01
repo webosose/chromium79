@@ -39,9 +39,17 @@ namespace media {
 
 class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
  public:
+  class Client {
+   public:
+    virtual bool HasAvailableResources() = 0;
+  };
+
   // Creates and initializes an WebRtcPassThroughVideoDecoder.
   static std::unique_ptr<WebRtcPassThroughVideoDecoder> Create(
       const webrtc::SdpVideoFormat& format);
+
+  static WebRtcPassThroughVideoDecoder* FromId(uint32_t decoder_id);
+
   virtual ~WebRtcPassThroughVideoDecoder();
 
   // Implements webrtc::VideoDecoder
@@ -55,6 +63,12 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   int32_t Release() override;
   const char* ImplementationName() const override;
 
+  // Request key frame.
+  void RequestKeyFrame();
+
+  // Set decoder client instance
+  void SetClient(Client* client);
+
  private:
   // Called on the worker thread.
   WebRtcPassThroughVideoDecoder(media::VideoCodec video_codec,
@@ -66,18 +80,23 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   media::VideoCodec video_codec_;
   VideoPixelFormat video_pixel_format_;
 
+  // Not owned. Should not be deleted.
+  Client* client_ = nullptr;
+
   gfx::Size frame_size_;
 
   webrtc::DecodedImageCallback* decode_complete_callback_ = nullptr;
 
   bool initialized_ = false;
   bool key_frame_required_ = true;
+
   bool media_decoder_acquired_ = false;
+  bool media_decoder_available_ = true;
 
   int propagation_cnt_ = -1;
   base::TimeTicks start_timestamp_;
 
-  static bool media_decoder_free_;
+  uint32_t decoder_id_ = 0;
 
   DISALLOW_COPY_AND_ASSIGN(WebRtcPassThroughVideoDecoder);
 };
