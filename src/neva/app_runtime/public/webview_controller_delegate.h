@@ -24,6 +24,8 @@ namespace neva_app_runtime {
 
 class WebViewControllerDelegate {
 public:
+  virtual ~WebViewControllerDelegate() {}
+
   virtual void RunCommand(
       const std::string& name,
       const std::vector<std::string>& arguments) = 0;
