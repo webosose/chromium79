@@ -42,8 +42,7 @@ class VideoWindowControllerImpl::VideoWindowInfo {
   VideoWindowParams params_;
 };
 
-VideoWindowControllerImpl::VideoWindowControllerImpl()
-    : provider_(VideoWindowProvider::Create()) {}
+VideoWindowControllerImpl::VideoWindowControllerImpl() = default;
 
 VideoWindowControllerImpl::~VideoWindowControllerImpl() = default;
 
@@ -52,6 +51,10 @@ void VideoWindowControllerImpl::CreateVideoWindow(
     mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
     mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
     const ui::VideoWindowParams& params) {
+  if (!provider_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
   base::UnguessableToken window_id = provider_->CreateNativeVideoWindow(
       w, std::move(client), std::move(receiver), params,
       base::BindRepeating(&VideoWindowControllerImpl::OnWindowEvent,
@@ -108,10 +111,28 @@ void VideoWindowControllerImpl::RemoveVideoWindowInfo(
             << " / # of windows of widget(" << w << "):" << count;
 }
 
+// NotifyVideoWindowGeometryChanged is called from viz/Display overlay processor
+// Now this will work only with --in-process-gpu command-line flag.
+// But chromium will move viz/Display to GPU process then it will work without
+// --in-process-gpu as well
 void VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged(
     const gpu::SurfaceHandle h,
     const base::UnguessableToken& window_id,
     const gfx::Rect& rect) {
+  if (!gpu_main_task_runner_ || !provider_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
+
+  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
+    gpu_main_task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(
+            &VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged,
+            base::Unretained(this), h, window_id, rect));
+    return;
+  }
+
   gfx::AcceleratedWidget w = static_cast<gfx::AcceleratedWidget>(h);
 
   auto it = hidden_candidate_.find(w);
@@ -133,6 +154,9 @@ void VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged(
 void VideoWindowControllerImpl::SetVideoWindowVisibility(
     const base::UnguessableToken& window_id,
     bool visibility) {
+  // provider_ is already checked from
+  // VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged
+  DCHECK(provider_);
   VideoWindowInfo* w = FindVideoWindowInfo(window_id);
   if (!w) {
     LOG(WARNING) << __func__ << " failed to find video window for "
@@ -194,7 +218,24 @@ void VideoWindowControllerImpl::OnVideoWindowDestroyed(
   RemoveVideoWindowInfo(window_id);
 }
 
+// BeginOverlayProcessor is called from viz/Display overlay processor
+// Now this will work only with --in-process-gpu command-line flag.
+// But chromium will move viz/Display to GPU process then it will work without
+// --in-process-gpu as well
 void VideoWindowControllerImpl::BeginOverlayProcessor(gpu::SurfaceHandle h) {
+  if (!gpu_main_task_runner_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
+
+  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
+    gpu_main_task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(&VideoWindowControllerImpl::BeginOverlayProcessor,
+                       base::Unretained(this), h));
+    return;
+  }
+
   gfx::AcceleratedWidget w = static_cast<gfx::AcceleratedWidget>(h);
 
   auto wl_it = video_windows_.find(w);
@@ -209,7 +250,24 @@ void VideoWindowControllerImpl::BeginOverlayProcessor(gpu::SurfaceHandle h) {
       hidden_candidate.insert(window->id_);
 }
 
+// EndOverlayProcessor is called from viz/Display overlay processor
+// Now this will work only with --in-process-gpu command-line flag.
+// But chromium will move viz/Display to GPU process then it will work without
+// --in-process-gpu as well
 void VideoWindowControllerImpl::EndOverlayProcessor(gpu::SurfaceHandle h) {
+  if (!gpu_main_task_runner_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
+
+  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
+    gpu_main_task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(&VideoWindowControllerImpl::EndOverlayProcessor,
+                       base::Unretained(this), h));
+    return;
+  }
+  const scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
   gfx::AcceleratedWidget w = static_cast<gfx::AcceleratedWidget>(h);
 
   auto wl_it = video_windows_.find(w);
@@ -224,6 +282,10 @@ void VideoWindowControllerImpl::EndOverlayProcessor(gpu::SurfaceHandle h) {
 
 void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
     gfx::AcceleratedWidget w) {
+  if (!provider_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
   auto it = video_windows_.find(w);
   if (it == video_windows_.end())
     return;
@@ -234,11 +296,28 @@ void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
 void VideoWindowControllerImpl::OwnerWidgetStateChanged(
     gfx::AcceleratedWidget w,
     ui::WidgetState state) {
+  if (!provider_) {
+    LOG(ERROR) << "Not initialized.";
+    return;
+  }
   auto it = video_windows_.find(w);
   if (it == video_windows_.end())
     return;
   for (auto const& w_info : it->second)
     provider_->OwnerWidgetStateChanged(w_info->id_, state);
+}
+
+void VideoWindowControllerImpl::Bind(
+    mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
+  // NOTE: We want to create a VidoeWindowProvider on the same thread with the
+  // receiver's binding thread. so that VideoWindowProvider knows the thread
+  // what it should live in. This thread is same with the thread of reciving
+  // other ozone releated messages.
+  if (!provider_)
+    provider_ = VideoWindowProvider::Create();
+  if (!gpu_main_task_runner_)
+    gpu_main_task_runner_ = base::ThreadTaskRunnerHandle::Get();
+  receiver_.Bind(std::move(receiver));
 }
 
 }  // namespace ui

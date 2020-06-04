@@ -58,9 +58,7 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
   void AcceleratedWidgetDeleted(gfx::AcceleratedWidget w);
   void OwnerWidgetStateChanged(gfx::AcceleratedWidget w, ui::WidgetState state);
 
-  void Bind(mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
-    receiver_.Bind(std::move(receiver));
-  }
+  void Bind(mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver);
 
  private:
   class VideoWindowInfo;
@@ -85,6 +83,7 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
       hidden_candidate_;
 
   mojo::Receiver<ui::mojom::VideoWindowController> receiver_{this};
+  scoped_refptr<base::SingleThreadTaskRunner> gpu_main_task_runner_;
   DISALLOW_COPY_AND_ASSIGN(VideoWindowControllerImpl);
 };
 

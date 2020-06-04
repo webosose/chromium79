@@ -77,9 +77,13 @@ class OzonePlatformWayland : public OzonePlatform {
 
 #if defined(USE_NEVA_MEDIA)
   void AddInterfaces(service_manager::BinderRegistry* registry) {
-    registry->AddInterface(base::BindRepeating(
-        &OzonePlatformWayland::GetVideoWindowControlleConnection,
-        base::Unretained(this)));
+    // This is called from gpu main thread and we want to get callback with gpu
+    // main thread
+    registry->AddInterface(
+        base::BindRepeating(
+            &OzonePlatformWayland::GetVideoWindowControlleConnection,
+            base::Unretained(this)),
+        base::ThreadTaskRunnerHandle::Get());
   }
 
   void GetVideoWindowControlleConnection(
