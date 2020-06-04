@@ -1021,7 +1021,7 @@ void WebView::DidFinishNavigation(
     DidFailLoad(nullptr, navigation_handle->GetURL(),
                 navigation_handle->GetNetErrorCode(), base::ASCIIToUTF16(""));
 
-    if (navigation_handle->IsErrorPage()) {
+    if (navigation_handle->IsErrorPage() && navigation_handle->IsInMainFrame()) {
       webview_delegate_->DidErrorPageLoadedFromNetErrorHelper();
     }
     return;
