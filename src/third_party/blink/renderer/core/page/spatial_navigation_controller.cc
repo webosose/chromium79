@@ -171,8 +171,10 @@ bool AdvanceFocusCSSNavigation(SpatialNavigationDirection direction,
           AtomicString(navigation->target));
 
     Document* target_document = nullptr;
-    if (target_frame)
-      target_document = DynamicTo<LocalFrame>(target_frame)->GetDocument();
+    if (target_frame) {
+      if (auto* local_frame = DynamicTo<LocalFrame>(target_frame))
+        target_document = local_frame->GetDocument();
+    }
     if (!target_document)
       target_document = focused_document;
 
