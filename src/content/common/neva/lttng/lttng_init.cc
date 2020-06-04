@@ -47,7 +47,7 @@ void LttngInit() {
                        << provider_path
                        << ": " << error.ToString();
 
-  (void)library;  // Prevent release-mode warning.
+  ignore_result(library);  // Prevent release-mode warning.
 }
 
 }  // namespace neva
