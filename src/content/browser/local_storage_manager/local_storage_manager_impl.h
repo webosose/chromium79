@@ -18,7 +18,7 @@
 #define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_IMPL_H_
 
 #include "base/memory/singleton.h"
-#include "content/browser/local_storage_manager/local_storage_manager.h"
+#include "content/public/browser/local_storage_manager.h"
 
 namespace content {
 
@@ -33,10 +33,11 @@ class LocalStorageManagerImpl final : public LocalStorageManager {
   void OnAccessOrigin(const std::string& app_id,
                       const GURL& origin,
                       base::OnceCallback<void()> callback) override;
-
+  void OnDeleteCompleted(const GURL& origin);
   base::WeakPtr<LocalStorageManager> GetWeakPtr() override;
 
  private:
+  std::set<GURL> GetSubOrigins(const GURL& origin);
   enum class InitializationStatus { kNone, kPending, kFailed, kSucceeded };
   void OnAccessesLoaded(bool success, const AccessDataList& access_list);
   void OnApplicationsLoaded(bool success, const ApplicationDataList& apps_list);
@@ -53,14 +54,41 @@ class LocalStorageManagerImpl final : public LocalStorageManager {
   void OnInitializeFailed();
   void OnInitializeSucceeded();
   bool IsInitialized();
+  void StartDeleteOriginData(const GURL& origin);
+
+  enum class AppLinkVerifyResult {
+    kExist,
+    kAdded,
+    kDeletionInProgress,
+    kAddedNewOriginEntry
+  };
+  AppLinkVerifyResult VerifyOriginAppLink(const GURL& origin,
+                                          const std::string& app_id);
 
   using AppToStatusMap = std::map<std::string, bool>;
   using AppsSet = std::set<std::string>;
-  using OriginToAppsMap = std::map<GURL, AppsSet>;
+  struct OriginData {
+    OriginData() = default;
+    bool deletion_in_progress = false;
+    AppsSet apps;
+  };
+  using OriginToAppsMap = std::map<GURL, OriginData>;
+
+  class DataDeleteCompletion {
+   public:
+    DataDeleteCompletion(std::set<GURL> origins, base::OnceClosure callback);
+    bool OnDataDeleted(const GURL& origin);
+
+   private:
+    std::set<GURL> origins_;
+    base::OnceClosure callback_;
+  };
+  using CompletionList = std::list<DataDeleteCompletion>;
 
   AppToStatusMap apps_;
   OriginToAppsMap origins_;
   std::unique_ptr<LocalStorageManagerStore> store_;
+  CompletionList data_delete_completions_;
 
   InitializationStatus init_status_ = InitializationStatus::kNone;
 

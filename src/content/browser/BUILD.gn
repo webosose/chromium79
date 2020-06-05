@@ -2696,8 +2696,6 @@ jumbo_source_set("browser") {
       "//content/browser/local_storage_manager/public/mojom",
     ]
     sources += [
-      "local_storage_manager/local_storage_manager.cc",
-      "local_storage_manager/local_storage_manager.h",
       "local_storage_manager/local_storage_manager_database.cc",
       "local_storage_manager/local_storage_manager_database.h",
       "local_storage_manager/local_storage_manager_fake_impl.cc",

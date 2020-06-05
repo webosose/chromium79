@@ -18,7 +18,7 @@
 #define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
 
 #include "base/memory/ref_counted.h"
-#include "content/browser/local_storage_manager/local_storage_manager.h"
+#include "content/public/browser/local_storage_manager.h"
 
 namespace net {
 class URLRequest;

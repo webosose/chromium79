@@ -18,7 +18,7 @@
 #define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_FAKE_IMPL_H_
 
 #include "base/memory/singleton.h"
-#include "content/browser/local_storage_manager/local_storage_manager.h"
+#include "content/public/browser/local_storage_manager.h"
 
 namespace content {
 

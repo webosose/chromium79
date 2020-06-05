@@ -215,8 +215,8 @@
 #include "url/url_constants.h"
 
 #if defined(USE_LOCAL_STORAGE_MANAGER)
-#include "content/browser/local_storage_manager/local_storage_manager.h"
 #include "content/browser/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
+#include "content/public/browser/local_storage_manager.h"
 #endif
 
 #if defined(OS_ANDROID)

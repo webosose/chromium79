@@ -64,7 +64,7 @@ void WebOSDataDeleter::StartDeleting(const Origins& origins,
     profile->RemoveBrowsingData(
         mask_, origin,
         base::BindOnce(&WebOSDataDeleter::OnDeleteCompleted,
-                       weak_factory_.GetWeakPtr(), origin, std::move(context)));
+                       weak_factory_.GetWeakPtr(), origin, nullptr));
   }
 }
 
@@ -78,6 +78,8 @@ void WebOSDataDeleter::StartDeleting(const GURL& origin,
 void WebOSDataDeleter::OnDeleteCompleted(
     const GURL& origin,
     scoped_refptr<content::DataDeleter::DeletionContext> context) {
+  if (!context)
+    return;
   std::set<GURL>::iterator it = context->origins_.find(origin);
   if (it != context->origins_.end()) {
     context->origins_.erase(it);

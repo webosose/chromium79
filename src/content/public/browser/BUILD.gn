@@ -398,6 +398,13 @@ jumbo_source_set("browser_sources") {
     sources += [ "neva/media_state_manager.h" ]
   }
 
+  if (use_local_storage_manager) {
+    sources += [
+      "local_storage_manager.cc",
+      "local_storage_manager.h",
+    ]
+  }
+
   configs += [
     "//build/config:precompiled_headers",
     "//build/config/compiler:wexit_time_destructors",

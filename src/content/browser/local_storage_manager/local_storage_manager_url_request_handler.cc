@@ -17,10 +17,10 @@
 #include "content/browser/local_storage_manager/local_storage_manager_url_request_handler.h"
 
 #include "base/task/post_task.h"
-#include "content/browser/local_storage_manager/local_storage_manager.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/local_storage_manager.h"
 #include "net/base/net_errors.h"
 #include "net/url_request/url_request.h"
 #include "services/network/url_loader.h"

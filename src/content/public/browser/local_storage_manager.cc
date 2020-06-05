@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "content/browser/local_storage_manager/local_storage_manager.h"
+#include "content/public/browser/local_storage_manager.h"
 
 #include <memory>
 

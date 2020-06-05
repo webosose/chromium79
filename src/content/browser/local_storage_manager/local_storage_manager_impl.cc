@@ -29,6 +29,7 @@
 #include "content/public/browser/renderer_preferences_util.h"
 #include "content/public/browser/web_contents.h"
 #include "net/base/net_errors.h"
+#include "net/base/registry_controlled_domains/registry_controlled_domain.h"
 #include "net/url_request/url_request.h"
 #include "third_party/blink/public/mojom/renderer_preferences.mojom.h"
 
@@ -74,12 +75,9 @@ void LocalStorageManagerImpl::OnAppRemoved(const std::string& app_id) {
   if (apps_.erase(app_id) == 0) {
     return;
   }
-  store_->DeleteApplication(
-      app_id, base::Bind(&LocalStorageManagerImpl::OnStoreModified, this,
-                         StoreModificationOperation::kDeleteApplication));
   std::set<GURL> origins_to_clear;
-  for (auto origin : origins_) {
-    AppsSet& apps = origin.second;
+  for (auto& origin : origins_) {
+    AppsSet& apps = origin.second.apps;
     AppsSet::iterator it_app = apps.find(app_id);
     if (it_app != apps.end()) {
       apps.erase(it_app);
@@ -101,6 +99,24 @@ void LocalStorageManagerImpl::OnAppRemoved(const std::string& app_id) {
     for (auto origin : origins_to_clear)
       origins_.erase(origin);
   }
+  store_->DeleteApplication(
+      app_id, base::Bind(&LocalStorageManagerImpl::OnStoreModified, this,
+                         StoreModificationOperation::kDeleteApplication));
+}
+
+void LocalStorageManagerImpl::OnDeleteCompleted(const GURL& origin) {
+  VLOG(1) << "On delete completed origin=" << origin;
+  OriginToAppsMap::iterator origin_it = origins_.find(origin);
+  if (origin_it != origins_.end()) {
+    origin_it->second.deletion_in_progress = false;
+  }
+  data_delete_completions_.remove_if(
+      [this, &origin](const DataDeleteCompletion& n) {
+        return const_cast<DataDeleteCompletion&>(n).OnDataDeleted(origin);
+      });
+
+  VLOG(1) << "data_delete_completions_ size="
+          << data_delete_completions_.size();
 }
 
 base::WeakPtr<LocalStorageManager> LocalStorageManagerImpl::GetWeakPtr() {
@@ -140,27 +156,87 @@ void LocalStorageManagerImpl::OnAccessOrigin(
                    StoreModificationOperation::kAddApplication));
   }
 
-  OriginToAppsMap::iterator it_origin = origins_.find(origin_actual);
-  if (it_origin == origins_.end()) {
-    VLOG(1) << "OnAccessOrigin: adding origin, origin=" << origin_actual;
-    it_origin = origins_.insert({origin_actual, AppsSet()}).first;
-    store_->AddOrigin({origin_actual},
-                      base::Bind(&LocalStorageManagerImpl::OnStoreModified,
-                                 this, StoreModificationOperation::kAddOrigin));
-  }
-  if (it_origin->second.find(app_id) == it_origin->second.end()) {
-    VLOG(1) << "Add appID=" << app_id << " to origin=" << origin_actual;
-    it_origin->second.insert(app_id);
-    store_->AddAccess({app_id, origin_actual},
-                      base::Bind(&LocalStorageManagerImpl::OnStoreModified,
-                                 this, StoreModificationOperation::kAddAccess));
-    if (it_origin->second.size() == 1 && it_app->second) {
-      VLOG(1) << "Clear all data for origin=" << origin_actual;
-      GetDataDeleter()->StartDeleting(origin_actual, std::move(callback));
+  bool app_installed = it_app->second;
+
+  AppLinkVerifyResult verify_result =
+      VerifyOriginAppLink(origin_actual, app_id);
+  if (verify_result == AppLinkVerifyResult::kExist &&
+      data_delete_completions_.empty()) {
+    std::move(callback).Run();
+    return;
+  } else {
+    std::set<GURL> origins_to_delete;
+    std::set<GURL> origins_to_wait;
+    if (verify_result == AppLinkVerifyResult::kAddedNewOriginEntry) {
+      origins_to_delete.insert(origin_actual);
+    }
+    if (verify_result == AppLinkVerifyResult::kDeletionInProgress) {
+      origins_to_wait.insert(origin_actual);
+    }
+    VLOG(1) << "OnAccessOrigin: checking subdomains";
+    std::set<GURL> sub_origins = GetSubOrigins(origin_actual);
+    for (const auto& sub_origin : sub_origins) {
+      AppLinkVerifyResult verify_result_suborigin =
+          VerifyOriginAppLink(sub_origin, app_id);
+      if (verify_result_suborigin ==
+          AppLinkVerifyResult::kAddedNewOriginEntry) {
+        origins_to_delete.insert(sub_origin);
+      }
+      if (verify_result_suborigin == AppLinkVerifyResult::kDeletionInProgress) {
+        origins_to_wait.insert(sub_origin);
+      }
+    }
+    if (app_installed) {
+      for (auto& origin : origins_to_delete) {
+        StartDeleteOriginData(origin);
+      }
+      origins_to_wait.insert(std::begin(origins_to_delete),
+                             std::end(origins_to_delete));
+      data_delete_completions_.emplace_back(origins_to_wait,
+                                            std::move(callback));
+      return;
+    }
+    if (!origins_to_wait.empty()) {
+      VLOG(1) << "Deleting in progress, start waiting origin="
+              << *origins_to_wait.begin();
+      data_delete_completions_.emplace_back(origins_to_wait,
+                                            std::move(callback));
       return;
     }
   }
-  std::move(callback).Run();
+}
+
+std::set<GURL> LocalStorageManagerImpl::GetSubOrigins(const GURL& origin) {
+  std::set<GURL> sub_origins;
+  if (!origin.SchemeIsHTTPOrHTTPS()) {
+    return sub_origins;
+  }
+  std::string domain_registry =
+      net::registry_controlled_domains::GetDomainAndRegistry(
+          origin, net::registry_controlled_domains::INCLUDE_PRIVATE_REGISTRIES);
+  std::string host = origin.host();
+  if (domain_registry.empty() || domain_registry == host) {
+    return sub_origins;
+  }
+  std::size_t domain_registry_length = domain_registry.length();
+  std::size_t host_length = host.length();
+  if (host_length < domain_registry_length) {
+    LOG(ERROR) << "Domain registry length exceeds host length";
+    return sub_origins;
+  }
+  std::size_t max_pos = host_length - domain_registry_length;
+  std::size_t pos = host.find('.', 0);
+  GURL sub_origin = origin;
+  while (pos != std::string::npos && pos < max_pos) {
+    url::Replacements<char> replacements;
+    std::size_t subdomain_pos = pos + 1;
+    replacements.SetHost(
+        host.c_str(),
+        url::Component(subdomain_pos, host.length() - subdomain_pos));
+    sub_origins.insert(sub_origin.ReplaceComponents(replacements));
+    pos = host.find('.', subdomain_pos);
+  }
+  return sub_origins;
 }
 
 void LocalStorageManagerImpl::OnAccessesLoaded(
@@ -177,7 +253,7 @@ void LocalStorageManagerImpl::OnAccessesLoaded(
     if (it == origins_.end()) {
       it = origins_.insert({item.origin_, {}}).first;
     }
-    it->second.insert(item.app_id_);
+    it->second.apps.insert(item.app_id_);
   }
   init_status_ = InitializationStatus::kSucceeded;
   OnInitializeSucceeded();
@@ -223,5 +299,66 @@ void LocalStorageManagerImpl::OnInitializeSucceeded() {}
 
 bool LocalStorageManagerImpl::IsInitialized() {
   return init_status_ == InitializationStatus::kSucceeded;
+}
+
+void LocalStorageManagerImpl::StartDeleteOriginData(const GURL& origin) {
+  VLOG(1) << "Start deleting origin=" << origin;
+
+  OriginToAppsMap::iterator iter = origins_.find(origin);
+  base::OnceClosure callback;
+  if (iter != origins_.end()) {
+    iter->second.deletion_in_progress = true;
+    callback = base::Bind(&LocalStorageManagerImpl::OnDeleteCompleted,
+                          weak_ptr_factory_.GetWeakPtr(), origin);
+  } else {
+    callback = base::BindOnce(base::DoNothing::Once());
+  }
+
+  if (GetDataDeleter())
+    GetDataDeleter()->StartDeleting(origin, std::move(callback));
+}
+
+LocalStorageManagerImpl::AppLinkVerifyResult
+LocalStorageManagerImpl::VerifyOriginAppLink(const GURL& origin,
+                                             const std::string& app_id) {
+  OriginToAppsMap::iterator it_origin = origins_.find(origin);
+  if (it_origin == origins_.end()) {
+    VLOG(1) << "VerifyOriginAppLink: adding origin, origin=" << origin;
+    it_origin = origins_.insert({origin, OriginData()}).first;
+    store_->AddOrigin(
+        {origin}, base::Bind(&LocalStorageManagerImpl::OnStoreModified, this,
+                             StoreModificationOperation::kAddOrigin));
+  }
+  AppLinkVerifyResult result = AppLinkVerifyResult::kExist;
+  OriginData& data = it_origin->second;
+  if (data.apps.find(app_id) == data.apps.end()) {
+    VLOG(1) << "VerifyOriginAppLink Add appID=" << app_id
+            << " to origin=" << origin;
+    data.apps.insert(app_id);
+    store_->AddAccess({app_id, origin},
+                      base::Bind(&LocalStorageManagerImpl::OnStoreModified,
+                                 this, StoreModificationOperation::kAddAccess));
+    result = data.apps.size() == 1 ? AppLinkVerifyResult::kAddedNewOriginEntry
+                                   : AppLinkVerifyResult::kAdded;
+  }
+  if (data.deletion_in_progress) {
+    result = AppLinkVerifyResult::kDeletionInProgress;
+  }
+  return result;
+}
+
+LocalStorageManagerImpl::DataDeleteCompletion::DataDeleteCompletion(
+    std::set<GURL> origins,
+    base::OnceClosure callback)
+    : origins_(origins), callback_(std::move(callback)) {}
+
+bool LocalStorageManagerImpl::DataDeleteCompletion::OnDataDeleted(
+    const GURL& origin) {
+  VLOG(1) << "OnDataDeleted, origin=" << origin;
+  if (origins_.erase(origin) == 1 && origins_.empty()) {
+    VLOG(1) << "origins is empty, call callback";
+    std::move(callback_).Run();
+  }
+  return origins_.empty();
 }
 }  // namespace content
