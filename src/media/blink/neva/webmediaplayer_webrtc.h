@@ -27,6 +27,7 @@
 #include "media/base/neva/media_platform_api.h"
 #include "media/blink/neva/video_frame_provider_impl.h"
 #include "media/blink/neva/webmediaplayer_params_neva.h"
+#include "media/webrtc/neva/webrtc_pass_through_video_decoder.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "third_party/blink/public/platform/web_float_point.h"
@@ -51,7 +52,8 @@ class VideoHoleGeometryUpdateHelper;
 // Encrypted Media.
 class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
     : public ui::mojom::VideoWindowClient,
-      public blink::WebMediaPlayerMS {
+      public blink::WebMediaPlayerMS,
+      public WebRtcPassThroughVideoDecoder::Client {
  public:
   // Constructs a WebMediaPlayer implementation using Chromium's media stack.
   // |delegate| may be null. |renderer_factory_selector| must not be null.
@@ -114,6 +116,9 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
   void OnFirstFrameReceived(media::VideoRotation video_rotation,
                             bool is_opaque) override;
   void OnRotationChanged(media::VideoRotation video_rotation) override;
+
+  // Overridden from parent WebRtcPassThroughVideoDecoder::Client
+  bool HasAvailableResources() override { return platform_decoders_available_; }
 
  private:
   enum class StatusOnSuspended {
@@ -183,11 +188,15 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
   base::Lock frame_lock_;
   std::deque<scoped_refptr<media::VideoFrame>> pending_encoded_frames_;
 
+  uint32_t decoder_id_ = 0;
+
   // Whether or not the pipeline is running.
   bool pipeline_running_ = false;
   bool is_destroying_ = false;
 
   bool handle_encoded_frames_ = false;
+
+  bool platform_decoders_available_ = true;
 
   bool has_activation_permit_ = false;
 
