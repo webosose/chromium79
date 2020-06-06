@@ -26,19 +26,20 @@ namespace base {
 
 // Needs to match the definition of URIType in the header
 static const char* const luna_service_uris[] = {
-    "",                                  // VSM
-    "",                                  // DISPLAY
-    "",                                  // AVBLOCK
-    "luna://com.webos.audio",            // AUDIO
-    "",                                  // BROADCAST
-    "",                                  // CHANNEL
-    "",                                  // EXTERNALDEVICE
-    "",                                  // DVR
-    "",                                  // SOUND
-    "",                                  // SUBTITLE
-    "",                                  // DRM
-    "luna://com.webos.settingsservice",  // SETTING
-    "",                                  // PHOTORENDERER
+    "",                                          // VSM
+    "",                                          // DISPLAY
+    "",                                          // AVBLOCK
+    "luna://com.webos.audio",                    // AUDIO
+    "",                                          // BROADCAST
+    "",                                          // CHANNEL
+    "",                                          // EXTERNALDEVICE
+    "",                                          // DVR
+    "",                                          // SOUND
+    "",                                          // SUBTITLE
+    "",                                          // DRM
+    "luna://com.webos.settingsservice",          // SETTING
+    "",                                          // PHOTORENDERER
+    "luna://com.webos.service.mediacontroller",  // MEDIACONTROLLER
 };
 
 // static

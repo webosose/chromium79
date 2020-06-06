@@ -9,6 +9,10 @@
 #include "base/strings/string16.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 
+#if defined(OS_WEBOS)
+#include "base/unguessable_token.h"
+#endif
+
 namespace system_media_controls {
 
 class SystemMediaControlsObserver;
@@ -53,6 +57,11 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControls {
   virtual void ClearThumbnail() = 0;
   virtual void ClearMetadata() = 0;
   virtual void UpdateDisplay() = 0;
+
+#if defined(OS_WEBOS)
+  virtual void SetMediaSessionId(
+      const base::Optional<base::UnguessableToken>& session_id) {}
+#endif
 
  protected:
   virtual ~SystemMediaControls() = default;

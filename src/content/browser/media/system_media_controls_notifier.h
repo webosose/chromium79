@@ -51,7 +51,11 @@ class CONTENT_EXPORT SystemMediaControlsNotifier
       const std::vector<media_session::mojom::MediaSessionAction>& actions)
       override {}
   void MediaSessionChanged(
+#if defined(OS_WEBOS)
+      const base::Optional<base::UnguessableToken>& request_id) override;
+#else
       const base::Optional<base::UnguessableToken>& request_id) override {}
+#endif
   void MediaSessionPositionChanged(
       const base::Optional<media_session::MediaPosition>& position) override {}
 

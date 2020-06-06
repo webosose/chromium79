@@ -43,5 +43,12 @@ const base::Feature kAudioFocusSessionGrouping {
 #endif
 };
 
+#if defined(OS_WEBOS)
+const base::Feature kMediaControllerService {
+  "MediaControllerService",
+      base::FEATURE_DISABLED_BY_DEFAULT
+};
+#endif
+
 }  // namespace features
 }  // namespace media_session

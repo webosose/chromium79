@@ -113,6 +113,9 @@ if test -n ${DISPLAY_ID}; then
   CHROME_DISPLAY_FLAG="--webos-displayid=${DISPLAY_ID}"
 fi
 
+# Enable runtime features
+export ENABLE_FEATURES=MediaControllerService
+
 CHROME_FLAGS=" \
   --allow-scripts-to-close-windows\
   --always-authorize-plugins\
@@ -145,6 +148,7 @@ CHROME_FLAGS=" \
   --load-apps=${APP_FOLDER_PATH}\
   --v8-snapshot-blob-path=${APP_FOLDER_PATH}/snapshot_blob.bin\
   --media-codec-capabilities-file=${MEDIA_CAPABILITY_FILE}\
+  --enable-features=$ENABLE_FEATURES\
 "
 
 if [ -f /var/luna/preferences/devmode_enabled -a -f /var/luna/preferences/debug_system_apps ]; then

@@ -18,6 +18,11 @@ extern const base::Feature kAudioFocusEnforcement;
 COMPONENT_EXPORT(MEDIA_SESSION_CPP)
 extern const base::Feature kAudioFocusSessionGrouping;
 
+#if defined(OS_WEBOS)
+COMPONENT_EXPORT(MEDIA_SESSION_CPP)
+extern const base::Feature kMediaControllerService;
+#endif
+
 }  // namespace features
 }  // namespace media_session
 

@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("linux/buildflags/buildflags.gni")
+import("//neva/neva.gni")
 
 component("system_media_controls") {
   friend = [ ":unit_tests" ]
@@ -29,6 +30,17 @@ component("system_media_controls") {
       "win/system_media_controls_win.cc",
       "win/system_media_controls_win.h",
     ]
+  } else if (is_webos) {
+    sources = [
+      "webos/system_media_controls_webos.cc",
+      "webos/system_media_controls_webos.h",
+    ]
+    deps += [
+      "//build:branding_buildflags",
+      "//services/media_session/public/mojom",
+      "//services/network/public/mojom",
+    ]
+    public_deps += [ "//third_party/jsoncpp" ]
   } else if (use_mpris) {
     sources = [
       "linux/system_media_controls_linux.cc",

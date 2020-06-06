@@ -138,6 +138,14 @@ void SystemMediaControlsNotifier::MediaSessionMetadataChanged(
   }
 }
 
+#if defined(OS_WEBOS)
+void SystemMediaControlsNotifier::MediaSessionChanged(
+      const base::Optional<base::UnguessableToken>& request_id) {
+  VLOG(1) << __func__ << " request_id: " << request_id->ToString();
+  system_media_controls_->SetMediaSessionId(request_id);
+}
+#endif
+
 void SystemMediaControlsNotifier::MediaControllerImageChanged(
     media_session::mojom::MediaSessionImageType type,
     const SkBitmap& bitmap) {
