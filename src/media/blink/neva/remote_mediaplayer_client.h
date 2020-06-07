@@ -129,6 +129,7 @@ class RemoteMediaPlayerClient
       const std::vector<media::MediaTrackInfo>& audio_track_info) override;
   void OnAudioFocusChanged() override;
   void OnActiveRegionChanged(const gfx::Rect&) override;
+  void OnZoomAreaChanged(const gfx::RectF& zoom_area) override;
   // end of pal_media::mojom::MediaPlayerListener
 
  private:

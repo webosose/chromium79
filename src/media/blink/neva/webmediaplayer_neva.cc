@@ -205,6 +205,7 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
       active_video_region_changed_(false),
       app_id_(params_neva->application_id().Utf8().data()),
       is_loading_(false),
+      additional_contents_scale_(params_neva->additional_contents_scale()),
       create_video_window_cb_(params_neva->get_create_video_window_callback()) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
 
@@ -390,6 +391,12 @@ void WebMediaPlayerNeva::OnActiveRegionChanged(
   video_frame_provider_->ActiveRegionChanged(active_region);
   if (!NaturalSize().IsEmpty())
     video_frame_provider_->UpdateVideoFrame();
+}
+
+void WebMediaPlayerNeva::OnZoomAreaChanged(const gfx::RectF& zoom_area) {
+  VLOG(1) << __func__ << " zoom_area=" << zoom_area.ToString();
+  if (video_window_remote_)
+    video_window_remote_->SetZoomRegion(zoom_area);
 }
 
 void WebMediaPlayerNeva::Play() {

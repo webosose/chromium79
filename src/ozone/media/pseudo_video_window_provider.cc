@@ -48,6 +48,7 @@ class PseudoVideoWindow : public ui::mojom::VideoWindow,
   void UpdateVideoWindowGeometryWithCrop(const gfx::Rect& ori,
                                          const gfx::Rect& src,
                                          const gfx::Rect& dst) {}
+  void SetZoomRegion(const gfx::RectF& zoom_area) override {}
   VideoWindowProvider::WindowEventCb window_event_cb_;
   base::CancelableOnceCallback<void()> notify_geometry_cb_;
   gfx::Rect rect_;
@@ -116,7 +117,7 @@ void PseudoVideoWindowProvider::UpdateNativeVideoWindowGeometry(
 void PseudoVideoWindowProvider::NativeVideoWindowGeometryChanged(
     const base::UnguessableToken& window_id,
     const gfx::Rect& dst,
-    const gfx::Rect& src,
+    const base::Optional<gfx::Rect>& src,
     const base::Optional<gfx::Rect>& ori) {
   PseudoVideoWindow* win = FindWindow(window_id);
   if (!win) {

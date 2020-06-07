@@ -267,6 +267,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
       override;
 
   void OnActiveRegionChanged(const blink::WebRect&) override;
+  void OnZoomAreaChanged(const gfx::RectF& zoom_area) override;
 
   void Repaint();
 
@@ -467,6 +468,9 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   std::string app_id_;
 
   bool is_loading_;
+
+  const blink::WebFloatPoint additional_contents_scale_;
+
   LoadType pending_load_type_ = blink::WebMediaPlayer::kLoadTypeURL;
   blink::WebMediaPlayerSource pending_source_;
   CorsMode pending_cors_mode_ = WebMediaPlayer::kCorsModeUnspecified;

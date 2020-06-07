@@ -74,6 +74,7 @@ interface MediaPlayerListener {
   OnAudioTracksUpdated(array<media.mojom.MediaTrackInfo> audio_track_info);
   OnAudioFocusChanged();
   OnActiveRegionChanged(gfx.mojom.Rect rect);
+  OnZoomAreaChanged(gfx.mojom.RectF zoom_area);
 };
 
 struct TimeDeltaPair {

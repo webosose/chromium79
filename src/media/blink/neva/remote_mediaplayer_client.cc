@@ -419,6 +419,11 @@ void RemoteMediaPlayerClient::OnActiveRegionChanged(
   client_->OnActiveRegionChanged(active_region);
 }
 
+void RemoteMediaPlayerClient::OnZoomAreaChanged(const gfx::RectF& zoom_area) {
+  DCHECK(main_task_runner_->BelongsToCurrentThread());
+  client_->OnZoomAreaChanged(zoom_area);
+}
+
 void RemoteMediaPlayerClient::OnSubscribeRespond(
     pal_media::mojom::MediaPlayerListenerAssociatedRequest request) {
   listener_binding_.Bind(std::move(request));

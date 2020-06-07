@@ -45,7 +45,7 @@ class PseudoVideoWindowProvider : public VideoWindowProvider {
   void NativeVideoWindowGeometryChanged(
       const base::UnguessableToken& window_id,
       const gfx::Rect& dst,
-      const gfx::Rect& src = gfx::Rect(),
+      const base::Optional<gfx::Rect>& src = base::nullopt,
       const base::Optional<gfx::Rect>& ori = base::nullopt) override;
   void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,

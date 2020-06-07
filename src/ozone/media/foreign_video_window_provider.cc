@@ -126,6 +126,7 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
   void UpdateVideoWindowGeometryWithCrop(const gfx::Rect& ori,
                                          const gfx::Rect& src,
                                          const gfx::Rect& dst) override;
+  void SetZoomRegion(const gfx::RectF& zoom_area) override;
 
   ForeignVideoWindowProvider* provider_ = nullptr;
   gfx::AcceleratedWidget owner_widget_ = gfx::kNullAcceleratedWidget;
@@ -136,7 +137,7 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
   base::CancelableOnceCallback<void()> notify_geometry_cb_;
   base::Optional<gfx::Rect> ori_rect_ = base::nullopt;
   base::Optional<gfx::Size> natural_video_size_;
-  gfx::Rect src_rect_;
+  base::Optional<gfx::Rect> src_rect_;
   gfx::Rect dst_rect_;
   base::Time last_updated_ = base::Time::Now();
   State state_ = State::kNone;
@@ -197,6 +198,29 @@ void ForeignVideoWindow::UpdateVideoWindowGeometryWithCrop(
   VLOG(1) << __func__ << " ori=" << ori.ToString() << " src=" << src.ToString()
           << " dst=" << dst.ToString();
   provider_->NativeVideoWindowGeometryChanged(window_id_, dst, src, ori);
+}
+
+void ForeignVideoWindow::SetZoomRegion(const gfx::RectF& zoom_area) {
+  VLOG(1) << __func__ << " zoom_area=" << zoom_area.ToString();
+
+  gfx::Rect ori;
+  if (natural_video_size_) {
+    ori = gfx::Rect(natural_video_size_.value());
+  } else {
+    auto display = ozonewayland::WaylandDisplay::GetInstance();
+    auto window = display->GetWindow(static_cast<unsigned>(owner_widget_));
+    if (!window) {
+      LOG(ERROR) << __func__ << " window is nullptr";
+      return;
+    }
+    ori = window->GetBounds();
+  }
+
+  gfx::Rect src = gfx::Rect(ori.width() * zoom_area.x(),
+                            ori.height() * zoom_area.y(),
+                            ori.width() * zoom_area.width(),
+                            ori.height() * zoom_area.height());
+  provider_->NativeVideoWindowGeometryChanged(window_id_, dst_rect_, src, ori);
 }
 
 std::unique_ptr<VideoWindowProvider> VideoWindowProvider::Create() {
@@ -332,8 +356,8 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
   if (!w->notify_geometry_cb_.IsCancelled())
     w->notify_geometry_cb_.Cancel();
 
-  gfx::Rect source = w->src_rect_;
   gfx::Rect dest = w->dst_rect_;
+  gfx::Rect source = w->src_rect_.value();
   base::Optional<gfx::Rect> ori = w->ori_rect_;
 
   // set_exported_window is not work correctly with punch-through in below cases
@@ -433,7 +457,7 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
 void ForeignVideoWindowProvider::NativeVideoWindowGeometryChanged(
     const base::UnguessableToken& window_id,
     const gfx::Rect& dst_rect,
-    const gfx::Rect& src_rect,
+    const base::Optional<gfx::Rect>& src_rect,
     const base::Optional<gfx::Rect>& ori_rect) {
   ForeignVideoWindow* win = FindWindow(window_id);
   if (!win) {
@@ -443,12 +467,12 @@ void ForeignVideoWindowProvider::NativeVideoWindowGeometryChanged(
 
   bool changed = false;
 
-  if (win->ori_rect_ != ori_rect) {
+  if (ori_rect.has_value() && win->ori_rect_ != ori_rect) {
     win->ori_rect_ = ori_rect;
     changed = true;
   }
 
-  if (win->src_rect_ != src_rect) {
+  if (src_rect.has_value() && win->src_rect_ != src_rect) {
     win->src_rect_ = src_rect;
     changed = true;
   }

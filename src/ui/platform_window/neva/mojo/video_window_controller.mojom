@@ -42,6 +42,7 @@ interface VideoWindow {
   UpdateCurrentVideoWindowGeometry();
   UpdateVideoWindowGeometry(gfx.mojom.Rect src, gfx.mojom.Rect dst);
   UpdateVideoWindowGeometryWithCrop(gfx.mojom.Rect ori, gfx.mojom.Rect src, gfx.mojom.Rect dst);
+  SetZoomRegion(gfx.mojom.RectF zoom);
 };
 
 interface VideoWindowClient {

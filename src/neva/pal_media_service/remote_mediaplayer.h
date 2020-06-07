@@ -119,6 +119,7 @@ class RemoteMediaPlayer : public mojom::MediaPlayer,
                     base::TimeTicks current_time_ticks) override;
   void OnActiveRegionChanged(const blink::WebRect& active_region) override;
   void OnAudioFocusChanged() override;
+  void OnZoomAreaChanged(const gfx::RectF& zoom_area) override;
 
  private:
   mojo::AssociatedInterfacePtrSet<mojom::MediaPlayerListener> listeners_;

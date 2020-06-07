@@ -333,6 +333,12 @@ void RemoteMediaPlayer::OnAudioFocusChanged() {
   });
 }
 
+void RemoteMediaPlayer::OnZoomAreaChanged(const gfx::RectF& zoom_area) {
+  listeners_.ForAllPtrs([&zoom_area](mojom::MediaPlayerListener* listener) {
+    listener->OnZoomAreaChanged(zoom_area);
+  });
+}
+
 void RemoteMediaPlayer::Send(const std::string& message,
                              SendCallback callback) {
   std::move(callback).Run(media_player_neva_->Send(message));

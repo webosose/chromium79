@@ -66,6 +66,7 @@ class MediaPlayerNevaClient {
 
   // For video texture
   virtual void OnActiveRegionChanged(const blink::WebRect&) {}
+  virtual void OnZoomAreaChanged(const gfx::RectF& zoom_area) = 0;
 
   virtual void OnAudioFocusChanged() = 0;
 };

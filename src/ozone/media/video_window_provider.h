@@ -61,7 +61,7 @@ class VideoWindowProvider {
   virtual void NativeVideoWindowGeometryChanged(
       const base::UnguessableToken& window_id,
       const gfx::Rect& dst_rect,
-      const gfx::Rect& src_rect = gfx::Rect(),
+      const base::Optional<gfx::Rect>& src_rect = base::nullopt,
       const base::Optional<gfx::Rect>& ori_rect = base::nullopt) = 0;
   virtual void NativeVideoWindowVisibilityChanged(
       const base::UnguessableToken& window_id,
