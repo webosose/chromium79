@@ -49,7 +49,7 @@ declare_args() {
 
   use_neva_media_for_testing = false
 
-  enable_webm_audio_codecs = true
+  enable_webm_audio_codecs = false
 
   enable_webm_video_codecs = true
 

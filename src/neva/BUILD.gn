@@ -64,8 +64,6 @@ config("config") {
       "OS_WEBOS=1",
       "NEVA_VIDEO_HOLE=1",
     ]
-
-    enable_webm_audio_codecs = false
   }
 
   if (use_neva_appruntime) {
