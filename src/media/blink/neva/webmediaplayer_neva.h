@@ -205,7 +205,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
                               bool success) override;
   void OnLoadComplete() override;
   void OnPlaybackComplete() override;
-  void OnBufferingUpdate(int percentage) override;
+  void OnBufferingStateChanged(const BufferingState buffering_state) override;
   // void OnBufferingUpdate(double begin, double end) override;
   void OnSeekComplete(const base::TimeDelta& current_time) override;
   void OnMediaError(int error_type) override;

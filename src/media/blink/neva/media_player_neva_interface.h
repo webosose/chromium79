@@ -20,6 +20,7 @@
 #include <string>
 
 #include "base/time/time.h"
+#include "media/base/buffering_state.h"
 #include "media/base/neva/media_constants.h"
 #include "media/base/neva/media_track_info.h"
 #include "media/base/ranges.h"
@@ -48,7 +49,8 @@ class MediaPlayerNevaClient {
 
   virtual void OnCustomMessage(const blink::WebMediaPlayer::MediaEventType,
                                const std::string& detail) = 0;
-  virtual void OnBufferingUpdate(int percentage) = 0;
+  virtual void OnBufferingStateChanged(
+      const BufferingState buffering_state) = 0;
   virtual void OnAudioTracksUpdated(
       const std::vector<MediaTrackInfo>& audio_track_info) = 0;
 

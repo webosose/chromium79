@@ -296,9 +296,10 @@ void RemoteMediaPlayer::OnCustomMessage(
   });
 }
 
-void RemoteMediaPlayer::OnBufferingUpdate(int percentage) {
-  listeners_.ForAllPtrs([&percentage](mojom::MediaPlayerListener* listener) {
-    listener->OnBufferingUpdate(percentage);
+void RemoteMediaPlayer::OnBufferingStateChanged(
+    const media::BufferingState buffering_state) {
+  listeners_.ForAllPtrs([&](mojom::MediaPlayerListener* listener) {
+    listener->OnBufferingStateChanged(buffering_state);
   });
 }
 

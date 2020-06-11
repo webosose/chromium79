@@ -122,7 +122,7 @@ class RemoteMediaPlayerClient
   void OnVideoSizeChanged(uint32_t width, uint32_t height) override;
   void OnCustomMessage(const pal_media::mojom::MediaEventType,
                        const std::string& detail) override;
-  void OnBufferingUpdate(int percentage) override;
+  void OnBufferingStateChanged(BufferingState buffering_state) override;
   void OnTimeUpdate(base::TimeDelta current_timestamp,
                     base::TimeTicks current_time_ticks) override;
   void OnAudioTracksUpdated(

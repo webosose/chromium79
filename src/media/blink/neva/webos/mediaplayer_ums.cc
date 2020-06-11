@@ -347,8 +347,10 @@ void MediaPlayerUMS::OnBufferingStatusChanged(
     case WebOSMediaClient::kPrerollCompleted:
       break;
     case WebOSMediaClient::kWebOSBufferingStart:
+      client_->OnBufferingStateChanged(BufferingState::BUFFERING_HAVE_NOTHING);
       break;
     case WebOSMediaClient::kWebOSBufferingEnd:
+      client_->OnBufferingStateChanged(BufferingState::BUFFERING_HAVE_ENOUGH);
       break;
     case WebOSMediaClient::kWebOSNetworkStateLoading:
       break;

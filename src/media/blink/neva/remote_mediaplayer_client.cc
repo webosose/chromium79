@@ -390,9 +390,10 @@ void RemoteMediaPlayerClient::OnCustomMessage(
   client_->OnCustomMessage(ConvertPalMediaEventType(media_event_type), detail);
 }
 
-void RemoteMediaPlayerClient::OnBufferingUpdate(int percentage) {
+void RemoteMediaPlayerClient::OnBufferingStateChanged(
+    BufferingState buffering_state) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-  client_->OnBufferingUpdate(percentage);
+  client_->OnBufferingStateChanged(buffering_state);
 }
 
 void RemoteMediaPlayerClient::OnTimeUpdate(base::TimeDelta current_timestamp,

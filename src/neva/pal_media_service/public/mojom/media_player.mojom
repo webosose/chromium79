@@ -16,6 +16,7 @@
 
 module pal_media.mojom;
 
+import "media/mojo/mojom/media_types.mojom";
 import "media/mojo/mojom/neva/media_track_info.mojom";
 import "mojo/public/mojom/base/time.mojom";
 import "ui/gfx/geometry/mojom/geometry.mojom";
@@ -68,7 +69,7 @@ interface MediaPlayerListener {
   OnLoadComplete();
   OnVideoSizeChanged(uint32 width, uint32 height);
   OnCustomMessage(MediaEventType media_event_type, string detail);
-  OnBufferingUpdate(int32 percentage);
+  OnBufferingStateChanged(media.mojom.BufferingState buffering_state);
   OnTimeUpdate(mojo_base.mojom.TimeDelta current_timestamp, mojo_base.mojom.TimeTicks current_time_ticks);
   OnAudioTracksUpdated(array<media.mojom.MediaTrackInfo> audio_track_info);
   OnAudioFocusChanged();

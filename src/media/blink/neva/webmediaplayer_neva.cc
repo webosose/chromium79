@@ -763,12 +763,25 @@ void WebMediaPlayerNeva::OnPlaybackComplete() {
     playback_completed_ = true;
 }
 
-void WebMediaPlayerNeva::OnBufferingUpdate(int percentage) {
+void WebMediaPlayerNeva::OnBufferingStateChanged(
+    const BufferingState buffering_state) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   did_loading_progress_ = true;
 
-  if (percentage == 100 && network_state_ < WebMediaPlayer::kNetworkStateLoaded)
-    UpdateNetworkState(WebMediaPlayer::kNetworkStateLoaded);
+  switch (buffering_state) {
+    case BUFFERING_HAVE_NOTHING:
+      interpolator_.StopInterpolating();
+      UpdateReadyState(WebMediaPlayer::kReadyStateHaveCurrentData);
+      break;
+    case BUFFERING_HAVE_ENOUGH:
+      interpolator_.StartInterpolating();
+      UpdateReadyState(WebMediaPlayer::kReadyStateHaveEnoughData);
+      if (network_state_ < WebMediaPlayer::kNetworkStateLoaded)
+        UpdateNetworkState(WebMediaPlayer::kNetworkStateLoaded);
+      break;
+    default:
+      NOTREACHED() << "Invalid buffering state";
+  }
 }
 
 void WebMediaPlayerNeva::OnSeekComplete(const base::TimeDelta& current_time) {

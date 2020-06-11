@@ -164,8 +164,6 @@ void UMediaClientImpl::SetPlaybackRate(float playback_rate) {
   } else if (playback_rate_ == 0.0f) {
     // paused -> play
     requests_play_ = true;
-    if (buffering_)
-      DispatchBufferingEnd();
     if (playback_rate_on_paused_ != 1.0f || playback_rate != 1.0f) {
       if (playback_rate_on_paused_ != playback_rate) {
         uMediaServer::uMediaClient::setPlayRate(
@@ -1245,10 +1243,6 @@ bool UMediaClientImpl::onBufferingStart() {
 void UMediaClientImpl::DispatchBufferingStart() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
-  if (current_time_ == 0.0f && requests_play_)
-    return;
-
-  buffering_ = true;
   if (event_listener_) {
     event_listener_->OnBufferingStatusChanged(
         UMediaClientImpl::kWebOSBufferingStart);
@@ -1265,7 +1259,6 @@ bool UMediaClientImpl::onBufferingEnd() {
 void UMediaClientImpl::DispatchBufferingEnd() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
-  buffering_ = false;
   if (event_listener_) {
     event_listener_->OnBufferingStatusChanged(
         UMediaClientImpl::kWebOSBufferingEnd);
