@@ -17,7 +17,7 @@
 #include "webos/application_installation_handler.h"
 
 #include "base/lazy_instance.h"
-#include "content/public/browser/local_storage_manager.h"
+#include "components/local_storage_manager/public/local_storage_manager.h"
 #include "neva/app_runtime/browser/app_runtime_browser_context.h"
 #include "neva/app_runtime/browser/app_runtime_browser_context_adapter.h"
 

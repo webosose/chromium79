@@ -129,7 +129,7 @@
 #endif
 
 #if defined(USE_LOCAL_STORAGE_MANAGER)
-#include "content/browser/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
+#include "components/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
 #endif
 
 class GURL;

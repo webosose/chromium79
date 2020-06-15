@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef CONTENT_PUBLIC_BROWSER_LOCAL_STORAGE_MANAGER_H_
-#define CONTENT_PUBLIC_BROWSER_LOCAL_STORAGE_MANAGER_H_
+#ifndef COMPONENTS_LOCAL_STORAGE_MANAGER_PUBLIC_LOCAL_STORAGE_MANAGER_H_
+#define COMPONENTS_LOCAL_STORAGE_MANAGER_PUBLIC_LOCAL_STORAGE_MANAGER_H_
 
 #include <map>
 #include <memory>
@@ -25,7 +25,7 @@
 #include "base/callback.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
-#include "content/browser/local_storage_manager/local_storage_manager_store.h"
+#include "components/local_storage_manager/common/local_storage_manager_store.h"
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
@@ -58,4 +58,4 @@ class LocalStorageManager
 
 }  // namespace content
 
-#endif  // CONTENT_PUBLIC_BROWSER_LOCAL_STORAGE_MANAGER_H_
+#endif  // COMPONENTS_LOCAL_STORAGE_MANAGER_PUBLIC_LOCAL_STORAGE_MANAGER_H_

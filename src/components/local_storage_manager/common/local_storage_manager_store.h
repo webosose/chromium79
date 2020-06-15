@@ -14,13 +14,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_STORE_H_
-#define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_STORE_H_
+#ifndef COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_STORE_H_
+#define COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_STORE_H_
 
 #include <memory>
 
 #include "base/threading/thread.h"
-#include "content/browser/local_storage_manager/local_storage_manager_database.h"
+#include "components/local_storage_manager/common/local_storage_manager_database.h"
 
 namespace content {
 
@@ -75,4 +75,4 @@ class LocalStorageManagerStore {
 
 }  // namespace content
 
-#endif  // CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_STORE_H_
+#endif  // COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_STORE_H_

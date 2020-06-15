@@ -2681,20 +2681,7 @@ jumbo_source_set("browser") {
 
   if (use_local_storage_manager) {
     deps += [
-      "//content/browser/local_storage_manager/public/mojom",
-    ]
-    sources += [
-      "local_storage_manager/local_storage_manager_database.cc",
-      "local_storage_manager/local_storage_manager_database.h",
-      "local_storage_manager/local_storage_manager_fake_impl.cc",
-      "local_storage_manager/local_storage_manager_fake_impl.h",
-      "local_storage_manager/local_storage_manager_impl.cc",
-      "local_storage_manager/local_storage_manager_impl.h",
-      "local_storage_manager/local_storage_manager_store.cc",
-      "local_storage_manager/local_storage_manager_store.h",
-      "local_storage_manager/local_storage_manager_types.h",
-      "local_storage_manager/local_storage_manager_url_request_handler.cc",
-      "local_storage_manager/local_storage_manager_url_request_handler.h",
+      "//components/local_storage_manager/browser",
     ]
     defines += [ "USE_LOCAL_STORAGE_MANAGER" ]
   }

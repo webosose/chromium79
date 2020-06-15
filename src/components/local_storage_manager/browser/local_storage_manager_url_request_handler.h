@@ -14,11 +14,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
-#define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
+#ifndef COMPONENTS_LOCAL_STORAGE_MANAGER_BROWSER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
+#define COMPONENTS_LOCAL_STORAGE_MANAGER_BROWSER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
 
 #include "base/memory/ref_counted.h"
-#include "content/public/browser/local_storage_manager.h"
+#include "components/local_storage_manager/public/local_storage_manager.h"
 
 namespace net {
 class URLRequest;
@@ -48,4 +48,4 @@ class LocalStorageManagerUrlRequestHandler
 };
 }  // namespace content
 
-#endif  // CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_
+#endif  // COMPONENTS_LOCAL_STORAGE_MANAGER_BROWSER_LOCAL_STORAGE_MANAGER_URL_REQUEST_HANDLER_H_

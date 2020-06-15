@@ -234,7 +234,7 @@
 #include "v8/include/v8.h"
 
 #if defined(USE_LOCAL_STORAGE_MANAGER)
-#include "content/browser/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
+#include "components/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
 #endif
 
 #if BUILDFLAG(ENABLE_PLUGINS)

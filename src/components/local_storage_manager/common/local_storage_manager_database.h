@@ -14,13 +14,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_DATABASE_H_
-#define CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_DATABASE_H_
+#ifndef COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_DATABASE_H_
+#define COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_DATABASE_H_
 
 #include <string>
 
 #include "base/files/file_util.h"
-#include "content/browser/local_storage_manager/local_storage_manager_types.h"
+#include "components/local_storage_manager/common/local_storage_manager_types.h"
 #include "sql/init_status.h"
 #include "sql/statement.h"
 #include "sql/transaction.h"
@@ -52,4 +52,4 @@ class LocalStorageManagerDatabase {
 };
 }  // namespace content
 
-#endif  // CONTENT_BROWSER_LOCAL_STORAGE_MANAGER_LOCAL_STORAGE_MANAGER_DATABASE_H_
+#endif  // COMPONENTS_LOCAL_STORAGE_MANAGER_COMMON_LOCAL_STORAGE_MANAGER_DATABASE_H_

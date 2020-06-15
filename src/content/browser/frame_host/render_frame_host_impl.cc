@@ -215,8 +215,7 @@
 #include "url/url_constants.h"
 
 #if defined(USE_LOCAL_STORAGE_MANAGER)
-#include "content/browser/local_storage_manager/public/mojom/local_storage_manager.mojom.h"
-#include "content/public/browser/local_storage_manager.h"
+#include "components/local_storage_manager/browser/local_storage_manager_mojo_impl.h"
 #endif
 
 #if defined(OS_ANDROID)
@@ -8038,35 +8037,4 @@ bool RenderFrameHostImpl::HasPendingCommitNavigationForTesting() {
   return navigation_request_ || !navigation_requests_.empty();
 }
 
-#if defined(USE_LOCAL_STORAGE_MANAGER)
-class LocalStorageManagerMojoImpl : local_storage::mojom::LocalStorageManager {
- public:
-  explicit LocalStorageManagerMojoImpl(
-      mojo::PendingReceiver<local_storage::mojom::LocalStorageManager> receiver)
-      : receiver_(this, std::move(receiver)) {}
-
-  void SaveUrl(const std::string& application_id,
-               const std::string& url,
-               SaveUrlCallback callback) override {
-    std::move(callback).Run();
-    auto lsm = content::LocalStorageManager::Create().release();
-    if (lsm) {
-      VLOG(1) << "LocalStorageManager  SaveUrl appID=" << application_id
-              << " url=" << url;
-      lsm->OnAccessOrigin(application_id, GURL(url), base::BindOnce([] {}));
-    }
-  }
-
- private:
-  mojo::Receiver<local_storage::mojom::LocalStorageManager> receiver_;
-
-  DISALLOW_COPY_AND_ASSIGN(LocalStorageManagerMojoImpl);
-};
-
-void RenderFrameHostImpl::GetLocalStorageManagerMojoImpl(
-    mojo::PendingReceiver<local_storage::mojom::LocalStorageManager> receiver) {
-  lsm_responder_ =
-      std::make_unique<LocalStorageManagerMojoImpl>(std::move(receiver));
-}
-#endif
 }  // namespace content

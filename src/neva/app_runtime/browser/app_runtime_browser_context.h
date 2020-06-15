@@ -17,8 +17,8 @@
 #ifndef NEVA_APP_RUNTIME_BROWSER_APP_RUNTIME_BROWSER_CONTEXT_H_
 #define NEVA_APP_RUNTIME_BROWSER_APP_RUNTIME_BROWSER_CONTEXT_H_
 
+#include "components/local_storage_manager/public/local_storage_manager.h"
 #include "content/public/browser/browser_context.h"
-#include "content/public/browser/local_storage_manager.h"
 
 namespace neva_app_runtime {
 

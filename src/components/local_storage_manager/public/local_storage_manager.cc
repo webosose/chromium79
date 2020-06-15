@@ -14,14 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "content/public/browser/local_storage_manager.h"
+#include "components/local_storage_manager/public/local_storage_manager.h"
 
 #include <memory>
 
 #include "base/base_switches.h"
 #include "base/command_line.h"
-#include "content/browser/local_storage_manager/local_storage_manager_fake_impl.h"
-#include "content/browser/local_storage_manager/local_storage_manager_impl.h"
+#include "components/local_storage_manager/browser/local_storage_manager_fake_impl.h"
+#include "components/local_storage_manager/browser/local_storage_manager_impl.h"
 
 namespace content {
 
