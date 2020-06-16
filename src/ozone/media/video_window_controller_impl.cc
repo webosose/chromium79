@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,6 +59,10 @@ void VideoWindowControllerImpl::CreateVideoWindow(
       w, std::move(client), std::move(receiver), params,
       base::BindRepeating(&VideoWindowControllerImpl::OnWindowEvent,
                           base::Unretained(this)));
+  if (window_id == base::UnguessableToken::Null()) {
+    LOG(ERROR) << "Not created.";
+    return;
+  }
 
   VideoWindowInfo* info = new VideoWindowInfo(w, window_id, params);
   id_to_widget_map_[window_id] = w;

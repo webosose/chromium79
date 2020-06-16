@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -267,11 +267,16 @@ base::UnguessableToken ForeignVideoWindowProvider::CreateNativeVideoWindow(
                                    ->GetWLSurface();
 
   base::UnguessableToken id = base::UnguessableToken::Create();
-  native_id_to_window_id_[id.ToString()] = id;
   foreign_windows_.emplace(
       id, std::make_unique<ForeignVideoWindow>(
               this, w, id, params, ForeignWindowType::VIDEO, surface));
   ForeignVideoWindow* window = FindWindow(id);
+  if (!window) {
+    LOG(ERROR) << __func__
+               << " failed to find foreign video window for id=" << id;
+    return base::UnguessableToken::Null();
+  }
+  native_id_to_window_id_[id.ToString()] = id;
   window->state_ = ForeignVideoWindow::State::kCreating;
   window->window_id_ = id;
   window->window_event_cb_ = cb;

@@ -1,4 +1,4 @@
-// Copyright 2019 LG Electronics, Inc.
+// Copyright (c) 2019-2020 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ base::UnguessableToken PseudoVideoWindowProvider::CreateNativeVideoWindow(
   auto result =
       pseudo_windows_.emplace(id, std::make_unique<PseudoVideoWindow>());
   if (!result.second) {
-    LOG(ERROR) << __func__ << " failed to inster PseudoVideoWindow for " << id;
+    LOG(ERROR) << __func__ << " failed to insert PseudoVideoWindow for " << id;
     return base::UnguessableToken::Null();
   }
   auto& window = result.first->second;
