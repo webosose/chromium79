@@ -44,6 +44,7 @@ void AppWindowContentsImpl::Initialize(content::BrowserContext* context,
   web_contents_->GetMutableRendererPrefs()->application_id =
       host_->GetApplicationId();
   web_contents_->GetMutableRendererPrefs()->is_enact_browser = true;
+  web_contents_->GetMutableRendererPrefs()->display_id = host_->GetDisplayId();
 #endif
 
 #if defined(OS_WEBOS) && defined(USE_NEVA_MEDIA)
