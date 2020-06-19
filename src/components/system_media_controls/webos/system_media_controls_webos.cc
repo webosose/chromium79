@@ -16,6 +16,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "build/branding_buildflags.h"
 #include "components/system_media_controls/system_media_controls_observer.h"
+#include "components/system_media_controls/webos/system_media_controls_stub.h"
 #include "content/public/browser/media_session.h"
 #include "content/public/browser/web_contents.h"
 #include "media/base/bind_to_current_loop.h"
@@ -27,9 +28,10 @@ namespace system_media_controls {
 
 // static
 SystemMediaControls* SystemMediaControls::GetInstance() {
-  internal::SystemMediaControlsWebOS* service =
-      internal::SystemMediaControlsWebOS::GetInstance();
-  return service;
+  if (!base::FeatureList::IsEnabled(
+          media_session::features::kMediaControllerService))
+    return internal::SystemMediaControlsStub::GetInstance();
+  return internal::SystemMediaControlsWebOS::GetInstance();;
 }
 
 namespace internal {
@@ -65,11 +67,6 @@ const char kDeactivateMediaSession[] = "deactivateMediaSession";
 const char kSetMediaMetaData[] = "setMediaMetaData";
 const char kSetMediaPlayStatus[] = "setMediaPlayStatus";
 
-bool IsMCSEnabled() {
-  return base::FeatureList::IsEnabled(
-             media_session::features::kMediaControllerService);
-}
-
 }  // namespace
 
 #define BIND_TO_CURRENT_LOOP(function) \
@@ -90,9 +87,6 @@ SystemMediaControlsWebOS::~SystemMediaControlsWebOS() {
 void SystemMediaControlsWebOS::AddObserver(
     SystemMediaControlsObserver* observer) {
   observers_.AddObserver(observer);
-
-  if (!IsMCSEnabled())
-    return;
 
   // If the service is already ready, inform the observer.
   if (registered_) {
@@ -183,9 +177,6 @@ void SystemMediaControlsWebOS::UpdateDisplay() {
 
 void SystemMediaControlsWebOS::SetMediaSessionId(
     const base::Optional<base::UnguessableToken>& session_id) {
-  if (!IsMCSEnabled())
-    return;
-
   if (session_id.has_value())
     application_id_ = GetAppIdFromSession(session_id.value());
 
@@ -225,9 +216,6 @@ void SystemMediaControlsWebOS::SetMediaSessionId(
 
 bool SystemMediaControlsWebOS::RegisterMediaSession(
     const std::string& session_id) {
-  if (!IsMCSEnabled())
-    return false;
-
   if (session_id.empty()) {
     LOG(ERROR) << __func__ << "Invalid session id.";
     return false;
@@ -254,9 +242,6 @@ bool SystemMediaControlsWebOS::RegisterMediaSession(
 }
 
 void SystemMediaControlsWebOS::UnregisterMediaSession() {
-  if (!IsMCSEnabled())
-    return;
-
   if (!registered_) {
     LOG(ERROR) << __func__ << " Session is already unregistered.";
     return;
@@ -289,9 +274,6 @@ void SystemMediaControlsWebOS::UnregisterMediaSession() {
 
 bool SystemMediaControlsWebOS::ActivateMediaSession(
     const std::string& session_id) {
-  if (!IsMCSEnabled())
-    return false;
-
   if (session_id.empty()) {
     LOG(ERROR) << __func__ << "Invalid session id.";
     return false;
@@ -315,9 +297,6 @@ bool SystemMediaControlsWebOS::ActivateMediaSession(
 }
 
 void SystemMediaControlsWebOS::DeactivateMediaSession() {
-  if (!IsMCSEnabled())
-    return;
-
   if (session_id_.empty()) {
     LOG(ERROR) << __func__ << " No active session.";
     return;
@@ -340,9 +319,6 @@ void SystemMediaControlsWebOS::DeactivateMediaSession() {
 
 void SystemMediaControlsWebOS::SetPlaybackStatusInternal(
     const std::string& play_status) {
-  if (!IsMCSEnabled())
-    return;
-
   Json::Value playstatus_root;
   playstatus_root[kMediaId] = session_id_;
   playstatus_root[kMediaPlayStatus] = play_status;
@@ -362,9 +338,6 @@ void SystemMediaControlsWebOS::SetPlaybackStatusInternal(
 void SystemMediaControlsWebOS::SetMetadataPropertyInternal(
     const std::string& property,
     const base::string16& value) {
-  if (!IsMCSEnabled())
-    return;
-
   Json::Value metadata;
   metadata[property] = base::UTF16ToUTF8(value);
 
