@@ -1415,12 +1415,13 @@ bool RenderWidgetHostViewAura::GetTextRange(gfx::Range* range) const {
   if (!text_input_manager_ || !GetFocusedWidget())
     return false;
 
-  const TextInputState* state = text_input_manager_->GetTextInputState();
-  if (!state)
+  const TextInputManager::TextSelection* selection =
+      text_input_manager_->GetTextSelection(GetFocusedWidget()->GetView());
+  if (!selection)
     return false;
 
-  range->set_start(0);
-  range->set_end(state->value.length());
+  range->set_start(selection->offset());
+  range->set_end(selection->offset() + selection->text().length());
   return true;
 }
 
@@ -1429,13 +1430,13 @@ bool RenderWidgetHostViewAura::GetCompositionTextRange(
   if (!text_input_manager_ || !GetFocusedWidget())
     return false;
 
-  const TextInputState* state = text_input_manager_->GetTextInputState();
-  // Return false when there is no composition.
-  if (!state || state->composition_start == -1)
+  const TextInputManager::CompositionRangeInfo* composition_range_info =
+      text_input_manager_->GetCompositionRangeInfo();
+  if (!composition_range_info || !composition_range_info->range.IsValid())
     return false;
 
-  range->set_start(state->composition_start);
-  range->set_end(state->composition_end);
+  range->set_start(composition_range_info->range.start());
+  range->set_end(composition_range_info->range.end());
   return true;
 }
 
@@ -1444,12 +1445,13 @@ bool RenderWidgetHostViewAura::GetEditableSelectionRange(
   if (!text_input_manager_ || !GetFocusedWidget())
     return false;
 
-  const TextInputState* state = text_input_manager_->GetTextInputState();
-  if (!state)
+  const TextInputManager::TextSelection* selection =
+      text_input_manager_->GetTextSelection(GetFocusedWidget()->GetView());
+  if (!selection)
     return false;
 
-  range->set_start(state->selection_start);
-  range->set_end(state->selection_end);
+  range->set_start(selection->range().start());
+  range->set_end(selection->range().end());
   return true;
 }
 
@@ -1482,22 +1484,24 @@ bool RenderWidgetHostViewAura::GetTextFromRange(
   if (!text_input_manager_ || !GetFocusedWidget())
     return false;
 
-  const TextInputState* state = text_input_manager_->GetTextInputState();
-  if (!state)
+  const TextInputManager::TextSelection* selection =
+      text_input_manager_->GetTextSelection(GetFocusedWidget()->GetView());
+  if (!selection)
     return false;
 
-  gfx::Range text_range;
-  GetTextRange(&text_range);
+  gfx::Range selection_text_range(
+      selection->offset(), selection->offset() + selection->text().length());
 
-  if (!text_range.Contains(range)) {
+  if (!selection_text_range.Contains(range)) {
     text->clear();
     return false;
   }
-  if (text_range.EqualsIgnoringDirection(range)) {
+  if (selection_text_range.EqualsIgnoringDirection(range)) {
     // Avoid calling substr whose performance is low.
-    *text = state->value;
+    *text = selection->text();
   } else {
-    *text = state->value.substr(range.GetMin(), range.length());
+    *text = selection->text().substr(range.GetMin() - selection->offset(),
+                                     range.length());
   }
   return true;
 }
