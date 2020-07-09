@@ -260,11 +260,28 @@ base::UnguessableToken ForeignVideoWindowProvider::CreateNativeVideoWindow(
     WindowEventCb cb) {
   VLOG(1) << __func__;
 
+  mojo::Remote<ui::mojom::VideoWindowClient> window_client(std::move(client));
+
   ozonewayland::WaylandDisplay* display =
       ozonewayland::WaylandDisplay::GetInstance();
-  struct wl_surface* surface = display->GetWindow(static_cast<unsigned>(w))
-                                   ->ShellSurface()
-                                   ->GetWLSurface();
+  ozonewayland::WaylandWindow* wayland_window = nullptr;
+  ozonewayland::WaylandShellSurface* shell_surface = nullptr;
+  struct wl_surface* surface = nullptr;
+
+  if (display)
+    wayland_window = display->GetWindow(static_cast<unsigned>(w));
+  if (wayland_window)
+    shell_surface = wayland_window->ShellSurface();
+  if (shell_surface)
+    surface = shell_surface->GetWLSurface();
+
+  if (!surface) {
+    LOG(ERROR) << __func__ << " Failed to get surface window_handle=" << w
+               << " display=" << display << " wayland_window=" << wayland_window
+               << " shell_surface=" << shell_surface << " surface=" << surface;
+    window_client->OnVideoWindowDestroyed();
+    return base::UnguessableToken::Null();
+  }
 
   base::UnguessableToken id = base::UnguessableToken::Create();
   foreign_windows_.emplace(
@@ -274,13 +291,15 @@ base::UnguessableToken ForeignVideoWindowProvider::CreateNativeVideoWindow(
   if (!window) {
     LOG(ERROR) << __func__
                << " failed to find foreign video window for id=" << id;
+    window_client->OnVideoWindowDestroyed();
     return base::UnguessableToken::Null();
   }
+
   native_id_to_window_id_[id.ToString()] = id;
   window->state_ = ForeignVideoWindow::State::kCreating;
   window->window_id_ = id;
   window->window_event_cb_ = cb;
-  window->client_.Bind(std::move(client));
+  window->client_ = std::move(window_client);
   window->receiver_.Bind(std::move(receiver));
   static const struct wl_webos_exported_listener exported_listener = {
       ForeignVideoWindowProvider::HandleExportedWindowAssigned};
@@ -524,6 +543,9 @@ void ForeignVideoWindowProvider::DestroyNativeVideoWindow(
     task_runner_->PostTask(
         FROM_HERE, base::BindOnce(info->window_event_cb_, w, id,
                                   ui::VideoWindowProvider::Event::kDestroyed));
+    if (info->client_)
+      info->client_->OnVideoWindowDestroyed();
+
     foreign_windows_.erase(id);
   } else {
     LOG(WARNING) << __func__ << " failed to find video window id=" << id;
