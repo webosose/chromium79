@@ -46,7 +46,7 @@ void LocalStorageManagerUrlRequestHandler::OnAccessOrigin(
 
   blink::mojom::RendererPreferences* prefs =
       web_contents->GetMutableRendererPrefs();
-  local_storage_manager_->OnAccessOrigin(prefs->application_id, origin,
+  local_storage_manager_->OnAccessOrigin(prefs->file_security_origin, origin,
                                          std::move(callback));
 }
 

@@ -5356,9 +5356,9 @@ void RenderFrameImpl::WillSendRequestInternal(
   mojo::Remote<local_storage::mojom::LocalStorageManager> lsm_responder;
   mojo::PendingReceiver<local_storage::mojom::LocalStorageManager> receiver =
       lsm_responder.BindNewPipeAndPassReceiver();
-  lsm_responder->SaveUrl(render_view_->renderer_preferences().application_id,
-                         request.Url().GetString().Utf8(),
-                         base::BindOnce([] {}));
+  lsm_responder->SaveUrl(
+      render_view_->renderer_preferences().file_security_origin,
+      request.Url().GetString().Utf8(), base::BindOnce([] {}));
   GetBrowserInterfaceBroker()->GetInterface(std::move(receiver));
 #endif
 

@@ -86,6 +86,8 @@ class WEBOS_EXPORT WebViewBase
     std::string bypass_list;
   };
 
+  static const std::string kSecurityOriginPostfix;
+
   static void SetFileAccessBlocked(bool blocked);
   static WebViewBase* FromID(int render_process_id, int render_view_id);
   static WebViewBase* FromFrameTreeNodeId(int frame_tree_node_id);

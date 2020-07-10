@@ -20,6 +20,7 @@
 #include "components/local_storage_manager/public/local_storage_manager.h"
 #include "neva/app_runtime/browser/app_runtime_browser_context.h"
 #include "neva/app_runtime/browser/app_runtime_browser_context_adapter.h"
+#include "webos/webview_base.h"
 
 static base::LazyInstance<webos::ApplicationInstallationHandler>::
     DestructorAtExit g_webos_app_installer = LAZY_INSTANCE_INITIALIZER;
@@ -35,7 +36,7 @@ void ApplicationInstallationHandler::OnAppInstalled(const std::string& app_id) {
                ->GetBrowserContext()
                ->GetLocalStorageManager();
   if (p)
-    p->OnAppInstalled(app_id);
+    p->OnAppInstalled(app_id + WebViewBase::kSecurityOriginPostfix);
 }
 
 void ApplicationInstallationHandler::OnAppRemoved(const std::string& app_id) {
@@ -43,7 +44,7 @@ void ApplicationInstallationHandler::OnAppRemoved(const std::string& app_id) {
                ->GetBrowserContext()
                ->GetLocalStorageManager();
   if (p)
-    p->OnAppRemoved(app_id);
+    p->OnAppRemoved(app_id + WebViewBase::kSecurityOriginPostfix);
 }
 
 }  // namespace webos

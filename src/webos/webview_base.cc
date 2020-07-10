@@ -78,6 +78,8 @@ void WebViewBase::SetFileAccessBlocked(bool blocked) {
   NOTIMPLEMENTED();
 }
 
+const std::string WebViewBase::kSecurityOriginPostfix("-webos");
+
 WebViewBase::WebViewBase(bool alt_storage_path, int width, int height) {
   // If screen is rotated then initial size might be different and default
   // values may lead to incorrectly scaled view for the first rendered frame.
