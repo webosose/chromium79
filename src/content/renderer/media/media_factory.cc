@@ -443,8 +443,8 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
       new media::WebMediaPlayerParamsNeva(base::BindRepeating(
           &content::mojom::FrameVideoWindowFactory::CreateVideoWindow,
           base::Unretained(render_frame_->GetFrameVideoWindowFactory()))));
-  params_neva->set_application_id(blink::WebString::FromUTF8(
-      renderer_prefs.application_id + renderer_prefs.display_id));
+  params_neva->set_application_id(
+      blink::WebString::FromUTF8(renderer_prefs.application_id));
   params_neva->set_use_unlimited_media_policy(
       renderer_prefs.use_unlimited_media_policy);
   params_neva->set_additional_contents_scale(
@@ -658,8 +658,8 @@ blink::WebMediaPlayer* MediaFactory::CreateWebMediaPlayerForMediaStream(
       new media::WebMediaPlayerParamsNeva(base::BindRepeating(
           &content::mojom::FrameVideoWindowFactory::CreateVideoWindow,
           base::Unretained(render_frame_->GetFrameVideoWindowFactory()))));
-  params_neva->set_application_id(blink::WebString::FromUTF8(
-      renderer_prefs.application_id + renderer_prefs.display_id));
+  params_neva->set_application_id(
+      blink::WebString::FromUTF8(renderer_prefs.application_id));
   params_neva->set_use_unlimited_media_policy(
       renderer_prefs.use_unlimited_media_policy);
   params_neva->set_additional_contents_scale(
