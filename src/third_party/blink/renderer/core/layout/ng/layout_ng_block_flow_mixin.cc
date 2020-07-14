@@ -45,7 +45,7 @@ void LayoutNGBlockFlowMixin<Base>::StyleDidChange(
     const ComputedStyle* old_style) {
   Base::StyleDidChange(diff, old_style);
 
-  if (diff.NeedsCollectInlines()) {
+  if (diff.NeedsReshape()) {
     Base::SetNeedsCollectInlines();
   }
 }
