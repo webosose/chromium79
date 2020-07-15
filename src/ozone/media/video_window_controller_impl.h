@@ -49,7 +49,9 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
       mojo::PendingRemote<ui::mojom::VideoWindowClient> client,
       mojo::PendingReceiver<ui::mojom::VideoWindow> receiver,
       const VideoWindowParams& param) override;
-  // end
+  void Initialize(
+      const scoped_refptr<base::SingleThreadTaskRunner>& task_runner) override;
+  bool IsInitialized() override { return initialized_; }
   void NotifyVideoWindowGeometryChanged(gpu::SurfaceHandle h,
                                         const base::UnguessableToken& window_id,
                                         const gfx::Rect& rect) override;
@@ -83,7 +85,9 @@ class VideoWindowControllerImpl : public ui::mojom::VideoWindowController,
       hidden_candidate_;
 
   mojo::Receiver<ui::mojom::VideoWindowController> receiver_{this};
-  scoped_refptr<base::SingleThreadTaskRunner> gpu_main_task_runner_;
+  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
+  bool initialized_ = false;
+
   DISALLOW_COPY_AND_ASSIGN(VideoWindowControllerImpl);
 };
 

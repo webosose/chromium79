@@ -16,6 +16,7 @@
 #ifndef UI_PLATFORM_WINDOW_NEVA_VIDEO_WINDOW_CONTROLLER_H_
 #define UI_PLATFORM_WINDOW_NEVA_VIDEO_WINDOW_CONTROLLER_H_
 
+#include "base/single_thread_task_runner.h"
 #include "base/unguessable_token.h"
 #include "gpu/ipc/common/surface_handle.h"
 #include "ui/gfx/geometry/rect.h"
@@ -28,6 +29,14 @@ class VideoWindowController {
  public:
   VideoWindowController() {}
   virtual ~VideoWindowController() {}
+  // Initialize VideoWindowController. |task_runner| will be dedicated
+  // TaskRunner. All public interfaces of VideoWindowController will be done
+  // on the given |task_runner|. If a function is called by another thread,
+  // then task_runner->PostTask() will be called.
+  virtual void Initialize(
+      const scoped_refptr<base::SingleThreadTaskRunner>& task_runner) = 0;
+  virtual bool IsInitialized() = 0;
+
   virtual void NotifyVideoWindowGeometryChanged(
       gpu::SurfaceHandle h,
       const base::UnguessableToken& window_id,

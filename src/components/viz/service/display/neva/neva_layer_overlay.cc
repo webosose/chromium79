@@ -130,7 +130,7 @@ void NevaLayerOverlayProcessor::Process(
     gfx::Rect* overlay_damage_rect,
     gfx::Rect* damage_rect) {
 #if defined(USE_NEVA_MEDIA)
-  if (video_window_controller_)
+  if (video_window_controller_ && video_window_controller_->IsInitialized())
     video_window_controller_->BeginOverlayProcessor(surface_handle_);
 #endif  // defined(USE_NEVA_MEDIA)
   processed_overlay_in_frame_ = false;
@@ -142,7 +142,7 @@ void NevaLayerOverlayProcessor::Process(
                       is_root ? damage_rect : &pass->damage_rect);
   }
 #if defined(USE_NEVA_MEDIA)
-  if (video_window_controller_)
+  if (video_window_controller_ && video_window_controller_->IsInitialized())
     video_window_controller_->EndOverlayProcessor(surface_handle_);
 #endif  // defined(USE_NEVA_MEDIA)
 }
@@ -288,9 +288,12 @@ void NevaLayerOverlayProcessor::ProcessRenderPass(
           VideoHoleDrawQuad::MaterialCast(*it)->overlay_plane_id;
       render_pass->quad_list.ReplaceExistingQuadWithOpaqueTransparentSolidColor(
           it);
-      video_window_controller_->NotifyVideoWindowGeometryChanged(
-          surface_handle_, overlay_plane_id,
-          gfx::ToEnclosingRect(quad_rect_in_root_target));
+      if (video_window_controller_ &&
+          video_window_controller_->IsInitialized()) {
+        video_window_controller_->NotifyVideoWindowGeometryChanged(
+            surface_handle_, overlay_plane_id,
+            gfx::ToEnclosingRect(quad_rect_in_root_target));
+      }
     }
 #endif  // defined(USE_NEVA_MEDIA)
   }

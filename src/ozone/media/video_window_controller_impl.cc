@@ -17,6 +17,8 @@
 #include "ozone/media/video_window_controller_impl.h"
 
 #include "base/bind.h"
+#include "mojo/public/cpp/bindings/remote.h"
+#include "ozone/media/video_window_provider.h"
 #include "ozone/platform/messages.h"
 #include "ui/ozone/public/ozone_platform.h"
 #include "ozone/media/video_window_provider.h"
@@ -115,6 +117,12 @@ void VideoWindowControllerImpl::RemoveVideoWindowInfo(
             << " / # of windows of widget(" << w << "):" << count;
 }
 
+void VideoWindowControllerImpl::Initialize(
+    const scoped_refptr<base::SingleThreadTaskRunner>& task_runner) {
+  task_runner_ = task_runner;
+  initialized_ = true;
+}
+
 // NotifyVideoWindowGeometryChanged is called from viz/Display overlay processor
 // Now this will work only with --in-process-gpu command-line flag.
 // But chromium will move viz/Display to GPU process then it will work without
@@ -123,13 +131,13 @@ void VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged(
     const gpu::SurfaceHandle h,
     const base::UnguessableToken& window_id,
     const gfx::Rect& rect) {
-  if (!gpu_main_task_runner_ || !provider_) {
+  if (!provider_) {
     LOG(ERROR) << "Not initialized.";
     return;
   }
 
-  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
-    gpu_main_task_runner_->PostTask(
+  if (task_runner_ && !task_runner_->BelongsToCurrentThread()) {
+    task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(
             &VideoWindowControllerImpl::NotifyVideoWindowGeometryChanged,
@@ -227,13 +235,8 @@ void VideoWindowControllerImpl::OnVideoWindowDestroyed(
 // But chromium will move viz/Display to GPU process then it will work without
 // --in-process-gpu as well
 void VideoWindowControllerImpl::BeginOverlayProcessor(gpu::SurfaceHandle h) {
-  if (!gpu_main_task_runner_) {
-    LOG(ERROR) << "Not initialized.";
-    return;
-  }
-
-  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
-    gpu_main_task_runner_->PostTask(
+  if (task_runner_ && !task_runner_->BelongsToCurrentThread()) {
+    task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(&VideoWindowControllerImpl::BeginOverlayProcessor,
                        base::Unretained(this), h));
@@ -259,19 +262,14 @@ void VideoWindowControllerImpl::BeginOverlayProcessor(gpu::SurfaceHandle h) {
 // But chromium will move viz/Display to GPU process then it will work without
 // --in-process-gpu as well
 void VideoWindowControllerImpl::EndOverlayProcessor(gpu::SurfaceHandle h) {
-  if (!gpu_main_task_runner_) {
-    LOG(ERROR) << "Not initialized.";
-    return;
-  }
-
-  if (!gpu_main_task_runner_->BelongsToCurrentThread()) {
-    gpu_main_task_runner_->PostTask(
+  if (task_runner_ && !task_runner_->BelongsToCurrentThread()) {
+    task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(&VideoWindowControllerImpl::EndOverlayProcessor,
                        base::Unretained(this), h));
     return;
   }
-  const scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
+
   gfx::AcceleratedWidget w = static_cast<gfx::AcceleratedWidget>(h);
 
   auto wl_it = video_windows_.find(w);
@@ -290,6 +288,7 @@ void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
     LOG(ERROR) << "Not initialized.";
     return;
   }
+
   auto it = video_windows_.find(w);
   if (it == video_windows_.end())
     return;
@@ -300,10 +299,19 @@ void VideoWindowControllerImpl::AcceleratedWidgetDeleted(
 void VideoWindowControllerImpl::OwnerWidgetStateChanged(
     gfx::AcceleratedWidget w,
     ui::WidgetState state) {
+  if (task_runner_ && !task_runner_->BelongsToCurrentThread()) {
+    task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(&VideoWindowControllerImpl::OwnerWidgetStateChanged,
+                       base::Unretained(this), w, state));
+    return;
+  }
+
   if (!provider_) {
     LOG(ERROR) << "Not initialized.";
     return;
   }
+
   auto it = video_windows_.find(w);
   if (it == video_windows_.end())
     return;
@@ -315,12 +323,12 @@ void VideoWindowControllerImpl::Bind(
     mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
   // NOTE: We want to create a VidoeWindowProvider on the same thread with the
   // receiver's binding thread. so that VideoWindowProvider knows the thread
-  // what it should live in. This thread is same with the thread of reciving
+  // what it should live in. This thread is same with the thread of receiving
   // other ozone releated messages.
   if (!provider_)
     provider_ = VideoWindowProvider::Create();
-  if (!gpu_main_task_runner_)
-    gpu_main_task_runner_ = base::ThreadTaskRunnerHandle::Get();
+  if (!task_runner_)
+    task_runner_ = base::ThreadTaskRunnerHandle::Get();
   receiver_.Bind(std::move(receiver));
 }
 

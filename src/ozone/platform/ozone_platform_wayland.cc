@@ -81,19 +81,17 @@ class OzonePlatformWayland : public OzonePlatform {
     // main thread
     registry->AddInterface(
         base::BindRepeating(
-            &OzonePlatformWayland::GetVideoWindowControlleConnection,
+            &OzonePlatformWayland::GetVideoWindowControllerConnection,
             base::Unretained(this)),
         base::ThreadTaskRunnerHandle::Get());
+    GetVideoWindowController()->Initialize(base::ThreadTaskRunnerHandle::Get());
   }
 
-  void GetVideoWindowControlleConnection(
+  void GetVideoWindowControllerConnection(
       mojo::PendingReceiver<ui::mojom::VideoWindowController> receiver) {
     wayland_display_->BindVideoWindowController(std::move(receiver));
   }
 
-  ui::VideoWindowControllerHost* GetVideoWindowControllerHost() override {
-    return video_window_controller_host_impl_.get();
-  }
   ui::VideoWindowController* GetVideoWindowController() override {
     return wayland_display_->GetVideoWindowControllerImpl();
   }
@@ -137,10 +135,6 @@ class OzonePlatformWayland : public OzonePlatform {
         new XkbKeyboardLayoutEngine(xkb_evdev_code_converter_)));
     window_manager_.reset(
         new ui::WindowManagerWayland(gpu_platform_host_.get()));
-#if defined(USE_NEVA_MEDIA)
-    video_window_controller_host_impl_.reset(
-        new ui::VideoWindowControllerHostImpl(gpu_platform_host_.get()));
-#endif
   }
 
   void InitializeGPU(const InitParams& args) override {
@@ -158,10 +152,7 @@ class OzonePlatformWayland : public OzonePlatform {
   std::unique_ptr<ui::WindowManagerWayland> window_manager_;
   XkbEvdevCodes xkb_evdev_code_converter_;
   std::unique_ptr<ui::OzoneGpuPlatformSupportHost> gpu_platform_host_;
-#if defined(USE_NEVA_MEDIA)
-  std::unique_ptr<ui::VideoWindowControllerHostImpl>
-      video_window_controller_host_impl_;
-#endif
+
   DISALLOW_COPY_AND_ASSIGN(OzonePlatformWayland);
 };
 

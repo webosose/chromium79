@@ -18,6 +18,7 @@
 #include "base/logging.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/gpu_service_registry.h"
 #include "ui/ozone/public/ozone_platform.h"
 
 namespace content {
@@ -39,10 +40,9 @@ void FrameVideoWindowFactoryImpl::CreateVideoWindow(
   gfx::AcceleratedWidget owner =
       render_frame_host_impl_->GetAcceleratedWidget();
 
-  ui::mojom::VideoWindowController* controller =
-      ui::OzonePlatform::GetInstance()
-          ->GetVideoWindowControllerHost()
-          ->GetControllerRemote();
+  mojo::Remote<ui::mojom::VideoWindowController> controller;
+  content::BindInterfaceInGpuProcess(controller.BindNewPipeAndPassReceiver());
+
   controller->CreateVideoWindow(owner, std::move(client), std::move(receiver),
                                 params);
 }
