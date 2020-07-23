@@ -166,6 +166,13 @@ static bool IsCacheableHTTPMethod(const AtomicString& method) {
          method != "DELETE";
 }
 
+static bool IsLocalImageResource(const Resource& resource) {
+  // If the resource is fetched by file protocol,
+  // it means that it is also saved in the disk
+  return ((resource.GetType() == ResourceType::kImage) &&
+          (resource.Url().Protocol() == "file"));
+}
+
 bool ShouldResourceBeAddedToMemoryCache(const FetchParameters& params,
                                         Resource* resource) {
   if (!IsMainThread())
@@ -175,6 +182,8 @@ bool ShouldResourceBeAddedToMemoryCache(const FetchParameters& params,
   if (IsRawResource(*resource))
     return false;
   if (!IsCacheableHTTPMethod(params.GetResourceRequest().HttpMethod()))
+    return false;
+  if (IsLocalImageResource(*resource))
     return false;
   return true;
 }
