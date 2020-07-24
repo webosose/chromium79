@@ -114,7 +114,7 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
                      const base::UnguessableToken& window_id,
                      const ui::VideoWindowParams& params,
                      ui::ForeignWindowType type,
-                     wl_surface* surface);
+                     struct wl_webos_exported* webos_exported);
   ~ForeignVideoWindow();
 
   // Implements ui::mojom::VideoWindow
@@ -131,8 +131,8 @@ class ForeignVideoWindow : public ui::mojom::VideoWindow,
   ForeignVideoWindowProvider* provider_ = nullptr;
   gfx::AcceleratedWidget owner_widget_ = gfx::kNullAcceleratedWidget;
   ui::VideoWindowParams params_;
-  struct wl_webos_exported* webos_exported_ = nullptr;
   ui::ForeignWindowType type_ = ui::ForeignWindowType::INVALID;
+  struct wl_webos_exported* webos_exported_ = nullptr;
   VideoWindowProvider::WindowEventCb window_event_cb_;
   base::CancelableOnceCallback<void()> notify_geometry_cb_;
   base::Optional<gfx::Rect> ori_rect_ = base::nullopt;
@@ -153,16 +153,17 @@ ForeignVideoWindow::ForeignVideoWindow(ForeignVideoWindowProvider* provider,
                                        const base::UnguessableToken& window_id,
                                        const ui::VideoWindowParams& params,
                                        ui::ForeignWindowType type,
-                                       wl_surface* surface)
-    : provider_(provider), owner_widget_(w), params_(params), type_(type) {
-  window_id_ = window_id;
-  ozonewayland::WaylandDisplay* display =
-      ozonewayland::WaylandDisplay::GetInstance();
-  webos_exported_ = wl_webos_foreign_export_element(
-      display->GetWebosForeign(), surface, ConvertToUInt32(type));
+                                       struct wl_webos_exported* webos_exported)
+    : ui::VideoWindow{window_id, ""},
+      provider_(provider),
+      owner_widget_(w),
+      params_(params),
+      type_(type),
+      webos_exported_(webos_exported) {
   VLOG(1) << __func__ << " window_id=" << window_id_ << " type=" << (int)type
-          << " surface=" << surface << " webos_exported=" << webos_exported_;
+          << " webos_exported=" << webos_exported_;
 }
+
 ForeignVideoWindow::~ForeignVideoWindow() {
   VLOG(1) << __func__;
   if (!webos_exported_)
@@ -308,32 +309,42 @@ base::UnguessableToken ForeignVideoWindowProvider::CreateNativeVideoWindow(
   }
 
   base::UnguessableToken id = base::UnguessableToken::Create();
-  foreign_windows_.emplace(
-      id, std::make_unique<ForeignVideoWindow>(
-              this, w, id, params, ForeignWindowType::VIDEO, surface));
-  ForeignVideoWindow* window = FindWindow(id);
+  ui::ForeignWindowType type = ForeignWindowType::VIDEO;
+  struct wl_webos_exported* webos_exported = nullptr;
+  static const struct wl_webos_exported_listener exported_listener = {
+      ForeignVideoWindowProvider::HandleExportedWindowAssigned};
+
+  webos_exported = wl_webos_foreign_export_element(
+      display->GetWebosForeign(), surface, ConvertToUInt32(type));
+  if (!webos_exported) {
+    LOG(ERROR) << __func__ << " failed to create webos_exported for=" << id;
+    window_client->OnVideoWindowDestroyed();
+    return base::UnguessableToken::Null();
+  }
+  wl_webos_exported_add_listener(webos_exported, &exported_listener, this);
+
+  std::unique_ptr<ForeignVideoWindow> window =
+      std::make_unique<ForeignVideoWindow>(this, w, id, params, type,
+                                           webos_exported);
+
   if (!window) {
     LOG(ERROR) << __func__
-               << " failed to find foreign video window for id=" << id;
+               << " failed to create foreign video window for id=" << id;
     window_client->OnVideoWindowDestroyed();
     return base::UnguessableToken::Null();
   }
 
   native_id_to_window_id_[id.ToString()] = id;
   window->state_ = ForeignVideoWindow::State::kCreating;
-  window->window_id_ = id;
   window->window_event_cb_ = cb;
   window->client_ = std::move(window_client);
   window->receiver_.Bind(std::move(receiver));
-  static const struct wl_webos_exported_listener exported_listener = {
-      ForeignVideoWindowProvider::HandleExportedWindowAssigned};
-
-  wl_webos_exported_add_listener(window->webos_exported_, &exported_listener,
-                                 this);
   // To detect when the user stop using the window.
   window->client_.set_disconnect_handler(
       base::BindOnce(&ForeignVideoWindowProvider::DestroyNativeVideoWindow,
                      base::Unretained(this), w, id));
+
+  foreign_windows_.emplace(id, std::move(window));
   return id;
 }
 
