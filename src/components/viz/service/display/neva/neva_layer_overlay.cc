@@ -86,7 +86,8 @@ bool NevaLayerOverlayProcessor::IsVideoHoleDrawQuad(
     const gfx::RectF& display_rect,
     QuadList::ConstIterator quad_list_begin,
     QuadList::ConstIterator quad) {
-  if (quad->shared_quad_state->blend_mode != SkBlendMode::kSrcOver)
+  if (!quad->shared_quad_state ||
+      quad->shared_quad_state->blend_mode != SkBlendMode::kSrcOver)
     return false;
 
   bool success{false};
