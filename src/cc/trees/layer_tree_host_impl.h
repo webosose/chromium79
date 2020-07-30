@@ -343,6 +343,7 @@ class CC_EXPORT LayerTreeHostImpl : public InputHandler,
       CommitEarlyOutReason reason,
       std::vector<std::unique_ptr<SwapPromise>> swap_promises,
       const viz::BeginFrameArgs& args);
+  void BeginMainFrameAppliedScrollAndScale();
   virtual void ReadyToCommit() {}  // For tests.
   virtual void BeginCommit();
   virtual void CommitComplete();
