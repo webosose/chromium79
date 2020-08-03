@@ -348,19 +348,28 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
   bool use_set_crop_region = true;
 #endif
 
-  gfx::Rect window_bounds = window->GetBounds();
+  // TODO(neva): Currently it considers only single screen for
+  // use_set_crop_region. If moving on supporting multi-screen we need to check
+  // how to use set_crop_region with multi-screen and revisit this clipping
+  // implementaion.
+  auto screen = display->PrimaryScreen();
+  if (!screen) {
+    LOG(ERROR) << __func__ << " primary screen is nullptr";
+    return;
+  }
+  gfx::Rect screen_rect = screen->Geometry();
   // Always use set_exported_window to keep the original video w/h ratio in
   // fullscreen.
   // set_exported_window always keeps the ratio even though dest is not match
   // with the ratio.
-  bool fullscreen = (window_bounds == dest);
+  bool fullscreen = (screen_rect == dest);
   if (!fullscreen && use_set_crop_region) {
     // Adjust for original_rect/source/dest rect
     gfx::Rect original_rect = w->natural_video_size_
                                   ? gfx::Rect(w->natural_video_size_.value())
-                                  : window_bounds;
+                                  : screen_rect;
 
-    gfx::Rect visible_rect = gfx::IntersectRects(dest, window_bounds);
+    gfx::Rect visible_rect = gfx::IntersectRects(dest, screen_rect);
 
     DCHECK(visible_rect.width() != 0 && visible_rect.height() != 0);
 
