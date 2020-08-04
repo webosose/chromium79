@@ -426,6 +426,7 @@ class LocalStorageContextMojo::StorageAreaHolder final
       return false;
     if (tld1_domain == GetTLD1DomainFromOrigin(origin))
       return true;
+    return false;
   }
 
   base::StringPiece GetTLD1DomainFromOrigin(const url::Origin& origin) {
