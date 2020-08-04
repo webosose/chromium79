@@ -28,11 +28,11 @@
 #include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/message_loop/message_loop.h"
+#include "base/message_loop/message_loop_current.h"
 #include "base/native_library.h"
 #include "base/stl_util.h"
 #include "ipc/ipc_sender.h"
 #include "ozone/platform/messages.h"
-#include "ozone/wayland/display_poll_thread.h"
 #include "ozone/wayland/input/cursor.h"
 #include "ozone/wayland/input/keyboard.h"
 #include "ozone/wayland/input/pointer.h"
@@ -177,18 +177,16 @@ WaylandDisplay::WaylandDisplay()
 #endif
       primary_screen_(NULL),
       primary_seat_(NULL),
-      display_poll_thread_(NULL),
 #if defined(ENABLE_DRM_SUPPORT)
       device_(NULL),
       m_deviceName(NULL),
 #endif
       sender_(NULL),
-      task_runner_(nullptr),
       screen_list_(),
       seat_list_(),
       widget_map_(),
       serial_(0),
-      processing_events_(false),
+      controller_(FROM_HERE),
 #if defined(ENABLE_DRM_SUPPORT)
       m_authenticated_(false),
       m_fd_(-1),
@@ -352,8 +350,6 @@ void WaylandDisplay::InitializeDisplay() {
     Terminate();
     return;
   }
-
-  display_poll_thread_ = new WaylandDisplayPollThread(display_);
 }
 
 WaylandWindow* WaylandDisplay::CreateAcceleratedSurface(unsigned w) {
@@ -367,25 +363,27 @@ WaylandWindow* WaylandDisplay::CreateAcceleratedSurface(unsigned w) {
 }
 
 void WaylandDisplay::StartProcessingEvents() {
-  DCHECK(display_poll_thread_);
-  // Start polling for wayland events.
-  if (!processing_events_) {
-    display_poll_thread_->StartProcessingEvents();
-    processing_events_ = true;
-  }
+  // Start watching for wayland events.
+  if (watching_)
+    return;
+
+  DCHECK(display_);
+  wl_display_flush(display_);
+
+  DCHECK(base::MessageLoopCurrentForIO::IsSet());
+
+  watching_ =
+      base::MessageLoopCurrentForIO::Get()->WatchFileDescriptor(
+          wl_display_get_fd(display_), true, base::MessagePumpForIO::WATCH_READ,
+          &controller_, this);
 }
 
 void WaylandDisplay::StopProcessingEvents() {
-  DCHECK(display_poll_thread_);
-  // Start polling for wayland events.
-  if (processing_events_) {
-    display_poll_thread_->StopProcessingEvents();
-    processing_events_ = false;
-  }
+  // Stop watching.
+  watching_ = !controller_.StopWatchingFileDescriptor();
 }
 
 void WaylandDisplay::Terminate() {
-  task_runner_ = nullptr;
   if (!widget_map_.empty()) {
     widget_map_.clear();
   }
@@ -432,8 +430,6 @@ void WaylandDisplay::Terminate() {
 
   if (registry_)
     wl_registry_destroy(registry_);
-
-  delete display_poll_thread_;
 
   if (display_) {
     wl_display_flush(display_);
@@ -1060,7 +1056,6 @@ void WaylandDisplay::DisplayHandleGlobal(void *data,
 }
 
 void WaylandDisplay::OnChannelEstablished(IPC::Sender* sender) {
-  task_runner_ = base::ThreadTaskRunnerHandle::Get();
   sender_ = sender;
   while (!deferred_messages_.empty()) {
     Dispatch(deferred_messages_.front());
@@ -1115,6 +1110,15 @@ bool WaylandDisplay::OnMessageReceived(const IPC::Message& message) {
 IPC::MessageFilter* WaylandDisplay::GetMessageFilter() {
   return NULL;
 }
+
+void WaylandDisplay::OnFileCanReadWithoutBlocking(int fd) {
+  // Automatic Flush.
+  wl_display_flush(display_);
+  // Dispatch events.
+  wl_display_dispatch(display_);
+}
+
+void WaylandDisplay::OnFileCanWriteWithoutBlocking(int fd) {}
 
 void WaylandDisplay::KeyboardAdded(int id, const std::string& name) {
   Dispatch(new WaylandInput_KeyboardAdded(id, name));
@@ -1288,20 +1292,10 @@ void WaylandDisplay::DragDrop(unsigned windowhandle) {
 }
 
 void WaylandDisplay::Dispatch(IPC::Message* message) {
-  if (!task_runner_) {
+  if (!sender_) {
     deferred_messages_.push(message);
     return;
   }
-
-  task_runner_->PostTask(FROM_HERE,
-                         base::Bind(&WaylandDisplay::Send,
-                                    weak_ptr_factory_.GetWeakPtr(), message));
-}
-
-void WaylandDisplay::Send(IPC::Message* message) {
-  // The GPU process never sends synchronous IPC, so clear the unblock flag.
-  // This ensures the message is treated as a synchronous one and helps preserve
-  // order. Check set_unblock in ipc_messages.h for explanation.
   message->set_unblock(true);
   sender_->Send(message);
 }

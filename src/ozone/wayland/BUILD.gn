@@ -72,8 +72,6 @@ source_set("wayland") {
     "data_offer.h",
     "display.cc",
     "display.h",
-    "display_poll_thread.cc",
-    "display_poll_thread.h",
     "ozone_wayland_screen.cc",
     "ozone_wayland_screen.h",
     "screen.cc",

@@ -840,6 +840,9 @@ bool GpuProcessHost::Init() {
     // WGL needs to create its own window and pump messages on it.
     options.message_pump_type = base::MessagePumpType::UI;
 #endif
+#if defined(USE_OZONE)
+    options.message_pump_type = gpu_preferences.message_pump_type;
+#endif
     if (base::FeatureList::IsEnabled(features::kGpuUseDisplayThreadPriority))
       options.priority = base::ThreadPriority::DISPLAY;
     in_process_gpu_thread_->StartWithOptions(options);

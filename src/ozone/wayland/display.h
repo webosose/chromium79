@@ -40,6 +40,7 @@
 
 #include "base/memory/shared_memory.h"
 #include "base/memory/weak_ptr.h"
+#include "base/message_loop/message_pump_for_io.h"
 #include "base/single_thread_task_runner.h"
 #include "ozone/platform/event_param_traits.h"
 #include "ozone/wayland/egl/gl_surface_wayland.h"
@@ -95,7 +96,6 @@ class WindowGroupConfiguration;
 
 namespace ozonewayland {
 
-class WaylandDisplayPollThread;
 class WaylandScreen;
 class WaylandSeat;
 class WaylandShell;
@@ -111,7 +111,8 @@ typedef std::map<unsigned, std::unique_ptr<WaylandWindow>> WindowMap;
 // wl_display, the Wayland server will send different events to register
 // the Wayland compositor, shell, screens, input devices, ...
 class WaylandDisplay : public ui::SurfaceFactoryOzone,
-                       public ui::GpuPlatformSupport {
+                       public ui::GpuPlatformSupport,
+                       public base::MessagePumpForIO::FdWatcher {
  public:
   WaylandDisplay();
   ~WaylandDisplay() override;
@@ -348,9 +349,13 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   void OnChannelEstablished(IPC::Sender* sender) override;
   bool OnMessageReceived(const IPC::Message& message) override;
   IPC::MessageFilter* GetMessageFilter() override;
+
+  // base::MessagePumpForIO::FdWatcher
+  void OnFileCanReadWithoutBlocking(int fd) override;
+  void OnFileCanWriteWithoutBlocking(int fd) override;
+
   // Posts task to main loop of the thread on which Dispatcher was initialized.
   void Dispatch(IPC::Message* message);
-  void Send(IPC::Message* message);
 
   void SetInputRegion(unsigned handle, const std::vector<gfx::Rect>& region);
   void SetGroupKeyMask(unsigned handle, ui::KeyMask key_mask);
@@ -387,13 +392,11 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
 #endif
   WaylandScreen* primary_screen_;
   WaylandSeat* primary_seat_;
-  WaylandDisplayPollThread* display_poll_thread_;
 #if defined(ENABLE_DRM_SUPPORT)
   gbm_device* device_;
   char* m_deviceName;
 #endif
   IPC::Sender* sender_;
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 
   std::list<WaylandScreen*> screen_list_;
   std::list<WaylandSeat*> seat_list_;
@@ -401,7 +404,8 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   // Display queues messages till Channel is establised.
   DeferredMessages deferred_messages_;
   unsigned serial_;
-  bool processing_events_ :1;
+  bool watching_ = false;
+  base::MessagePumpForIO::FdWatchController controller_;
 #if defined(ENABLE_DRM_SUPPORT)
   bool m_authenticated_ :1;
   int m_fd_;

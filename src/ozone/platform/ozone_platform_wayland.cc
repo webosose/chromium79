@@ -33,6 +33,14 @@ namespace ui {
 
 namespace {
 
+constexpr OzonePlatform::PlatformProperties kWaylandExternalPlatformProperties =
+    {
+        /*needs_view_token=*/false,
+        /*custom_frame_pref_default=*/false,
+        /*use_system_title_bar=*/false,
+        /*requires_mojo=*/false,
+        /*message_pump_type_for_gpu=*/base::MessagePumpType::IO};
+
 // OzonePlatform for Wayland
 //
 // This platform is Linux with the Wayland display server.
@@ -143,6 +151,10 @@ class OzonePlatformWayland : public OzonePlatform {
 
     if (!wayland_display_->InitializeHardware())
       LOG(FATAL) << "failed to initialize display hardware";
+  }
+
+  const PlatformProperties& GetPlatformProperties() override {
+    return kWaylandExternalPlatformProperties;
   }
 
  private:
