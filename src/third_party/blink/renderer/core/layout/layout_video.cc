@@ -214,9 +214,10 @@ void LayoutVideo::UpdateAfterLayout() {
     if (!web_media_player->UsesIntrinsicSize()) {
       const IntSize size = video->VideoRectInScreen().Size();
       PhysicalRect content_rect = PhysicalContentBoxRect();
-      const IntSize widget_view_size = MediaElement()->WidgetViewRect().Size();
-      if (!size.IsEmpty() && (size.Width() >= widget_view_size.Width() ||
-                              size.Height() >= widget_view_size.Height() ||
+      const IntSize widget_window_size =
+          MediaElement()->WidgetWindowRect().Size();
+      if (!size.IsEmpty() && (size.Width() >= widget_window_size.Width() ||
+                              size.Height() >= widget_window_size.Height() ||
                               video->IsFullscreen())) {
         SetIntrinsicSize(LayoutSize(size));
       } else {

@@ -58,6 +58,7 @@ class HTMLMediaElement {
 
   const IntRect VideoRectInScreen() const;
   const IntRect WidgetViewRect() const;
+  const IntRect WidgetWindowRect() const;
 
   // Neva audio focus extensions
   bool webosMediaFocus() const;
@@ -135,6 +136,25 @@ const IntRect HTMLMediaElement<original_t>::WidgetViewRect() const {
     return IntRect();
 
   WebRect rect = frame_widget->Client()->ViewRect();
+  return IntRect(rect.x, rect.y, rect.width, rect.height);
+}
+
+template <typename original_t>
+const IntRect HTMLMediaElement<original_t>::WidgetWindowRect() const {
+  const original_t* self(static_cast<const original_t*>(this));
+
+  LocalFrame* frame = self->GetDocument().GetFrame();
+
+  if (!frame)
+    return IntRect();
+
+  WebFrameWidgetBase* frame_widget =
+      WebLocalFrameImpl::FromFrame(frame)->LocalRootFrameWidget();
+
+  if (!frame_widget)
+    return IntRect();
+
+  WebRect rect = frame_widget->Client()->WindowRect();
   return IntRect(rect.x, rect.y, rect.width, rect.height);
 }
 
