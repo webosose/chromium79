@@ -471,7 +471,7 @@ void WebMediaPlayerWebRtc::InitMediaPlatformAPI(
   // audio data handling and rendering path is separate. We are leaving
   // it to be taken care by Chromium now. So, we dont need any audio config
   AudioDecoderConfig audio_config;
-  VideoDecoderConfig video_config = GetVideoConfig(input_frame->format());
+  VideoDecoderConfig video_config = GetVideoConfig(input_frame);
 
   LOG(INFO) << __func__ << " : natural_size: "
             << video_config.natural_size().ToString();
@@ -777,10 +777,10 @@ void WebMediaPlayerWebRtc::EnqueueHoleFrame(
 }
 
 VideoDecoderConfig WebMediaPlayerWebRtc::GetVideoConfig(
-    media::VideoPixelFormat format) {
+    const scoped_refptr<media::VideoFrame>& video_frame) {
   VideoCodec codec = media::kUnknownVideoCodec;
   VideoCodecProfile profile = media::VIDEO_CODEC_PROFILE_UNKNOWN;
-  switch (format) {
+  switch (video_frame->format()) {
     case media::PIXEL_FORMAT_H264:
       codec = media::kCodecH264;
       profile = media::H264PROFILE_MIN;
@@ -798,15 +798,16 @@ VideoDecoderConfig WebMediaPlayerWebRtc::GetVideoConfig(
       NOTREACHED();
       break;
   }
-  LOG(INFO) << __func__ << ", format: " << format
+  LOG(INFO) << __func__ << ", format: " << video_frame->format()
                         << ", codec: " << codec
                         << ", name: " << media::GetCodecName(codec);
 
   media::VideoDecoderConfig video_config(
       codec, profile,
       media::VideoDecoderConfig::AlphaMode::kIsOpaque, media::VideoColorSpace(),
-      media::kNoTransformation, kDefaultSize, gfx::Rect(kDefaultSize),
-      kDefaultSize, media::EmptyExtraData(), media::Unencrypted());
+      media::kNoTransformation, video_frame->coded_size(),
+      video_frame->visible_rect(), video_frame->natural_size(),
+      media::EmptyExtraData(), media::Unencrypted());
   video_config.set_live_stream(true);
   return video_config;
 }

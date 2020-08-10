@@ -55,6 +55,16 @@ component("webrtc") {
 
   if (use_neva_webrtc) {
     import ("//media/webrtc/neva/build.gni")
+    configs += neva.configs
+    if (!defined(public_configs)) {
+      public_configs = []
+    }
+    public_configs += neva.public_configs
+    deps += neva.deps
+    if (!defined(public_deps)) {
+      public_deps = []
+    }
+    public_deps += neva.public_deps
     sources += rebase_path(neva.sources, ".")
   }
 }
