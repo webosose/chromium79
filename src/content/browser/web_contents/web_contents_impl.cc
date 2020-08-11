@@ -4928,8 +4928,6 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* source,
 
   for (auto& observer : observers_)
     observer.DidFinishLoad(source, validated_url);
-
-  source->DidFinishLoad();
 }
 
 void WebContentsImpl::OnGoToEntryAtOffset(RenderFrameHostImpl* source,

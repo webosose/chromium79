@@ -3911,10 +3911,6 @@ void RenderFrameHostImpl::OnDidFinishDocumentLoad() {
   delegate_->DOMContentLoaded(this);
 }
 
-void RenderFrameHostImpl::DidFinishLoad() {
-  is_loading_ = false;
-}
-
 void RenderFrameHostImpl::OnDidStopLoading() {
   TRACE_EVENT1("navigation", "RenderFrameHostImpl::OnDidStopLoading",
                "frame_tree_node", frame_tree_node_->frame_tree_node_id());

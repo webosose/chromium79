@@ -1238,8 +1238,6 @@ class CONTENT_EXPORT RenderFrameHostImpl
           receiver);
 #endif
 
-  void DidFinishLoad();
-
  protected:
   friend class RenderFrameHostFactory;
 
