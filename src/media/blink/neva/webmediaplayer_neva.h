@@ -252,7 +252,7 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   void OnPause() override;
   // TODO(neva) : This method has been added during chromium72 upgrade.
   // Need to revisit and confirm that does not cause any regression
-  void OnMuted(bool muted) override {}
+  void OnMuted(bool muted) override;
   void OnSeekForward(double seconds) override {}
   void OnSeekBackward(double seconds) override {}
   void OnVolumeMultiplierUpdate(double multiplier) override {}

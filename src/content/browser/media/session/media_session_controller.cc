@@ -118,6 +118,14 @@ void MediaSessionController::OnSetVolumeMultiplier(int player_id,
       volume_multiplier));
 }
 
+#if defined(USE_NEVA_MEDIA)
+void MediaSessionController::OnMuted(int player_id, bool mute) {
+  DCHECK_EQ(player_id_, player_id);
+  id_.render_frame_host->Send(new MediaPlayerDelegateMsg_Muted(
+      id_.render_frame_host->GetRoutingID(), id_.delegate_id, mute));
+}
+#endif  // defined(USE_NEVA_MEDIA)
+
 RenderFrameHost* MediaSessionController::render_frame_host() const {
   return id_.render_frame_host;
 }

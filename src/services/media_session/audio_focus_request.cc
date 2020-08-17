@@ -152,6 +152,12 @@ void AudioFocusRequest::PerformUIAction(mojom::MediaSessionAction action) {
     case mojom::MediaSessionAction::kStop:
       session_->Stop(mojom::MediaSession::SuspendType::kUI);
       break;
+#if defined(USE_NEVA_MEDIA)
+    case mojom::MediaSessionAction::kMute:
+    case mojom::MediaSessionAction::kUnMute:
+      session_->SetMuted(action == mojom::MediaSessionAction::kMute);
+      break;
+#endif  // defined(USE_NEVA_MEDIA)
     default:
       // Only UI transport actions are supported.
       NOTREACHED();

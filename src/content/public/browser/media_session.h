@@ -119,6 +119,11 @@ class MediaSession : public media_session::mojom::MediaSession {
   // scrubbing operation.
   void ScrubTo(base::TimeDelta seek_time) override = 0;
 
+#if defined(USE_NEVA_MEDIA)
+  // Set to mute/unmute based on |mute|
+  void SetMuted(bool mute) override {}
+#endif
+
  protected:
   MediaSession() = default;
 };

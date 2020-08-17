@@ -29,6 +29,12 @@ enum MediaSessionAction {
   kStop,
   kSeekTo,
   kScrubTo,
+  ///@}
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  kMute,
+  kUnMute,
+  ///@}
 };
 
 [Extensible]
@@ -242,4 +248,11 @@ interface MediaSession {
   // this will be a no-op. The client should call |SeekTo| to finish the
   // scrubbing operation.
   ScrubTo@14(mojo_base.mojom.TimeDelta seek_time);
+
+  ///@}
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  // Set the media session to mute/unmute based on |mute|
+  SetMuted@15(bool mute);
+  ///@}
 };

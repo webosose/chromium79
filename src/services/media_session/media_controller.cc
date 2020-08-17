@@ -270,6 +270,16 @@ void MediaController::ScrubTo(base::TimeDelta seek_time) {
     session_->ipc()->ScrubTo(seek_time);
 }
 
+#if defined(USE_NEVA_MEDIA)
+void MediaController::SetMuted(bool mute) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  if (session_)
+    session_->PerformUIAction(mute ? mojom::MediaSessionAction::kMute
+                                   : mojom::MediaSessionAction::kUnMute);
+}
+#endif  // defined(USE_NEVA_MEDIA)
+
 void MediaController::SetMediaSession(AudioFocusRequest* session) {
   DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
 

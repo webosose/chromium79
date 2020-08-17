@@ -1383,6 +1383,11 @@ void WebMediaPlayerNeva::OnPause() {
     client_->RequestPause();
 }
 
+void WebMediaPlayerNeva::OnMuted(bool muted) {
+  if (client_)
+    client_->RequestMuted(muted);
+}
+
 bool WebMediaPlayerNeva::Send(const std::string& message) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1) << "message:  " <<  message;

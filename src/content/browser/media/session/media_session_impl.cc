@@ -1029,6 +1029,16 @@ void MediaSessionImpl::GetMediaImageBitmap(
                      minimum_size_px, desired_size_px));
 }
 
+#if defined(USE_NEVA_MEDIA)
+void MediaSessionImpl::SetMuted(bool mute) {
+  if (!IsActive())
+    return;
+
+  for (const auto& it : normal_players_)
+    it.first.observer->OnMuted(it.first.player_id, mute);
+}
+#endif  // defined(USE_NEVA_MEDIA)
+
 void MediaSessionImpl::AbandonSystemAudioFocusIfNeeded() {
   if (audio_focus_state_ == State::INACTIVE || !normal_players_.empty() ||
       !pepper_players_.empty() || !one_shot_players_.empty()) {

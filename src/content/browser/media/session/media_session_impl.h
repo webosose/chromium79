@@ -257,6 +257,11 @@ class MediaSessionImpl : public MediaSession,
       int desired_size_px,
       GetMediaImageBitmapCallback callback) override;
 
+#if defined(USE_NEVA_MEDIA)
+  // mute/unmute the media session.
+  CONTENT_EXPORT void SetMuted(bool mute) override;
+#endif  // defined(USE_NEVA_MEDIA)
+
   const base::UnguessableToken& audio_focus_group_id() const {
     return audio_focus_group_id_;
   }

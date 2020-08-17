@@ -53,6 +53,9 @@ class CONTENT_EXPORT MediaSessionController
   void OnSeekForward(int player_id, base::TimeDelta seek_time) override;
   void OnSeekBackward(int player_id, base::TimeDelta seek_time) override;
   void OnSetVolumeMultiplier(int player_id, double volume_multiplier) override;
+#if defined(USE_NEVA_MEDIA)
+  void OnMuted(int player_id, bool mute) override;
+#endif  // defined(USE_NEVA_MEDIA)
   RenderFrameHost* render_frame_host() const override;
   base::Optional<media_session::MediaPosition> GetPosition(
       int player_id) const override;

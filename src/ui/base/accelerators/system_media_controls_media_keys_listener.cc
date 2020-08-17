@@ -134,6 +134,14 @@ void SystemMediaControlsMediaKeysListener::OnStop() {
   MaybeSendKeyCode(VKEY_MEDIA_STOP);
 }
 
+#if defined(OS_WEBOS)
+void SystemMediaControlsMediaKeysListener::OnMuteStateChanged(bool mute) {
+  Accelerator accelerator(VKEY_VOLUME_MUTE,
+                          (mute ? ui::EF_NONE : ui::EF_IS_SYNTHESIZED));
+  delegate_->OnMediaKeysAccelerator(accelerator);
+}
+#endif  // defined(OS_WEBOS)
+
 void SystemMediaControlsMediaKeysListener::MaybeSendKeyCode(
     KeyboardCode key_code) {
   if (!key_codes_.contains(key_code))

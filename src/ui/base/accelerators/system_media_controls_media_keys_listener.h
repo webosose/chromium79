@@ -45,6 +45,9 @@ class UI_BASE_EXPORT SystemMediaControlsMediaKeysListener
   void OnPause() override;
   void OnPlayPause() override;
   void OnStop() override;
+#if defined(OS_WEBOS)
+  void OnMuteStateChanged(bool mute) override;
+#endif
 
   void SetSystemMediaControlsForTesting(
       system_media_controls::SystemMediaControls* service) {

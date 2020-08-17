@@ -54,6 +54,8 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControlsWebOS
     kPause,
     kNext,
     kPrevious,
+    kMute,
+    kUnmute,
   };
 
   enum class ServiceReadyStatus {

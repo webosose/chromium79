@@ -132,6 +132,13 @@ void MediaKeysListenerManagerImpl::OnMediaKeysAccelerator(
     return;
 #endif
 
+#if defined(OS_WEBOS)
+  if (accelerator.key_code() == ui::VKEY_VOLUME_MUTE) {
+    hardware_key_media_controller_->OnMediaKeysAccelerator(accelerator);
+    return;
+  }
+#endif  // defined(OS_WEBOS)
+
   ListeningData* listening_data = delegate_map_[accelerator.key_code()].get();
 
   // If the HardwareKeyMediaController is listening and is allowed to listen,

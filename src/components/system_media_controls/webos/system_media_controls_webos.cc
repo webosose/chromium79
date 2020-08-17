@@ -59,6 +59,8 @@ const char kPlayEvent[] = "play";
 const char kPauseEvent[] = "pause";
 const char kNextEvent[] = "next";
 const char kPreviousEvent[] = "previous";
+const char kMuteEvent[] = "mute";
+const char kUnmuteEvent[] = "unmute";
 
 const char kRegisterMediaSession[] = "registerMediaSession";
 const char kUnregisterMediaSession[] = "unregisterMediaSession";
@@ -416,7 +418,9 @@ void SystemMediaControlsWebOS::HandleMediaKeyEventInternal(
     {kPlayEvent, SystemMediaControlsWebOS::MediaKeyEvent::kPlay},
     {kPauseEvent, SystemMediaControlsWebOS::MediaKeyEvent::kPause},
     {kNextEvent, SystemMediaControlsWebOS::MediaKeyEvent::kNext},
-    {kPreviousEvent, SystemMediaControlsWebOS::MediaKeyEvent::kPrevious}
+    {kPreviousEvent, SystemMediaControlsWebOS::MediaKeyEvent::kPrevious},
+    {kMuteEvent, SystemMediaControlsWebOS::MediaKeyEvent::kMute},
+    {kUnmuteEvent, SystemMediaControlsWebOS::MediaKeyEvent::kUnmute}
   };
 
   auto get_event_type = [&](const std::string& key) {
@@ -441,6 +445,12 @@ void SystemMediaControlsWebOS::HandleMediaKeyEventInternal(
         break;
       case SystemMediaControlsWebOS::MediaKeyEvent::kPrevious:
         obs.OnPrevious();
+        break;
+      case SystemMediaControlsWebOS::MediaKeyEvent::kMute:
+        obs.OnMuteStateChanged(true);
+        break;
+      case SystemMediaControlsWebOS::MediaKeyEvent::kUnmute:
+        obs.OnMuteStateChanged(false);
         break;
       default:
         NOTREACHED() << " key_event: " << key_event << " Not Handled !!!";
