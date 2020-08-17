@@ -329,12 +329,6 @@ void MediaPlatformAPIWebOSGmp::SetPlaybackRate(float playback_rate) {
     return;
   }
 
-  if (playback_rate == 0.0f && !video_config_.IsValidConfig() &&
-      audio_config_.IsValidConfig()) {
-    VLOG(1) << " Play for audio only case";
-    current_playback_rate = 0.0f;
-    playback_rate = 1.0;
-  }
   if (playback_rate > 0.0f) {
     VLOG(1) << " load_completed_=" << load_completed_;
     if (load_completed_)
