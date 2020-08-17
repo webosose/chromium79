@@ -128,7 +128,7 @@ void MediaPlatformAPIWebOSGmp::Callback(const gint type,
   }
 
   std::string string_value(str_value ? str_value : std::string());
-  that->main_task_runner_->PostTask(
+  that->media_task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&MediaPlatformAPIWebOSGmp::DispatchCallback,
                  base::Unretained(that), type, num_value, string_value));
