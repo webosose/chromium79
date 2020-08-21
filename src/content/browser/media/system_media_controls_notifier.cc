@@ -144,7 +144,12 @@ void SystemMediaControlsNotifier::MediaSessionChanged(
   VLOG(1) << __func__ << " request_id: " << request_id->ToString();
   system_media_controls_->SetMediaSessionId(request_id);
 }
-#endif
+
+void SystemMediaControlsNotifier::MediaSessionMutedStatusChanged(bool muted) {
+  VLOG(1) << __func__ << " muted: " << muted;
+  system_media_controls_->SetMuteStatus(muted);
+}
+#endif  // defined(OS_WEBOS)
 
 void SystemMediaControlsNotifier::MediaControllerImageChanged(
     media_session::mojom::MediaSessionImageType type,

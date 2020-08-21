@@ -61,6 +61,7 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControls {
 #if defined(OS_WEBOS)
   virtual void SetMediaSessionId(
       const base::Optional<base::UnguessableToken>& session_id) {}
+  virtual void SetMuteStatus(bool muted) {}
 #endif
 
  protected:

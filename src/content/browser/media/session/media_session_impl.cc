@@ -931,6 +931,9 @@ void MediaSessionImpl::AddObserver(
   media_session_observer->MediaSessionMetadataChanged(metadata_);
   media_session_observer->MediaSessionImagesChanged(images_);
   media_session_observer->MediaSessionPositionChanged(position_);
+#if defined(USE_NEVA_MEDIA)
+  media_session_observer->MediaSessionMutedStatusChanged(muted_);
+#endif
 
   std::vector<media_session::mojom::MediaSessionAction> actions(
       actions_.begin(), actions_.end());
@@ -1294,6 +1297,15 @@ const base::UnguessableToken& MediaSessionImpl::GetSourceId() const {
 const base::UnguessableToken& MediaSessionImpl::GetRequestId() const {
   return delegate_->request_id();
 }
+
+#if defined(USE_NEVA_MEDIA)
+void MediaSessionImpl::OnMediaMutedStatusChanged(bool muted) {
+  for (auto& observer : observers_)
+   observer->MediaSessionMutedStatusChanged(muted);
+
+  muted_ = muted;
+}
+#endif  // defined(USE_NEVA_MEDIA)
 
 void MediaSessionImpl::RebuildAndNotifyActionsChanged() {
   std::set<media_session::mojom::MediaSessionAction> actions =

@@ -164,4 +164,11 @@ void MediaSessionController::OnMediaPositionStateChanged(
   media_session_->RebuildAndNotifyMediaPositionChanged();
 }
 
+#if defined(USE_NEVA_MEDIA)
+void MediaSessionController::OnMediaMutedStatusChanged(bool muted) {
+  if (media_session_->IsActive())
+    media_session_->OnMediaMutedStatusChanged(muted);
+}
+#endif  // defined(USE_NEVA_MEDIA)
+
 }  // namespace content

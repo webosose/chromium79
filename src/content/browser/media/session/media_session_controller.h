@@ -70,6 +70,11 @@ class CONTENT_EXPORT MediaSessionController
   void OnMediaPositionStateChanged(
       const media_session::MediaPosition& position);
 
+#if defined(USE_NEVA_MEDIA)
+  // Called when the media mute state of the player has changed.
+  void OnMediaMutedStatusChanged(bool muted);
+#endif
+
  private:
   friend class MediaSessionControllerTest;
 

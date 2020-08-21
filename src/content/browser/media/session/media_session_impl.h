@@ -276,6 +276,11 @@ class MediaSessionImpl : public MediaSession,
   // Returns the Audio Focus request ID associated with this media session.
   const base::UnguessableToken& GetRequestId() const;
 
+#if defined(USE_NEVA_MEDIA)
+  // Called when the media mute state of the player has changed.
+  void OnMediaMutedStatusChanged(bool muted);
+#endif
+
  private:
   friend class content::WebContentsUserData<MediaSessionImpl>;
   friend class ::MediaSessionImplBrowserTest;
@@ -411,6 +416,11 @@ class MediaSessionImpl : public MediaSession,
 
   // The last updated |MediaPosition| that was sent to |observers_|.
   base::Optional<media_session::MediaPosition> position_;
+
+#if defined(USE_NEVA_MEDIA)
+  // The last updated mute status was sent to |observers_|.
+  bool muted_;
+#endif
 
   MediaSessionUmaHelper uma_helper_;
 

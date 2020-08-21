@@ -55,6 +55,10 @@ const char kMediaPlayStatusStopped[] = "PLAYSTATE_STOPPED";
 const char kMediaPlayStatusPaused[] = "PLAYSTATE_PAUSED";
 const char kMediaPlayStatusPlaying[] = "PLAYSTATE_PLAYING";
 
+const char kMediaMuteStatus[] = "muteStatus";
+const char kMediaMuteStatusMuted[] = "MUTE";
+const char kMediaMuteStatusUnmuted[] = "UNMUTE";
+
 const char kPlayEvent[] = "play";
 const char kPauseEvent[] = "pause";
 const char kNextEvent[] = "next";
@@ -68,6 +72,7 @@ const char kActivateMediaSession[] = "activateMediaSession";
 const char kDeactivateMediaSession[] = "deactivateMediaSession";
 const char kSetMediaMetaData[] = "setMediaMetaData";
 const char kSetMediaPlayStatus[] = "setMediaPlayStatus";
+const char kSetMediaMuteStatus[] = "setMediaMuteStatus";
 
 }  // namespace
 
@@ -214,6 +219,30 @@ void SystemMediaControlsWebOS::SetMediaSessionId(
   }
 
   session_id_ = session_id->ToString();
+}
+
+void SystemMediaControlsWebOS::SetMuteStatus(bool muted) {
+  if (session_id_.empty()) {
+    LOG(ERROR) << __func__ << " No active session.";
+    return;
+  }
+
+  Json::Value mutestatus_root;
+  mutestatus_root[kMediaId] = session_id_;
+  mutestatus_root[kMediaMuteStatus] =
+      muted ? kMediaMuteStatusMuted : kMediaMuteStatusUnmuted;
+
+  Json::FastWriter mutestatus_writer;
+  std::string mutestatus_payload = mutestatus_writer.write(mutestatus_root);
+
+  VLOG(1) << __func__ << " mutestatus_payload: " << mutestatus_payload;
+  luna_service_client_->CallAsync(
+      base::LunaServiceClient::GetServiceURI(
+          base::LunaServiceClient::URIType::MEDIACONTROLLER,
+          kSetMediaMuteStatus),
+      mutestatus_payload,
+      BIND_TO_CURRENT_LOOP(
+          &SystemMediaControlsWebOS::CheckReplyStatusMessage));
 }
 
 bool SystemMediaControlsWebOS::RegisterMediaSession(

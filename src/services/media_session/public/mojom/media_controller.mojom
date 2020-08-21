@@ -114,6 +114,13 @@ interface MediaControllerObserver {
   // anytime the position state (playback rate, duration) is changed or the
   // media is seeked.
   MediaSessionPositionChanged(MediaPosition? position);
+
+  ///@}
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  // Called when the Observed MediaSession has changed Muted status
+  MediaSessionMutedStatusChanged(bool muted);
+  ///@}
 };
 
 // The observer for observing when images associated with a media controller

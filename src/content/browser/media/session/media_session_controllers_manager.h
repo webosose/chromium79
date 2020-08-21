@@ -66,6 +66,11 @@ class CONTENT_EXPORT MediaSessionControllersManager {
   // Called when the WebContents was muted or unmuted.
   void WebContentsMutedStateChanged(bool muted);
 
+#if defined(USE_NEVA_MEDIA)
+  // Called when the media session was muted or unmuted.
+  void OnMediaMutedStatusChanged(const MediaPlayerId& id, bool muted);
+#endif
+
  private:
   friend class MediaSessionControllersManagerTest;
 

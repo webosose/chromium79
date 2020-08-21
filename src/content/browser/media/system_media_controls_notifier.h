@@ -59,6 +59,10 @@ class CONTENT_EXPORT SystemMediaControlsNotifier
   void MediaSessionPositionChanged(
       const base::Optional<media_session::MediaPosition>& position) override {}
 
+#if defined(OS_WEBOS)
+  void MediaSessionMutedStatusChanged(bool muted) override;
+#endif
+
   // media_session::mojom::MediaControllerImageObserver implementation.
   void MediaControllerImageChanged(
       ::media_session::mojom::MediaSessionImageType type,

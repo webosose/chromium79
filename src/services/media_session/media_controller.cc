@@ -148,6 +148,9 @@ void MediaController::AddObserver(
   media_controller_observer->MediaSessionMetadataChanged(session_metadata_);
   media_controller_observer->MediaSessionActionsChanged(session_actions_);
   media_controller_observer->MediaSessionPositionChanged(session_position_);
+#if defined(USE_NEVA_MEDIA)
+  media_controller_observer->MediaSessionMutedStatusChanged(session_muted_);
+#endif
 
   observers_.Add(std::move(media_controller_observer));
 }
@@ -190,6 +193,17 @@ void MediaController::MediaSessionPositionChanged(
 
   session_position_ = position;
 }
+
+#if defined(USE_NEVA_MEDIA)
+void MediaController::MediaSessionMutedStatusChanged(bool muted) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  for (auto& observer : observers_)
+    observer->MediaSessionMutedStatusChanged(muted);
+
+  session_muted_ = muted;
+}
+#endif  // defined(USE_NEVA_MEDIA)
 
 void MediaController::MediaSessionImagesChanged(
     const base::flat_map<mojom::MediaSessionImageType, std::vector<MediaImage>>&

@@ -264,6 +264,14 @@ void MediaWebContentsObserver::OnMediaPlaying(
   // Notify observers of the new player.
   web_contents_impl()->MediaStartedPlaying(
       WebContentsObserver::MediaPlayerInfo(has_video, has_audio), id);
+
+#if defined(USE_NEVA_MEDIA)
+  // Since SetVolume is called before Play is started, below code ensures
+  // that mute status is updated after play is started.
+  auto it = mute_status_.find(id);
+  if (it != mute_status_.end())
+    session_controllers_manager_.OnMediaMutedStatusChanged(id, it->second);
+#endif
 }
 
 void MediaWebContentsObserver::OnMediaEffectivelyFullscreenChanged(
@@ -363,6 +371,19 @@ void MediaWebContentsObserver::OnMediaMutedStatusChanged(
     bool muted) {
   const MediaPlayerId id(render_frame_host, delegate_id);
   web_contents_impl()->MediaMutedStatusChanged(id, muted);
+
+#if defined(USE_NEVA_MEDIA)
+  auto it = mute_status_.find(id);
+  if (it == mute_status_.end()) {
+    mute_status_[id] = muted;
+  } else {
+    if (it->second == muted)
+      return;
+    it->second = muted;
+  }
+
+  session_controllers_manager_.OnMediaMutedStatusChanged(id, muted);
+#endif
 }
 
 void MediaWebContentsObserver::OnMediaPositionStateChanged(

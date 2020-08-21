@@ -166,6 +166,13 @@ interface MediaSessionObserver {
 
   // Called when the position associated with the session has changed.
   MediaSessionPositionChanged@4(MediaPosition? position);
+
+  ///@}
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  // Called when the Observed MediaSession has changes Muted status
+  MediaSessionMutedStatusChanged@5(bool muted);
+  ///@}
 };
 
 // A MediaSession manages the media session and audio focus for a given

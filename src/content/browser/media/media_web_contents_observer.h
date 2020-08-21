@@ -173,6 +173,8 @@ class CONTENT_EXPORT MediaWebContentsObserver : public WebContentsObserver {
                       int player_id,
                       bool will_use_media_resource);
   void OnMediaSuspended(RenderFrameHost* render_frame_host, int player_id);
+
+  std::map<MediaPlayerId, bool> mute_status_;
 #endif
 
   // Tracking variables and associated wake locks for media playback.

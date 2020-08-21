@@ -505,6 +505,7 @@ void WebMediaPlayerNeva::SetVolume(double volume) {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   FUNC_LOG(1);
   volume_ = volume;
+  delegate_->DidPlayerMutedStatusChange(delegate_id_, volume == 0.0);
   player_api_->SetVolume(volume_);
 }
 
