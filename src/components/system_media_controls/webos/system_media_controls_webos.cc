@@ -49,6 +49,7 @@ const char kMediaMetaData[] = "mediaMetaData";
 const char kMediaMetaDataTitle[] = "title";
 const char kMediaMetaDataArtist[] = "artist";
 const char kMediaMetaDataAlbum[] = "album";
+const char kMediaMetaDataTotalDuration[] = "totalDuration";
 
 const char kMediaPlayStatus[] = "playStatus";
 const char kMediaPlayStatusStopped[] = "PLAYSTATE_STOPPED";
@@ -58,6 +59,8 @@ const char kMediaPlayStatusPlaying[] = "PLAYSTATE_PLAYING";
 const char kMediaMuteStatus[] = "muteStatus";
 const char kMediaMuteStatusMuted[] = "MUTE";
 const char kMediaMuteStatusUnmuted[] = "UNMUTE";
+
+const char kMediaPlayPosition[] = "playPosition";
 
 const char kPlayEvent[] = "play";
 const char kPauseEvent[] = "pause";
@@ -73,6 +76,7 @@ const char kDeactivateMediaSession[] = "deactivateMediaSession";
 const char kSetMediaMetaData[] = "setMediaMetaData";
 const char kSetMediaPlayStatus[] = "setMediaPlayStatus";
 const char kSetMediaMuteStatus[] = "setMediaMuteStatus";
+const char kSetMediaPlayPosition[] = "setMediaPlayPosition";
 
 }  // namespace
 
@@ -245,6 +249,26 @@ void SystemMediaControlsWebOS::SetMuteStatus(bool muted) {
           &SystemMediaControlsWebOS::CheckReplyStatusMessage));
 }
 
+void SystemMediaControlsWebOS::SetMediaPosition(
+    const base::Optional<media_session::MediaPosition>& position) {
+  if (!position.has_value()) {
+    LOG(ERROR) << __func__ << "media position value is not available.";
+    return;
+  }
+
+  base::TimeDelta new_duration = position->duration();
+  base::TimeDelta new_position = position->GetPosition();
+
+  SetMediaPositionInternal(new_position);
+
+  if (duration_ == new_duration)
+    return;
+
+  duration_ = new_duration;
+  SetMetadataPropertyInternal(kMediaMetaDataTotalDuration,
+                              base::NumberToString16(duration_.InSecondsF()));
+}
+
 bool SystemMediaControlsWebOS::RegisterMediaSession(
     const std::string& session_id) {
   if (session_id.empty()) {
@@ -385,6 +409,30 @@ void SystemMediaControlsWebOS::SetMetadataPropertyInternal(
           base::LunaServiceClient::URIType::MEDIACONTROLLER, kSetMediaMetaData),
       metadata_paylaod,
       BIND_TO_CURRENT_LOOP(&SystemMediaControlsWebOS::CheckReplyStatusMessage));
+}
+
+void SystemMediaControlsWebOS::SetMediaPositionInternal(
+    const base::TimeDelta& position) {
+  if (session_id_.empty()) {
+    LOG(ERROR) << __func__ << " No active session.";
+    return;
+  }
+
+  Json::Value playposition_root;
+  playposition_root[kMediaId] = session_id_;
+  playposition_root[kMediaPlayPosition] = std::to_string(position.InSecondsF());
+
+  Json::FastWriter playposition_writer;
+  std::string playposition_payload = playposition_writer.write(playposition_root);
+
+  VLOG(1) << __func__ << " playposition_payload: " << playposition_payload;
+  luna_service_client_->CallAsync(
+      base::LunaServiceClient::GetServiceURI(
+          base::LunaServiceClient::URIType::MEDIACONTROLLER,
+          kSetMediaPlayPosition),
+      playposition_payload,
+      BIND_TO_CURRENT_LOOP(
+          &SystemMediaControlsWebOS::CheckReplyStatusMessage));
 }
 
 void SystemMediaControlsWebOS::HandleMediaKeyEvent(const std::string& payload) {

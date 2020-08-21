@@ -47,6 +47,8 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControlsWebOS
   void SetMediaSessionId(
       const base::Optional<base::UnguessableToken>& session_id) override;
   void SetMuteStatus(bool muted) override;
+  void SetMediaPosition(
+      const base::Optional<media_session::MediaPosition>& position) override;
 
  private:
    enum class MediaKeyEvent {
@@ -85,6 +87,9 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControlsWebOS
   void SetMetadataPropertyInternal(const std::string& property,
                                    const base::string16& value);
 
+  // Sets the playback position value to MCS.
+  void SetMediaPositionInternal(const base::TimeDelta& position);
+
   void HandleMediaKeyEvent(const std::string& payload);
 
   void CheckReplyStatusMessage(const std::string& message);
@@ -94,6 +99,8 @@ class COMPONENT_EXPORT(SYSTEM_MEDIA_CONTROLS) SystemMediaControlsWebOS
 
   // True if we have registered to com.webos.service.mediacontroller service.
   bool registered_ = false;
+
+  base::TimeDelta duration_;
 
   ServiceReadyStatus service_ready_status_ = ServiceReadyStatus::kNone;
 

@@ -56,8 +56,13 @@ class CONTENT_EXPORT SystemMediaControlsNotifier
 #else
       const base::Optional<base::UnguessableToken>& request_id) override {}
 #endif
+
   void MediaSessionPositionChanged(
+#if defined(OS_WEBOS)
+      const base::Optional<media_session::MediaPosition>& position) override;
+#else
       const base::Optional<media_session::MediaPosition>& position) override {}
+#endif
 
 #if defined(OS_WEBOS)
   void MediaSessionMutedStatusChanged(bool muted) override;

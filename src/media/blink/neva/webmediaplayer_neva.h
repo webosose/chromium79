@@ -41,6 +41,7 @@
 #include "media/blink/neva/webmediaplayer_params_neva.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
+#include "services/media_session/public/cpp/media_position.h"
 #include "third_party/blink/public/platform/media/webmediaplayer_delegate.h"
 #include "third_party/blink/public/platform/web_audio_source_provider.h"
 #include "third_party/blink/public/platform/web_float_point.h"
@@ -325,6 +326,8 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
   // Getter method to |client_|.
   blink::WebMediaPlayerClient* GetClient();
 
+  void OnMediaPositionUpdateTimerFired();
+
   // Notifies blink of the video size change.
   // void OnVideoSizeChange();
 
@@ -492,6 +495,10 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerNeva
 
   base::WeakPtr<WebMediaPlayerNeva> weak_this_;
   base::WeakPtrFactory<WebMediaPlayerNeva> weak_factory_{this};
+
+  base::RepeatingTimer media_position_update_timer_;
+  media_session::MediaPosition media_position_state_;
+  double playback_rate_;
 
   DISALLOW_COPY_AND_ASSIGN(WebMediaPlayerNeva);
 };

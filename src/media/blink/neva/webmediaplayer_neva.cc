@@ -70,6 +70,9 @@ namespace {
 const double kMinRate = -16.0;
 const double kMaxRate = 16.0;
 
+const base::TimeDelta kCurrentTimeUpdateInterval =
+    base::TimeDelta::FromSeconds(1);
+
 const char* ReadyStateToString(WebMediaPlayer::ReadyState state) {
 #define STRINGIFY_READY_STATUS_CASE(state) \
   case WebMediaPlayer::ReadyState::state:  \
@@ -435,6 +438,9 @@ void WebMediaPlayerNeva::Pause() {
 
   paused_time_ = base::TimeDelta::FromSecondsD(CurrentTime());
 
+  if (media_position_update_timer_.IsRunning())
+    media_position_update_timer_.Stop();
+
   media_log_->AddEvent(media_log_->CreateEvent(media::MediaLogEvent::PAUSE));
 
   if (delegate_) {
@@ -499,6 +505,7 @@ void WebMediaPlayerNeva::SetRate(double rate) {
   interpolator_.SetPlaybackRate(rate);
   player_api_->SetRate(rate);
   is_negative_playback_rate_ = rate < 0.0f;
+  playback_rate_ = rate;
 }
 
 void WebMediaPlayerNeva::SetVolume(double volume) {
@@ -587,6 +594,21 @@ double WebMediaPlayerNeva::CurrentTime() const {
     current_time = 0;
 
   return current_time;
+}
+
+void WebMediaPlayerNeva::OnMediaPositionUpdateTimerFired() {
+  media_session::MediaPosition new_position(
+      Paused() ? 0.0 : playback_rate_, duration_,
+      base::TimeDelta::FromSecondsD(CurrentTime()));
+
+  if (media_position_state_ == new_position)
+    return;
+
+  media_position_state_ = new_position;
+
+  if (delegate_)
+    delegate_->DidPlayerMediaPositionStateChange(delegate_id_,
+                                                 media_position_state_);
 }
 
 WebSize WebMediaPlayerNeva::NaturalSize() const {
@@ -767,8 +789,11 @@ void WebMediaPlayerNeva::OnPlaybackComplete() {
   // playing after seek completes.
   if (is_playing_ && seeking_ && seek_time_.is_zero())
     player_api_->Start();
-  else
+  else {
     playback_completed_ = true;
+    if (media_position_update_timer_.IsRunning())
+      media_position_update_timer_.Stop();
+  }
 }
 
 void WebMediaPlayerNeva::OnBufferingStateChanged(
@@ -938,6 +963,13 @@ void WebMediaPlayerNeva::OnTimeUpdate(base::TimeDelta current_timestamp,
 void WebMediaPlayerNeva::OnMediaPlayerPlay() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   UpdatePlayingState(true);
+  if (!media_position_update_timer_.IsRunning()) {
+    media_position_update_timer_.Start(
+        FROM_HERE, kCurrentTimeUpdateInterval,
+        base::BindRepeating(&WebMediaPlayerNeva::OnMediaPositionUpdateTimerFired,
+                            base::Unretained(this)));
+  }
+
   client_->RequestPlay();
 }
 
@@ -945,6 +977,9 @@ void WebMediaPlayerNeva::OnMediaPlayerPause() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
   UpdatePlayingState(false);
   client_->RequestPause();
+
+  if (media_position_update_timer_.IsRunning())
+    media_position_update_timer_.Stop();
 }
 
 void WebMediaPlayerNeva::UpdateNetworkState(

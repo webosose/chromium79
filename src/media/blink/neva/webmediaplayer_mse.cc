@@ -36,6 +36,12 @@
 #include "ui/gfx/geometry/rect_f.h"
 
 namespace media {
+namespace {
+
+const base::TimeDelta kCurrentTimeUpdateInterval =
+    base::TimeDelta::FromSeconds(1);
+
+}  // namespace
 
 #define BIND_TO_RENDER_LOOP_VIDEO_FRAME_PROVIDER(function) \
   (DCHECK(main_task_runner_->BelongsToCurrentThread()),    \
@@ -151,6 +157,13 @@ void WebMediaPlayerMSE::Play() {
     return;
   }
   media::WebMediaPlayerImpl::Play();
+
+  if (!media_position_update_timer_.IsRunning()) {
+    media_position_update_timer_.Start(
+        FROM_HERE, kCurrentTimeUpdateInterval,
+        base::BindRepeating(&WebMediaPlayerMSE::OnMediaPositionUpdateTimerFired,
+                            base::Unretained(this)));
+  }
 }
 
 void WebMediaPlayerMSE::Pause() {
@@ -160,6 +173,9 @@ void WebMediaPlayerMSE::Pause() {
     return;
   }
   media::WebMediaPlayerImpl::Pause();
+
+  if (media_position_update_timer_.IsRunning())
+    media_position_update_timer_.Stop();
 }
 
 void WebMediaPlayerMSE::SetRate(double rate) {
@@ -328,6 +344,13 @@ void WebMediaPlayerMSE::OnError(PipelineStatus metadata) {
     delegate_->DidMediaActivated(delegate_id_);
   }
   media::WebMediaPlayerImpl::OnError(metadata);
+}
+
+void WebMediaPlayerMSE::OnEnded() {
+  if (media_position_update_timer_.IsRunning())
+    media_position_update_timer_.Stop();
+
+  media::WebMediaPlayerImpl::OnEnded();
 }
 
 void WebMediaPlayerMSE::OnMetadata(const PipelineMetadata& metadata) {
@@ -502,6 +525,10 @@ void WebMediaPlayerMSE::SetDisableAudio(bool disable) {
 
 bool WebMediaPlayerMSE::UsesIntrinsicSize() const {
   return !MediaPlatformPrefs::Get()->IsDisableVideoIntrinsicSizeForMSE();
+}
+
+void WebMediaPlayerMSE::OnMediaPositionUpdateTimerFired() {
+  media::WebMediaPlayerImpl::UpdateMediaPositionState();
 }
 
 }  // namespace media

@@ -149,6 +149,11 @@ void SystemMediaControlsNotifier::MediaSessionMutedStatusChanged(bool muted) {
   VLOG(1) << __func__ << " muted: " << muted;
   system_media_controls_->SetMuteStatus(muted);
 }
+
+void SystemMediaControlsNotifier::MediaSessionPositionChanged(
+    const base::Optional<media_session::MediaPosition>& position) {
+  system_media_controls_->SetMediaPosition(position);
+}
 #endif  // defined(OS_WEBOS)
 
 void SystemMediaControlsNotifier::MediaControllerImageChanged(

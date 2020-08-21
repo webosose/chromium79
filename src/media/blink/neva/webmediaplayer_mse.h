@@ -129,8 +129,11 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE
   void OnSuspended();
   void OnNaturalVideoSizeChanged(const gfx::Size& natural_video_size);
   void OnError(PipelineStatus status) override;
+  void OnEnded() override;
 
   void OnMetadata(const PipelineMetadata& metadata) override;
+
+  void OnMediaPositionUpdateTimerFired();
 
   // Implements ui::mojom::VideoWindowClient
   void OnVideoWindowCreated(const ui::VideoWindowInfo& info) override;
@@ -174,6 +177,8 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerMSE
 
   base::WeakPtr<WebMediaPlayerMSE> weak_this_for_mse_;
   base::WeakPtrFactory<WebMediaPlayerMSE> weak_factory_for_mse_{this};
+
+  base::RepeatingTimer media_position_update_timer_;
 
   DISALLOW_COPY_AND_ASSIGN(WebMediaPlayerMSE);
 };
