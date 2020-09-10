@@ -64,7 +64,7 @@ class CONTENT_EXPORT SystemMediaControlsNotifier
       const base::Optional<media_session::MediaPosition>& position) override {}
 #endif
 
-#if defined(OS_WEBOS)
+#if defined(USE_NEVA_MEDIA)
   void MediaSessionMutedStatusChanged(bool muted) override;
 #endif
 

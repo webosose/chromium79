@@ -43,7 +43,7 @@ class CONTENT_EXPORT HardwareKeyMediaController
       const base::Optional<base::UnguessableToken>& request_id) override {}
   void MediaSessionPositionChanged(
       const base::Optional<media_session::MediaPosition>& position) override {}
-#if defined(OS_WEBOS)
+#if defined(USE_NEVA_MEDIA)
   void MediaSessionMutedStatusChanged(bool muted) override {}
 #endif
 

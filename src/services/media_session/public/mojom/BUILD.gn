@@ -25,4 +25,10 @@ mojom("mojom") {
   export_class_attribute_blink = "BLINK_PLATFORM_EXPORT"
   export_define_blink = "BLINK_PLATFORM_IMPLEMENTATION=1"
   export_header_blink = "third_party/blink/public/platform/web_common.h"
+
+  enabled_features = []
+
+  if (use_neva_media) {
+    enabled_features += [ "neva_media" ]
+  }
 }

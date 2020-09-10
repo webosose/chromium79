@@ -29,12 +29,9 @@ enum MediaSessionAction {
   kStop,
   kSeekTo,
   kScrubTo,
-  ///@}
-  ///@name USE_NEVA_MEDIA
-  ///@{
+  [EnableIf=neva_media]
   kMute,
   kUnMute,
-  ///@}
 };
 
 [Extensible]
@@ -167,12 +164,9 @@ interface MediaSessionObserver {
   // Called when the position associated with the session has changed.
   MediaSessionPositionChanged@4(MediaPosition? position);
 
-  ///@}
-  ///@name USE_NEVA_MEDIA
-  ///@{
+  [EnableIf=neva_media]
   // Called when the Observed MediaSession has changes Muted status
   MediaSessionMutedStatusChanged@5(bool muted);
-  ///@}
 };
 
 // A MediaSession manages the media session and audio focus for a given
@@ -256,10 +250,7 @@ interface MediaSession {
   // scrubbing operation.
   ScrubTo@14(mojo_base.mojom.TimeDelta seek_time);
 
-  ///@}
-  ///@name USE_NEVA_MEDIA
-  ///@{
+  [EnableIf=neva_media]
   // Set the media session to mute/unmute based on |mute|
   SetMuted@15(bool mute);
-  ///@}
 };

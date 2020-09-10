@@ -145,16 +145,18 @@ void SystemMediaControlsNotifier::MediaSessionChanged(
   system_media_controls_->SetMediaSessionId(request_id);
 }
 
-void SystemMediaControlsNotifier::MediaSessionMutedStatusChanged(bool muted) {
-  VLOG(1) << __func__ << " muted: " << muted;
-  system_media_controls_->SetMuteStatus(muted);
-}
-
 void SystemMediaControlsNotifier::MediaSessionPositionChanged(
     const base::Optional<media_session::MediaPosition>& position) {
   system_media_controls_->SetMediaPosition(position);
 }
 #endif  // defined(OS_WEBOS)
+
+#if defined(USE_NEVA_MEDIA)
+void SystemMediaControlsNotifier::MediaSessionMutedStatusChanged(bool muted) {
+  VLOG(1) << __func__ << " muted: " << muted;
+  system_media_controls_->SetMuteStatus(muted);
+}
+#endif
 
 void SystemMediaControlsNotifier::MediaControllerImageChanged(
     media_session::mojom::MediaSessionImageType type,

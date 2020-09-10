@@ -78,12 +78,9 @@ interface MediaController {
   // scrubbing operation.
   ScrubTo(mojo_base.mojom.TimeDelta seek_time);
 
-  ///@}
-  ///@name USE_NEVA_MEDIA
-  ///@{
+  [EnableIf=neva_media]
   // Set the media session to mute/unmute based on |mute|
   SetMuted(bool mute);
-  ///@}
 };
 
 // The observer for observing media controller events. This is different to a
@@ -115,12 +112,9 @@ interface MediaControllerObserver {
   // media is seeked.
   MediaSessionPositionChanged(MediaPosition? position);
 
-  ///@}
-  ///@name USE_NEVA_MEDIA
-  ///@{
+  [EnableIf=neva_media]
   // Called when the Observed MediaSession has changed Muted status
   MediaSessionMutedStatusChanged(bool muted);
-  ///@}
 };
 
 // The observer for observing when images associated with a media controller

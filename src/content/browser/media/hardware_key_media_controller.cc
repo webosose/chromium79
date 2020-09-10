@@ -103,12 +103,12 @@ void HardwareKeyMediaController::OnMediaKeysAccelerator(
   if (accelerator.key_state() == ui::Accelerator::KeyState::RELEASED)
     return;
 
-#if defined(OS_WEBOS)
+#if defined(USE_NEVA_MEDIA)
   if (accelerator.key_code() == ui::KeyboardCode::VKEY_VOLUME_MUTE) {
     media_controller_remote_->SetMuted(accelerator.modifiers() == ui::EF_NONE);
     return;
   }
-#endif  // defined(OS_WEBOS)
+#endif  // defined(USE_NEVA_MEDIA)
 
   MediaSessionAction action =
       KeyCodeToMediaSessionAction(accelerator.key_code());
