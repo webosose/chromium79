@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 LG Electronics, Inc.
+// Copyright 2016-2019 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,9 +58,6 @@ class AppRuntimeContentRendererClient : public content::ContentRendererClient {
 
   void RenderFrameCreated(content::RenderFrame* render_frame) override;
   void RenderThreadStarted() override;
-
-  bool ShouldSuppressErrorPage(content::RenderFrame* render_frame,
-                               const GURL& url) override;
 
   void PrepareErrorPage(content::RenderFrame* render_frame,
                         const blink::WebURLError& error,
