@@ -250,6 +250,13 @@ void WebRtcVideoEncoderWebOSGMP::EncodeFrame(
     return;
   }
 
+  if (!failed_timestamp_match_) {
+    const base::TimeDelta timestamp =
+        base::TimeDelta::FromMilliseconds(next_frame->ntp_time_ms());
+    pending_timestamps_.emplace_back(timestamp, next_frame->timestamp(),
+                                     next_frame->render_time_ms());
+  }
+
   SignalAsyncWaiter(WEBRTC_VIDEO_CODEC_OK);
 }
 
@@ -404,10 +411,33 @@ void WebRtcVideoEncoderWebOSGMP::NotifyEncodedBufferReady(const void* data) {
   DVLOG(3) << __func__ << ", buffer_size=" << encoded_buffer->bufferSize
            << ", is_key_frame=" << encoded_buffer->isKeyFrame;
 
-  const int64_t current_time_ms =
-      rtc::TimeMicros() / base::Time::kMicrosecondsPerMillisecond;
-  // RTP timestamp can wrap around. Get the lower 32 bits.
-  uint32_t rtp_timestamp = static_cast<uint32_t>(current_time_ms * 90);
+  const base::TimeDelta media_timestamp =
+      base::TimeDelta::FromMilliseconds(encoded_buffer->timeStamp);
+  base::Optional<uint32_t> rtp_timestamp;
+  base::Optional<int64_t> capture_timestamp_ms;
+  if (!failed_timestamp_match_) {
+    // Pop timestamps until we have a match.
+    while (!pending_timestamps_.empty()) {
+      const auto& front_timestamps = pending_timestamps_.front();
+      if (front_timestamps.media_timestamp_ == media_timestamp) {
+        rtp_timestamp = front_timestamps.rtp_timestamp;
+        capture_timestamp_ms = front_timestamps.capture_time_ms;
+        pending_timestamps_.pop_front();
+        break;
+      }
+      pending_timestamps_.pop_front();
+    }
+  }
+
+  if (!rtp_timestamp.has_value() || !capture_timestamp_ms.has_value()) {
+    failed_timestamp_match_ = true;
+    pending_timestamps_.clear();
+    const int64_t current_time_ms =
+        rtc::TimeMicros() / base::Time::kMicrosecondsPerMillisecond;
+    // RTP timestamp can wrap around. Get the lower 32 bits.
+    rtp_timestamp = static_cast<uint32_t>(current_time_ms * 90);
+    capture_timestamp_ms = current_time_ms;
+  }
 
   webrtc::EncodedImage image;
   image.SetEncodedData(webrtc::EncodedImageBuffer::Create(
@@ -415,8 +445,8 @@ void WebRtcVideoEncoderWebOSGMP::NotifyEncodedBufferReady(const void* data) {
       encoded_buffer->bufferSize));
   image._encodedWidth = input_visible_size_.width();
   image._encodedHeight = input_visible_size_.height();
-  image.SetTimestamp(rtp_timestamp);
-  image.capture_time_ms_ = current_time_ms;
+  image.SetTimestamp(rtp_timestamp.value());
+  image.capture_time_ms_ = capture_timestamp_ms.value();
   image._frameType =
       (encoded_buffer->isKeyFrame ? webrtc::VideoFrameType::kVideoFrameKey
                                   : webrtc::VideoFrameType::kVideoFrameDelta);

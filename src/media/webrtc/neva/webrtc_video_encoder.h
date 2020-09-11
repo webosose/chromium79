@@ -39,6 +39,18 @@ namespace media {
 class WebRtcVideoEncoder
     : public base::RefCountedThreadSafe<media::WebRtcVideoEncoder> {
  public:
+  struct WebRtcTimestamps {
+    WebRtcTimestamps(const base::TimeDelta& media_timestamp,
+                  int32_t rtp_timestamp,
+                  int64_t capture_time_ms)
+        : media_timestamp_(media_timestamp),
+          rtp_timestamp(rtp_timestamp),
+          capture_time_ms(capture_time_ms) {}
+    const base::TimeDelta media_timestamp_;
+    const int32_t rtp_timestamp;
+    const int64_t capture_time_ms;
+  };
+
   // Returns true if the codec type passed is supported by the platform
   static bool IsCodecTypeSupported(webrtc::VideoCodecType type);
 
@@ -97,6 +109,14 @@ class WebRtcVideoEncoder
   // The content type, as reported to WebRTC (screenshare vs realtime video).
   const webrtc::VideoContentType video_content_type_ =
       webrtc::VideoContentType::UNSPECIFIED;
+
+  // Used to match the encoded frame timestamp with WebRTC's given RTP
+  // timestamp.
+  std::deque<WebRtcTimestamps> pending_timestamps_;
+
+  // Indicates that timestamp match failed and we should no longer attempt
+  // matching.
+  bool failed_timestamp_match_ = false;
 
   base::WaitableEvent* async_waiter_ = nullptr;
   int32_t* async_retval_ = nullptr;
