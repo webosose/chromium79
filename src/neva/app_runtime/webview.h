@@ -66,7 +66,6 @@ class WebView : public content::WebContentsDelegate,
     KeepAliveWebApp,
     AdditionalFontFamilyEnabled,
     BackHistoryKeyDisabled,
-    ForceVideoTexture,
   };
 
   enum FontFamily {

@@ -213,7 +213,6 @@ class WEBOS_EXPORT WebViewBase
   void SetXFrameOptionsCrossOriginAllowed(bool enable);
   void SetKeepAliveWebApp(bool enable);
   void SetAdditionalFontFamilyEnabled(bool enable);
-  void SetForceVideoTexture(bool enable);
   void SetNotifyFMPDirectly(bool enable);
   void SetNetworkStableTimeout(double timeout);
 
