@@ -133,9 +133,7 @@ void WebAppWindowBase::InitWindow(int width, int height) {
   webapp_window_ = new WebAppWindow(params);
   webapp_window_->SetDelegate(this);
 
-  if (switches::UseVizFMPWithTimeout())
-    webapp_window_->BeginPrepareStackForWebApp();
-
+  webapp_window_->BeginPrepareStackForWebApp();
 }
 
 void WebAppWindowBase::Show() {
@@ -180,8 +178,7 @@ void WebAppWindowBase::AttachWebContents(void* web_contents) {
     webapp_window_->SetupWebContents(
         static_cast<content::WebContents*>(web_contents));
 
-    if (switches::UseVizFMPWithTimeout())
-      webapp_window_->FinishPrepareStackForWebApp();
+    webapp_window_->FinishPrepareStackForWebApp();
   }
 }
 

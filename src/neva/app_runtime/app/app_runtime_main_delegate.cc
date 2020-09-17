@@ -21,6 +21,7 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "components/viz/common/switches.h"
 #include "content/public/common/content_switches.h"
 #include "neva/app_runtime/browser/app_runtime_content_browser_client.h"
 #include "neva/app_runtime/browser/app_runtime_file_access_delegate.h"
@@ -86,6 +87,10 @@ AppRuntimeMainDelegate::~AppRuntimeMainDelegate() {}
 
 bool AppRuntimeMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(&content_client_);
+
+  base::CommandLine::ForCurrentProcess()->AppendSwitchASCII(
+      switches::kUseVizFMPWithTimeout, "0");
+
   return false;
 }
 

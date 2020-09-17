@@ -634,10 +634,6 @@ void WebViewBase::SetBackHistoryAPIDisabled(const bool on) {
       neva_app_runtime::WebView::Attribute::BackHistoryKeyDisabled, on);
 }
 
-void WebViewBase::SetNotifyFMPDirectly(const bool on) {
-  notify_on_first_paint_ = on;
-}
-
 void WebViewBase::SetNetworkStableTimeout(const double timeout) {
   webview_->SetNetworkQuietTimeout(timeout);
 }
@@ -753,11 +749,8 @@ void WebViewBase::SetV8ExtraFlags(const std::string& v8_extra_flags) {
 }
 
 void WebViewBase::DidLoadingEnd() {
-  if (switches::UseVizFMPWithTimeout()) {
-    DidSwapCompositorFrame();
-    CallLoadVisuallyCommitted();
-  } else if (notify_on_first_paint_)
-    CallLoadVisuallyCommitted();
+  DidSwapCompositorFrame();
+  CallLoadVisuallyCommitted();
 }
 
 void WebViewBase::DidFirstMeaningfulPaint() {
