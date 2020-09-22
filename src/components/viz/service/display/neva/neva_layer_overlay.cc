@@ -7,6 +7,9 @@
 
 #include "components/viz/service/display/neva/neva_layer_overlay.h"
 
+#include <cmath>
+#include <limits>
+
 #include "cc/base/math_util.h"
 #include "components/viz/common/quads/render_pass_draw_quad.h"
 #include "components/viz/common/quads/solid_color_draw_quad.h"
@@ -187,7 +190,8 @@ QuadList::Iterator NevaLayerOverlayProcessor::ProcessRenderPassDrawQuad(
   bool should_blend =
       rpdq->ShouldDrawWithBlending() &&
       original_shared_quad_state->blend_mode == SkBlendMode::kSrcOver &&
-      original_shared_quad_state->opacity < 1.f;
+      !(std::fabs(original_shared_quad_state->opacity - 1.0f) <
+        std::numeric_limits<float>::epsilon());
 
   gfx::Rect visible_rect = rpdq->visible_rect;
 
