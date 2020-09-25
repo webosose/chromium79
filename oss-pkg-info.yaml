@@ -1,7 +1,7 @@
 Open Source Software Package:
-- name: webOSOSE-chromium79
+- name: Chromium
   version: 79.0.3945.79
-  source: https://github.com/webosose/chromium79
+  source: https://chromium.googlesource.com/
   license :
   - BSD
   - Apache 2.0
