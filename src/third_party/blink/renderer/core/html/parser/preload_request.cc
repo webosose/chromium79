@@ -123,9 +123,11 @@ Resource* PreloadRequest::Start(Document* document) {
         params.MutableResourceRequest().Url().ProtocolIs("file"))
       can_load_local_file = true;
 
-    if (can_load_universal_access || can_load_local_file)
+    if (can_load_universal_access || can_load_local_file) {
       params.MutableResourceRequest().SetMode(
           network::mojom::RequestMode::kNoCors);
+      params.MutableResourceRequest().SetAccessTrusted(true);
+    }
   }
 #endif
 

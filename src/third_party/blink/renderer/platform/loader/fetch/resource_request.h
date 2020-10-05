@@ -452,6 +452,11 @@ class PLATFORM_EXPORT ResourceRequest final {
   // |url|,
   bool CanDisplay(const KURL&) const;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  bool IsAccessTrusted() { return trusted_access_; }
+  void SetAccessTrusted(bool trusted) { trusted_access_ = trusted; }
+#endif
+
  private:
   using SharableExtraData =
       base::RefCountedData<std::unique_ptr<WebURLRequest::ExtraData>>;
@@ -548,6 +553,10 @@ class PLATFORM_EXPORT ResourceRequest final {
   // prefetch responses. The browser process uses this token to ensure the
   // request is cached correctly.
   base::Optional<base::UnguessableToken> recursive_prefetch_token_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  static bool trusted_access_;
+#endif
 };
 
 }  // namespace blink

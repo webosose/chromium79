@@ -151,6 +151,9 @@ struct COMPONENT_EXPORT(NETWORK_CPP_BASE) ResourceRequest {
   base::Optional<base::UnguessableToken> recursive_prefetch_token;
 
   base::Optional<TrustedParams> trusted_params;
+#if defined(USE_NEVA_APPRUNTIME)
+  bool allow_local_resources = false;
+#endif
 };
 
 }  // namespace network

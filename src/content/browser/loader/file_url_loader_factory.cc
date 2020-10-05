@@ -794,6 +794,10 @@ void FileURLLoaderFactory::CreateLoaderAndStart(
   bool cors_flag = !network::IsNavigationRequestMode(request.mode) &&
                    request.mode != network::mojom::RequestMode::kNoCors;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  cors_flag = cors_flag && !request.allow_local_resources;
+#endif
+
   // CORS mode requires a valid |request_inisiator|. Check this condition first
   // so that kDisableWebSecurity should not hide program errors in tests.
   if (cors_flag && !request.request_initiator) {

@@ -349,6 +349,12 @@ struct URLRequest {
   // response headers. For more information on these requests see
   // https://github.com/w3c/resource-hints/issues/77.
   mojo_base.mojom.UnguessableToken? recursive_prefetch_token;
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Allows local resource load to avoid CORS lock
+  bool allow_local_resources;
+  ///@}
 };
 
 // URLRequestBody represents body (i.e. upload data) of a HTTP request.

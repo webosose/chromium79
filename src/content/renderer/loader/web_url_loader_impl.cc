@@ -812,6 +812,10 @@ void WebURLLoaderImpl::Context::Start(const WebURLRequest& request,
     resource_request->is_signed_exchange_prefetch_cache_enabled = true;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  resource_request->allow_local_resources = request.IsAccessTrusted();
+#endif
+
   auto throttles = extra_data->TakeURLLoaderThrottles();
   // The frame request blocker is only for a frame's subresources.
   if (extra_data->frame_request_blocker() &&

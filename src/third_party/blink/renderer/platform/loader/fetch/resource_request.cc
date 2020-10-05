@@ -40,6 +40,11 @@
 
 namespace blink {
 
+#if defined(USE_NEVA_APPRUNTIME)
+// static
+bool ResourceRequest::trusted_access_ = false;
+#endif
+
 const base::TimeDelta ResourceRequest::default_timeout_interval_ =
     base::TimeDelta::Max();
 

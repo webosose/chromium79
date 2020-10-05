@@ -1064,8 +1064,10 @@ void ThreadableLoader::LoadRequest(
         request.Url().ProtocolIs("file"))
       can_load_local_file = true;
 
-    if (can_load_universal_access || can_load_local_file)
+    if (can_load_universal_access || can_load_local_file) {
       request.SetMode(network::mojom::RequestMode::kNoCors);
+      request.SetAccessTrusted(true);
+    }
   }
 #endif
 
