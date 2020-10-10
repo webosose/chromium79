@@ -383,22 +383,26 @@ void ForeignVideoWindowProvider::UpdateNativeVideoWindowGeometry(
   bool use_set_crop_region = true;
 #endif
 
-  // TODO(neva): Currently it considers only single screen for
-  // use_set_crop_region. If moving on supporting multi-screen we need to check
-  // how to use set_crop_region with multi-screen and revisit this clipping
-  // implementaion.
-  auto screen = display->PrimaryScreen();
-  if (!screen) {
-    LOG(ERROR) << __func__ << " primary screen is nullptr";
-    return;
-  }
-  gfx::Rect screen_rect = screen->Geometry();
   // Always use set_exported_window to keep the original video w/h ratio in
   // fullscreen.
   // set_exported_window always keeps the ratio even though dest is not match
   // with the ratio.
-  bool fullscreen = (screen_rect == dest);
+  // In webos, for application window resolution is less than the screen
+  // resolution, we have to consider window bounds to decide full-screen mode
+  // of video.
+  bool fullscreen = (window->GetBounds() == dest);
   if (!fullscreen && use_set_crop_region) {
+    // TODO(neva): Currently it considers only single screen for
+    // use_set_crop_region. If moving on supporting multi-screen we need to
+    // check how to use set_crop_region with multi-screen and revisit this
+    // clipping implementaion.
+    auto screen = display->PrimaryScreen();
+    if (!screen) {
+      LOG(ERROR) << __func__ << " primary screen is nullptr";
+      return;
+    }
+    gfx::Rect screen_rect = screen->Geometry();
+
     // Adjust for original_rect/source/dest rect
     gfx::Rect original_rect = w->natural_video_size_
                                   ? gfx::Rect(w->natural_video_size_.value())
