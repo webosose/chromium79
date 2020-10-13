@@ -92,12 +92,6 @@ blink::WebPlugin* ShellContentRendererClient::CreatePluginReplacement(
   return NULL;
 }
 
-bool ShellContentRendererClient::ShouldSuppressErrorPage(
-    content::RenderFrame* render_frame,
-    const GURL& url) {
-  return true;
-}
-
 void ShellContentRendererClient::WillSendRequest(
     blink::WebLocalFrame* frame,
     ui::PageTransition transition_type,

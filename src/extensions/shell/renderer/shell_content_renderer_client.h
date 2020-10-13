@@ -49,8 +49,6 @@ class ShellContentRendererClient
   blink::WebPlugin* CreatePluginReplacement(
       content::RenderFrame* render_frame,
       const base::FilePath& plugin_path) override;
-  bool ShouldSuppressErrorPage(content::RenderFrame* render_frame,
-                               const GURL& url) override;
   void WillSendRequest(blink::WebLocalFrame* frame,
                        ui::PageTransition transition_type,
                        const blink::WebURL& url,
