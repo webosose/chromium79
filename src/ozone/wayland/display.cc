@@ -926,6 +926,7 @@ void WaylandDisplay::XInputInvokeAction(uint32_t keysym,
   }
   wl_webos_xinput_invoke_action(webos_xinput_, keysym, wl_keysym_type,
                                 wl_event_type);
+  wl_display_flush(display_);
 #else
   LOG(INFO) << "WaylandDisplay::XInputInvokeAction reached";
 #endif
