@@ -749,8 +749,7 @@ void WebViewBase::SetV8ExtraFlags(const std::string& v8_extra_flags) {
 }
 
 void WebViewBase::DidLoadingEnd() {
-  VLOG(1) << __func__;
-  webview_->SendDidPrepareContentsForFirstShow();
+  DidSwapCompositorFrame();
   CallLoadVisuallyCommitted();
 }
 

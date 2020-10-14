@@ -315,7 +315,6 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   bool IsInspectablePage() const override;
   void SetInspectablePage(bool inspectable) override;
   void DropAllPeerConnections(mojom::DropPeerConnectionReason reason) override;
-  void DidPrepareContentsForFirstShow() override;
   void OverrideWebkitPrefs(WebPreferences* prefs) override;
 
   // RenderWidgetHostDelegate

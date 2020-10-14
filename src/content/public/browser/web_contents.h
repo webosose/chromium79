@@ -319,7 +319,6 @@ class WebContents : public PageNavigator,
   virtual void SetInspectablePage(bool inspectable) = 0;
   virtual void DropAllPeerConnections(
       mojom::DropPeerConnectionReason reason) = 0;
-  virtual void DidPrepareContentsForFirstShow() = 0;
 #endif
 
   // Returns the main frame for the currently active view.

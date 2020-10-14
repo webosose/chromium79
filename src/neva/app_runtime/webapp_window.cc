@@ -252,7 +252,6 @@ void WebAppWindow::SetupWebContents(content::WebContents* web_contents) {
   }
 
   web_contents_ = web_contents;
-  Observe(web_contents_);
 #if defined(USE_NEVA_EXTENSIONS)
   extensions::ShellExtensionWebContentsObserver::CreateForWebContents(
       web_contents);
@@ -350,17 +349,8 @@ ui::WidgetState WebAppWindow::GetWindowHostStateAboutToChange() const {
 }
 
 void WebAppWindow::Activate() {
-  VLOG(1) << __func__;
-  if (!contents_ready_) {
-    VLOG(1) << __func__ << ": contents not ready, waiting";
-    pending_activate_ = true;
-    return;
-  }
-  pending_activate_ = false;
-  if (widget_) {
-    VLOG(1) << __func__ << ": contents ready, activating";
+  if (widget_)
     widget_->Activate();
-  }
 }
 
 void WebAppWindow::SetBounds(int x, int y, int width, int height) {
@@ -393,22 +383,11 @@ void WebAppWindow::SetLocationHint(gfx::LocationHint value) {
 }
 
 void WebAppWindow::Show() {
-  VLOG(1) << __func__;
-  if (!contents_ready_) {
-    VLOG(1) << __func__ << " waiting visibility";
-    pending_show_ = true;
-    return;
-  }
-  pending_show_ = false;
-  if (widget_) {
-    VLOG(1) << __func__ << " ready to show";
+  if (widget_)
     widget_->Show();
-  }
 }
 
 void WebAppWindow::Hide() {
-  contents_ready_ = false;
-  pending_show_ = false;
   if (widget_)
     widget_->Hide();
 }
@@ -425,8 +404,6 @@ void WebAppWindow::Restore() {
 
 void WebAppWindow::Close() {
   widget_closed_ = true;
-  contents_ready_ = false;
-  pending_show_ = false;
 
   if (widget_)
     widget_->Close();
@@ -910,17 +887,6 @@ void WebAppWindow::DetachGroup() {
     return;
 
   host_->AsWindowTreeHost()->DetachGroup();
-}
-
-void WebAppWindow::DidPrepareContentsForFirstShow() {
-  VLOG(1) << __func__;
-  if (!contents_ready_) {
-    contents_ready_ = true;
-    if (pending_activate_)
-      Activate();
-    if (pending_show_)
-      Show();
-  }
 }
 
 }  // namespace neva_app_runtime

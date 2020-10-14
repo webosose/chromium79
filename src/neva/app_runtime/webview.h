@@ -108,7 +108,6 @@ class WebView : public content::WebContentsDelegate,
   }
 
   void CommitLoadVisually();
-  void SendDidPrepareContentsForFirstShow();
   std::string DocumentTitle() const;
   void RunJavaScript(const std::string& js_code);
   void RunJavaScriptInAllFrames(const std::string& js_code);

@@ -7474,17 +7474,8 @@ void WebContentsImpl::OverrideWebkitPrefs(WebPreferences* prefs) {
 }
 
 void WebContentsImpl::DidReceiveCompositorFrame() {
-  // This is notified in two stages. First stage is for WebView side, to
-  // acknowledge a frame has been swapped.
   for (auto& observer : observers_)
     observer.DidReceiveCompositorFrame();
-}
-
-void WebContentsImpl::DidPrepareContentsForFirstShow() {
-  // Second stage is for the window to be shown accordingly once the
-  // WebView has been prepared.
-  for (auto& observer : observers_)
-    observer.DidPrepareContentsForFirstShow();
 }
 #endif
 

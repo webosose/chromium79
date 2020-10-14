@@ -1106,17 +1106,8 @@ void WebView::DidDropAllPeerConnections(
 }
 
 void WebView::DidReceiveCompositorFrame() {
-  VLOG(1) << __func__;
   if (webview_delegate_)
     webview_delegate_->DidSwapCompositorFrame();
-  if (web_contents_)
-    web_contents_->DidPrepareContentsForFirstShow();
-}
-
-void WebView::SendDidPrepareContentsForFirstShow() {
-  VLOG(1) << __func__;
-  if (web_contents_)
-    web_contents_->DidPrepareContentsForFirstShow();
 }
 
 void WebView::DidFrameFocused() {
