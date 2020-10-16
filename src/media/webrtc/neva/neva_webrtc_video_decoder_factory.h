@@ -17,8 +17,14 @@
 #ifndef MEDIA_WEBRTC_NEVA_NEVA_WEBRTC_VIDEO_DECODER_FACTORY_H_
 #define MEDIA_WEBRTC_NEVA_NEVA_WEBRTC_VIDEO_DECODER_FACTORY_H_
 
+#include "base/memory/ref_counted.h"
 #include "media/base/media_export.h"
 #include "third_party/webrtc/api/video_codecs/video_decoder_factory.h"
+
+namespace base {
+class SingleThreadTaskRunner;
+class Thread;
+}
 
 namespace webrtc {
 class SdpVideoFormat;
@@ -32,12 +38,16 @@ class GpuVideoAcceleratorFactories;
 class MEDIA_EXPORT NevaWebRtcVideoDecoderFactory
     : public webrtc::VideoDecoderFactory {
  public:
-  explicit NevaWebRtcVideoDecoderFactory();
+  explicit NevaWebRtcVideoDecoderFactory(
+      scoped_refptr<base::SingleThreadTaskRunner> main_task_runner);
   ~NevaWebRtcVideoDecoderFactory() override;
 
   std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override;
   std::unique_ptr<webrtc::VideoDecoder> CreateVideoDecoder(
       const webrtc::SdpVideoFormat& format) override;
+
+ private:
+  scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
 };
 
 }  // namespace media

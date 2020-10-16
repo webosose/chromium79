@@ -26,6 +26,9 @@ const char kFakeUrlMediaDuration[] = "fake-url-media-duration";
 
 #if defined(USE_NEVA_WEBRTC)
 // Enables platforms to provide h/w accelarated video encoder.
+const char kEnableWebRTCPlatformVideoDecoder[] =
+    "enable-webrtc-platform-video-decoder";
+// Enables platforms to provide h/w accelarated video encoder.
 const char kEnableWebRTCPlatformVideoEncoder[] =
     "enable-webrtc-platform-video-encoder";
 #endif

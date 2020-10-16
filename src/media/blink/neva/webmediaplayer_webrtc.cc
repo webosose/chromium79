@@ -111,11 +111,6 @@ WebMediaPlayerWebRtc::~WebMediaPlayerWebRtc() {
 
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
-  WebRtcPassThroughVideoDecoder* decoder =
-      WebRtcPassThroughVideoDecoder::FromId(decoder_id_);
-  if (decoder)
-    decoder->SetClient(nullptr);
-
   compositor_task_runner_->DeleteSoon(FROM_HERE,
                                       std::move(video_frame_provider_impl_));
 
@@ -205,11 +200,6 @@ void WebMediaPlayerWebRtc::OnFrameShown() {
   LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
 
   blink::WebMediaPlayerMS::OnFrameShown();
-
-  WebRtcPassThroughVideoDecoder* decoder =
-      WebRtcPassThroughVideoDecoder::FromId(decoder_id_);
-  if (decoder)
-    decoder->RequestKeyFrame();
 
   ResumeInternal();
 }
@@ -403,14 +393,8 @@ void WebMediaPlayerWebRtc::HandleEncodedFrame(
     return;
   }
 
-  if (!media_platform_api_) {
-    decoder_id_ = encoded_frame->get_decoder_id();
-    WebRtcPassThroughVideoDecoder::FromId(decoder_id_)->SetClient(this);
-
-    LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_
-              << " decoder_id: " << decoder_id_;
+  if (!media_platform_api_)
     StartMediaPipeline(encoded_frame);
-  }
 
   {
     base::AutoLock auto_lock(frame_lock_);
@@ -446,7 +430,7 @@ void WebMediaPlayerWebRtc::StartMediaPipeline(
       BIND_TO_RENDER_LOOP(&WebMediaPlayerWebRtc::OnSuspended),
       BIND_TO_RENDER_LOOP_VIDEO_FRAME_PROVIDER(
           &VideoFrameProviderImpl::ActiveRegionChanged),
-      BIND_TO_RENDER_LOOP(&WebMediaPlayerWebRtc::OnError));
+      BIND_TO_RENDER_LOOP(&WebMediaPlayerWebRtc::OnPipelineError));
 
   if (video_window_info_)
     media_platform_api_->SetMediaLayerId(video_window_info_->native_window_id);
@@ -499,9 +483,10 @@ void WebMediaPlayerWebRtc::ReleaseMediaPlatformAPI() {
   if (!media_platform_api_)
     return;
 
-  platform_decoders_available_ = true;
   handle_encoded_frames_ = false;
   media_platform_api_->Finalize();
+
+  WebRtcPassThroughVideoDecoder::SetMediaDecoderAvailable(true);
 
   // Make sure to stop the pipeline so there's no more media threads running.
   base::WaitableEvent event(base::WaitableEvent::ResetPolicy::AUTOMATIC,
@@ -646,38 +631,9 @@ void WebMediaPlayerWebRtc::OnResumed() {
 void WebMediaPlayerWebRtc::OnSuspended() {
   DCHECK_CALLED_ON_VALID_THREAD(thread_checker_);
 
-  platform_decoders_available_ = true;
+  WebRtcPassThroughVideoDecoder::SetMediaDecoderAvailable(true);
 
   delegate_->DidMediaSuspended(delegate_id_);
-}
-
-void WebMediaPlayerWebRtc::OnError(PipelineStatus status) {
-  LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
-
-  if (is_loading_) {
-    is_loading_ = false;
-    delegate_->DidMediaActivated(delegate_id_);
-  }
-
-  if (is_destroying_)
-    return;
-
-  if (status == media::DECODER_ERROR_RESOURCE_IS_RELEASED)
-    platform_decoders_available_ = false;
-
-  {
-    base::AutoLock auto_lock(frame_lock_);
-    pending_encoded_frames_.clear();
-  }
-
-  compositor_->ReplaceCurrentFrameWithACopy();
-
-  pipeline_running_ = false;
-  pipeline_status_ = status;
-
-  SetNetworkState(blink::PipelineErrorToNetworkState(status));
-
-  RepaintInternal();
 }
 
 // It returns true if video window is already created and can be continued
@@ -746,6 +702,44 @@ void WebMediaPlayerWebRtc::OnMediaPlatformAPIInitialized(
   media_task_runner_->PostTask(
       FROM_HERE, base::Bind(&WebMediaPlayerWebRtc::OnPipelineFeed,
                             weak_ptr_this_));
+}
+
+void WebMediaPlayerWebRtc::OnPipelineError(PipelineStatus status) {
+  LOG(INFO) << __func__ << " : delegate_id_: " << delegate_id_;
+
+  if (main_render_task_runner_ &&
+      !main_render_task_runner_->BelongsToCurrentThread()) {
+    main_render_task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(&WebMediaPlayerWebRtc::OnPipelineError,
+                       weak_ptr_this_, status));
+    return;
+  }
+
+  if (is_loading_) {
+    is_loading_ = false;
+    delegate_->DidMediaActivated(delegate_id_);
+  }
+
+  if (is_destroying_)
+    return;
+
+  if (status == media::DECODER_ERROR_RESOURCE_IS_RELEASED)
+    WebRtcPassThroughVideoDecoder::SetMediaDecoderAvailable(false);
+
+  {
+    base::AutoLock auto_lock(frame_lock_);
+    pending_encoded_frames_.clear();
+  }
+
+  compositor_->ReplaceCurrentFrameWithACopy();
+
+  pipeline_running_ = false;
+  pipeline_status_ = status;
+
+  SetNetworkState(blink::PipelineErrorToNetworkState(status));
+
+  RepaintInternal();
 }
 
 void WebMediaPlayerWebRtc::EnqueueHoleFrame(

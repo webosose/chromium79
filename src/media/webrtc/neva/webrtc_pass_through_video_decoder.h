@@ -21,6 +21,9 @@
 
 #include "base/callback_forward.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
+#include "base/threading/thread.h"
 #include "base/time/time.h"
 #include "media/base/media_export.h"
 #include "media/base/video_codecs.h"
@@ -37,18 +40,17 @@ class VideoCodec;
 
 namespace media {
 
+class VideoFrame;
+
 class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
  public:
-  class Client {
-   public:
-    virtual bool HasAvailableResources() = 0;
-  };
-
   // Creates and initializes an WebRtcPassThroughVideoDecoder.
   static std::unique_ptr<WebRtcPassThroughVideoDecoder> Create(
+      scoped_refptr<base::SingleThreadTaskRunner> main_task_runner,
       const webrtc::SdpVideoFormat& format);
 
-  static WebRtcPassThroughVideoDecoder* FromId(uint32_t decoder_id);
+  // Sets h/w media decoder resources availibility
+  static void SetMediaDecoderAvailable(bool available);
 
   virtual ~WebRtcPassThroughVideoDecoder();
 
@@ -63,40 +65,43 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   int32_t Release() override;
   const char* ImplementationName() const override;
 
-  // Request key frame.
-  void RequestKeyFrame();
-
-  // Set decoder client instance
-  void SetClient(Client* client);
-
  private:
   // Called on the worker thread.
-  WebRtcPassThroughVideoDecoder(media::VideoCodec video_codec,
-                                media::VideoPixelFormat video_pixel_format);
+  WebRtcPassThroughVideoDecoder(
+      scoped_refptr<base::SingleThreadTaskRunner> main_task_runner,
+      media::VideoCodec video_codec,
+      media::VideoPixelFormat video_pixel_format);
 
-  int32_t ReturnEncodedFrame(const webrtc::EncodedImage& input_image);
+  void DecodeOnMediaThread();
+  void ReturnEncodedFrame(scoped_refptr<media::VideoFrame> encoded_frame);
 
   // Construction parameters.
   media::VideoCodec video_codec_;
   VideoPixelFormat video_pixel_format_;
 
-  // Not owned. Should not be deleted.
-  Client* client_ = nullptr;
-
   gfx::Size frame_size_;
 
+  scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
+  webrtc::VideoCodecType video_codec_type_ = webrtc::kVideoCodecGeneric;
   webrtc::DecodedImageCallback* decode_complete_callback_ = nullptr;
 
-  bool initialized_ = false;
+  base::Lock lock_;
+  int32_t consecutive_error_count_ = 0;
+
+  // Requests that have not been submitted to the decoder yet.
+  std::deque<scoped_refptr<media::VideoFrame>> pending_frames_;
+
+  // Record of timestamps that have been sent to be decoded. Removing a
+  // timestamp will cause the frame to be dropped when it is output.
+  std::deque<base::TimeDelta> decode_timestamps_;
+
   bool key_frame_required_ = true;
-
   bool media_decoder_acquired_ = false;
-  bool media_decoder_available_ = true;
 
-  int propagation_cnt_ = -1;
-  base::TimeTicks start_timestamp_;
+  static bool media_decoder_available_;
 
-  uint32_t decoder_id_ = 0;
+  base::WeakPtr<WebRtcPassThroughVideoDecoder> weak_this_;
+  base::WeakPtrFactory<WebRtcPassThroughVideoDecoder> weak_this_factory_{this};
 
   DISALLOW_COPY_AND_ASSIGN(WebRtcPassThroughVideoDecoder);
 };

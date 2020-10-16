@@ -212,13 +212,18 @@ std::unique_ptr<webrtc::VideoDecoderFactory> CreateWebrtcVideoDecoderFactory(
   std::unique_ptr<webrtc::VideoDecoderFactory> decoder_factory;
 
 #if defined(USE_NEVA_WEBRTC)
-  decoder_factory = std::make_unique<media::NevaWebRtcVideoDecoderFactory>();
-#else
+  const base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
+  if (cmd_line->HasSwitch(switches::kEnableWebRTCPlatformVideoDecoder)) {
+    decoder_factory = std::make_unique<media::NevaWebRtcVideoDecoderFactory>(
+        gpu_factories->GetTaskRunner());
+  }
+  if (!decoder_factory)
+#endif
+
   if (gpu_factories && gpu_factories->IsGpuVideoAcceleratorEnabled() &&
       Platform::Current()->IsWebRtcHWDecodingEnabled()) {
     decoder_factory = std::make_unique<RTCVideoDecoderFactory>(gpu_factories);
   }
-#endif
 
   return std::make_unique<DecoderAdapter>(std::move(decoder_factory));
 }

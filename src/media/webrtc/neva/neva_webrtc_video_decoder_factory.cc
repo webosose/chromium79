@@ -22,7 +22,9 @@
 
 namespace media {
 
-NevaWebRtcVideoDecoderFactory::NevaWebRtcVideoDecoderFactory() {}
+NevaWebRtcVideoDecoderFactory::NevaWebRtcVideoDecoderFactory(
+    scoped_refptr<base::SingleThreadTaskRunner> main_task_runner)
+    : main_task_runner_(main_task_runner) {}
 
 NevaWebRtcVideoDecoderFactory::~NevaWebRtcVideoDecoderFactory() {}
 
@@ -34,7 +36,8 @@ NevaWebRtcVideoDecoderFactory::GetSupportedFormats() const {
 std::unique_ptr<webrtc::VideoDecoder>
 NevaWebRtcVideoDecoderFactory::CreateVideoDecoder(
     const webrtc::SdpVideoFormat& format) {
-  return std::move(WebRtcPassThroughVideoDecoder::Create(format));
+  return std::move(WebRtcPassThroughVideoDecoder::Create(
+      main_task_runner_, format));
 }
 
 }  // namespace media

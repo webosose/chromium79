@@ -23,6 +23,7 @@
 #include "base/memory/aligned_memory.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/scoped_refptr.h"
+#include "base/single_thread_task_runner.h"
 #include "media/base/neva/media_platform_prefs.h"
 #include "media/base/video_frame.h"
 #include "third_party/blink/renderer/platform/webrtc/webrtc_video_frame_adapter.h"
@@ -37,8 +38,17 @@ namespace {
 
 const char* kImplementationName = "WebRtcPassThroughVideoDecoder";
 
-// Error propogation threshold value
-constexpr int kVp8ErrorPropagationTh = 30;
+// Maximum number of frames that we will queue in |pending_frames_|.
+const int32_t kMaxPendingBuffers = 8;
+
+// Maximum number of timestamps that will be maintained in |decode_timestamps_|.
+// Really only needs to be a bit larger than the maximum reorder distance (which
+// is presumably 0 for WebRTC), but being larger doesn't hurt much.
+const int32_t kMaxDecodeHistory = 32;
+
+// Maximum number of consecutive frames that can fail to decode before
+// requesting fallback to software decode.
+const int32_t kMaxConsecutiveErrors = 5;
 
 // Map webrtc::VideoCodecType to media::VideoCodec.
 media::VideoCodec ToVideoCodec(webrtc::VideoCodecType webrtc_codec) {
@@ -75,11 +85,13 @@ media::VideoPixelFormat ToVideoPixelFormat(
 
 typedef std::map<uint32_t, WebRtcPassThroughVideoDecoder*> WebRtcDecoderMap;
 WebRtcDecoderMap webrtc_video_decoder_map_;
-std::mutex webrtc_video_decoder_lock_;
+
+bool WebRtcPassThroughVideoDecoder::media_decoder_available_ = true;
 
 // static
 std::unique_ptr<WebRtcPassThroughVideoDecoder>
 WebRtcPassThroughVideoDecoder::Create(
+    scoped_refptr<base::SingleThreadTaskRunner> main_task_runner,
     const webrtc::SdpVideoFormat& sdp_format) {
   DVLOG(1) << __func__ << "(" << sdp_format.name << ")";
 
@@ -96,51 +108,31 @@ WebRtcPassThroughVideoDecoder::Create(
     return nullptr;
 
   VideoPixelFormat video_pixel_format = ToVideoPixelFormat(webrtc_codec_type);
-  return base::WrapUnique(
-      new WebRtcPassThroughVideoDecoder(video_codec, video_pixel_format));
+  return base::WrapUnique(new WebRtcPassThroughVideoDecoder(
+      main_task_runner, video_codec, video_pixel_format));
 }
 
 // static
-WebRtcPassThroughVideoDecoder* WebRtcPassThroughVideoDecoder::FromId(
-    uint32_t decoder_id) {
-  LOG(INFO) << __func__ << " Decoder requested for id: " << decoder_id;
-
-  std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
-  WebRtcDecoderMap::iterator it = webrtc_video_decoder_map_.find(decoder_id);
-  if (it == webrtc_video_decoder_map_.end()) {
-    LOG(ERROR) << __func__ << " Decoder not found for id: " << decoder_id;
-    return nullptr;
-  }
-  return it->second;
+void WebRtcPassThroughVideoDecoder::SetMediaDecoderAvailable(bool available) {
+  LOG(INFO) << __func__ << " available: " << (available ? " TRUE" : " FALSE");
+  media_decoder_available_ = available;
 }
 
 WebRtcPassThroughVideoDecoder::WebRtcPassThroughVideoDecoder(
+    scoped_refptr<base::SingleThreadTaskRunner> main_task_runner,
     media::VideoCodec video_codec,
     media::VideoPixelFormat video_pixel_format)
-    : video_codec_(video_codec),
+    : main_task_runner_(main_task_runner),
+      video_codec_(video_codec),
       video_pixel_format_(video_pixel_format) {
-  decoder_id_ = rtc::CreateRandomNonZeroId();
-  {
-    std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
-    webrtc_video_decoder_map_[decoder_id_] = this;
-  }
-
-  LOG(INFO) << __func__ <<  "[" << this << "] "
-                        << ", video_pixel_format: " << video_pixel_format
-                        << " codec: " << GetCodecName(video_codec)
-                        << " id: " << decoder_id_;
+  LOG(INFO) << __func__ << " [" << this << "] "
+                        << " video_pixel_format: " << video_pixel_format
+                        << " codec: " << GetCodecName(video_codec);
+  weak_this_ = weak_this_factory_.GetWeakPtr();
 }
 
 WebRtcPassThroughVideoDecoder::~WebRtcPassThroughVideoDecoder() {
-  LOG(INFO) << __func__ <<  "[" << this << "] " << " id: " << decoder_id_;
-  {
-    std::lock_guard<std::mutex> lock(webrtc_video_decoder_lock_);
-    WebRtcDecoderMap::iterator it = webrtc_video_decoder_map_.find(decoder_id_);
-    if (it != webrtc_video_decoder_map_.end())
-      webrtc_video_decoder_map_.erase(it);
-  }
-
-  Release();
+  LOG(INFO) << __func__ <<  "[" << this << "] ";
 }
 
 int32_t WebRtcPassThroughVideoDecoder::InitDecode(
@@ -151,124 +143,54 @@ int32_t WebRtcPassThroughVideoDecoder::InitDecode(
   if (codec_settings == nullptr)
     return WEBRTC_VIDEO_CODEC_ERR_PARAMETER;
 
-  int ret_val = Release();
-  if (ret_val != WEBRTC_VIDEO_CODEC_OK)
-    return ret_val;
-
-  propagation_cnt_ = -1;
-  initialized_ = true;
-
-  start_timestamp_ = base::TimeTicks::Now();
+  video_codec_type_ = codec_settings->codecType;
 
   // Always start with a complete key frame.
   key_frame_required_ = true;
-  return WEBRTC_VIDEO_CODEC_OK;
+  return media_decoder_available_ ? WEBRTC_VIDEO_CODEC_OK
+                                  : WEBRTC_VIDEO_CODEC_UNINITIALIZED;
 }
 
 int32_t WebRtcPassThroughVideoDecoder::Decode(
     const webrtc::EncodedImage& input_image,
     bool missing_frames,
     int64_t render_time_ms) {
-  if (!initialized_ || decode_complete_callback_ == nullptr) {
-    return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
-  }
-
-  if (media_decoder_acquired_) {
-    if (client_ && !client_->HasAvailableResources()) {
+  // Check s/w fallback for only once, the first time this is called.
+  if (!media_decoder_acquired_) {
+    if (!media_decoder_available_) {
       // Fallback to software mode if no free media decoder.
-      LOG(INFO) << __func__ << " Decoder fallback to s/w, id: " << decoder_id_;
+      LOG(INFO) << __func__ << " Fallback to s/w Decoder";
       return WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE;
     }
+    media_decoder_acquired_ = true;
   }
 
-  gfx::Size frame_size(input_image._encodedWidth,
-                       input_image._encodedHeight);
-  VLOG(1) << __func__ << " frame_size: " << frame_size.ToString();
-
-  if (input_image.data() == NULL && input_image.size() > 0) {
-    // Reset to avoid requesting key frames too often.
-    if (propagation_cnt_ > 0)
-      propagation_cnt_ = 0;
-    return WEBRTC_VIDEO_CODEC_ERR_PARAMETER;
+  // Hardware VP9 decoders don't handle more than one spatial layer. Fall back
+  // to software decoding. See https://crbug.com/webrtc/9304.
+  if (video_codec_type_ == webrtc::kVideoCodecVP9 &&
+      input_image.SpatialIndex().value_or(0) > 0) {
+    LOG(INFO) << __func__
+              << " VP9 with more spatial index > 0. Fallback to s/w Decoder";
+    return WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE;
   }
 
-  // Always start with a complete key frame.
-  if (key_frame_required_) {
-    if (input_image._frameType != webrtc::VideoFrameType::kVideoFrameKey)
-      return WEBRTC_VIDEO_CODEC_ERROR;
-    // We have a key frame - is it complete?
-    if (input_image._completeFrame) {
-      key_frame_required_ = false;
-    } else {
-      return WEBRTC_VIDEO_CODEC_ERROR;
-    }
-  }
-  // Restrict error propagation using key frame requests.
-  // Reset on a key frame refresh.
-  if (input_image._frameType == webrtc::VideoFrameType::kVideoFrameKey &&
-      input_image._completeFrame) {
-    propagation_cnt_ = -1;
-    // Start count on first loss.
-  } else if ((!input_image._completeFrame || missing_frames) &&
-             propagation_cnt_ == -1) {
-    propagation_cnt_ = 0;
-  }
-  if (propagation_cnt_ >= 0) {
-    propagation_cnt_++;
-  }
-
-  int ret = ReturnEncodedFrame(input_image);
-  if (ret != 0) {
-    // Reset to avoid requesting key frames too often.
-    if (ret < 0 && propagation_cnt_ > 0)
-      propagation_cnt_ = 0;
-    return ret;
-  }
-
-  // Check Vs. threshold
-  if (propagation_cnt_ > kVp8ErrorPropagationTh) {
-    // Reset to avoid requesting key frames too often.
-    propagation_cnt_ = 0;
+  if (missing_frames || !input_image._completeFrame) {
+    VLOG(1) << "Missing or incomplete frames";
+    // We probably can't handle broken frames. Request a key frame.
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
-  return WEBRTC_VIDEO_CODEC_OK;
-}
-
-int32_t WebRtcPassThroughVideoDecoder::RegisterDecodeCompleteCallback(
-    webrtc::DecodedImageCallback* callback) {
-  decode_complete_callback_ = callback;
-  return WEBRTC_VIDEO_CODEC_OK;
-}
-
-int32_t WebRtcPassThroughVideoDecoder::Release() {
-  VLOG(1) << __func__;
-
-  media_decoder_acquired_ = false;
-  key_frame_required_ = true;
-
-  initialized_ = false;
-
-  return WEBRTC_VIDEO_CODEC_OK;
-}
-
-const char* WebRtcPassThroughVideoDecoder::ImplementationName() const {
-  return kImplementationName;
-}
-
-void WebRtcPassThroughVideoDecoder::RequestKeyFrame() {
-  key_frame_required_ = true;
-}
-
-void WebRtcPassThroughVideoDecoder::SetClient(Client* client) {
-  client_ = client;
-}
-
-int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
-    const webrtc::EncodedImage& input_image) {
-  if (input_image.size() == 0) {
-    // Decoder OK and NULL image => No show frame
-    return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
+  if (key_frame_required_) {
+    // We discarded previous frame because we have too many pending framess
+    // (see logic) below. Now we need to wait for the key frame and discard
+    // everything else.
+    if (input_image._frameType != webrtc::VideoFrameType::kVideoFrameKey) {
+      DVLOG(2) << "Discard non-key frame";
+      return WEBRTC_VIDEO_CODEC_ERROR;
+    }
+    DVLOG(2) << "Key frame received, resume decoding";
+    // ok, we got key frame and can continue decoding
+    key_frame_required_ = false;
   }
 
   bool key_frame = input_image._frameType
@@ -276,7 +198,7 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
   if (key_frame) {
     frame_size_.set_width(input_image._encodedWidth);
     frame_size_.set_height(input_image._encodedHeight);
-    VLOG(1) << __func__ << " key_frame size: " << frame_size_.ToString();
+    LOG(INFO) << __func__ << " key_frame_size: " << frame_size_.ToString();
   }
 
   std::unique_ptr<uint8_t, base::AlignedFreeDeleter> encoded_data(
@@ -285,10 +207,8 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
               media::VideoFrameLayout::kBufferAddressAlignment)));
   memcpy(encoded_data.get(), input_image.data(), input_image.size());
 
-  // Convert timestamp from 90KHz to ms.
-  base::TimeDelta timestamp_ms = base::TimeDelta::FromInternalValue(
-      base::checked_cast<uint64_t>(input_image.Timestamp()) * 1000 / 90);
-
+  base::TimeDelta timestamp_ms =
+      base::TimeDelta::FromMicroseconds(input_image.Timestamp());
   // Make a shallow copy.
   scoped_refptr<media::VideoFrame> encoded_frame =
       media::VideoFrame::WrapExternalData(video_pixel_format_,
@@ -298,9 +218,10 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
                                           encoded_data.get(),
                                           input_image.size(),
                                           timestamp_ms);
-
-  if (!encoded_frame)
+  if (!encoded_frame) {
+    LOG(ERROR) << __func__ << " Could not allocate encoded_frame.";
     return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
+  }
 
   // The bind ensures that we keep a pointer to the encoded data.
   encoded_frame->AddDestructionObserver(
@@ -308,25 +229,100 @@ int32_t WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
   encoded_frame->metadata()->SetBoolean(media::VideoFrameMetadata::KEY_FRAME,
                                         key_frame);
 
+  // Queue for decoding.
+  {
+    base::AutoLock auto_lock(lock_);
+
+    if (pending_frames_.size() >= kMaxPendingBuffers) {
+      // We are severely behind. Drop pending frames and request a keyframe to
+      // catch up as quickly as possible.
+      DVLOG(2) << "Pending VideoFrames overflow";
+      pending_frames_.clear();
+
+      // Actually we just discarded a frame. We must wait for the key frame and
+      // drop any other non-key frame.
+      key_frame_required_ = true;
+      if (++consecutive_error_count_ > kMaxConsecutiveErrors) {
+        decode_timestamps_.clear();
+        return WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE;
+      }
+      return WEBRTC_VIDEO_CODEC_ERROR;
+    }
+    pending_frames_.push_back(std::move(encoded_frame));
+  }
+
+  main_task_runner_->PostTask(
+      FROM_HERE,
+      base::BindOnce(&WebRtcPassThroughVideoDecoder::DecodeOnMediaThread,
+                     weak_this_));
+
+  return WEBRTC_VIDEO_CODEC_OK;
+}
+
+int32_t WebRtcPassThroughVideoDecoder::RegisterDecodeCompleteCallback(
+    webrtc::DecodedImageCallback* callback) {
+  decode_complete_callback_ = callback;
+  VLOG(1) << __func__ << " decoder available: " << media_decoder_available_;
+  return media_decoder_available_ ? WEBRTC_VIDEO_CODEC_OK
+                                  : WEBRTC_VIDEO_CODEC_UNINITIALIZED;
+}
+
+int32_t WebRtcPassThroughVideoDecoder::Release() {
+  VLOG(1) << __func__ << " decoder available: " << media_decoder_available_;
+
+  base::AutoLock auto_lock(lock_);
+  pending_frames_.clear();
+  decode_timestamps_.clear();
+
+  media_decoder_acquired_ = false;
+  return media_decoder_available_ ? WEBRTC_VIDEO_CODEC_OK
+                                  : WEBRTC_VIDEO_CODEC_UNINITIALIZED;
+}
+
+const char* WebRtcPassThroughVideoDecoder::ImplementationName() const {
+  return kImplementationName;
+}
+
+void WebRtcPassThroughVideoDecoder::DecodeOnMediaThread() {
+  std::deque<scoped_refptr<media::VideoFrame>> pending_frames;
+  {
+    base::AutoLock auto_lock(lock_);
+    pending_frames.swap(pending_frames_);
+  }
+
+  while (!pending_frames.empty()) {
+    scoped_refptr<media::VideoFrame> pending_frame = pending_frames.front();
+
+    // Record the timestamp.
+    while (decode_timestamps_.size() >= kMaxDecodeHistory)
+      decode_timestamps_.pop_front();
+    decode_timestamps_.push_back(pending_frame->timestamp());
+
+    ReturnEncodedFrame(pending_frame);
+    pending_frames.pop_front();
+  }
+}
+
+void WebRtcPassThroughVideoDecoder::ReturnEncodedFrame(
+    scoped_refptr<media::VideoFrame> encoded_frame) {
+  const base::TimeDelta timestamp = encoded_frame->timestamp();
   webrtc::VideoFrame rtc_frame =
       webrtc::VideoFrame::Builder()
           .set_video_frame_buffer(
               new rtc::RefCountedObject<blink::WebRtcVideoFrameAdapter>(
                   std::move(encoded_frame)))
-          .set_timestamp_rtp(input_image.Timestamp())
+          .set_timestamp_rtp(static_cast<uint32_t>(timestamp.InMicroseconds()))
+          .set_timestamp_us(0)
           .set_rotation(webrtc::kVideoRotation_0)
           .build();
-  rtc_frame.set_timestamp(input_image.Timestamp());
-  rtc_frame.set_ntp_time_ms(input_image.ntp_time_ms_);
 
-  if (!media_decoder_acquired_) {
-    media_decoder_acquired_ = true;
-    rtc_frame.set_decoder_id(decoder_id_);
+  if (!base::Contains(decode_timestamps_, timestamp)) {
+    LOG(INFO) << __func__ << " Discarding frame with timestamp: " << timestamp;
+    return;
   }
 
-  decode_complete_callback_->Decoded(rtc_frame, absl::nullopt, 0);
-
-  return WEBRTC_VIDEO_CODEC_OK;
+  decode_complete_callback_->Decoded(rtc_frame);
+  consecutive_error_count_ = 0;
 }
 
 }  // namespace media

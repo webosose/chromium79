@@ -52,8 +52,7 @@ class VideoHoleGeometryUpdateHelper;
 // Encrypted Media.
 class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
     : public ui::mojom::VideoWindowClient,
-      public blink::WebMediaPlayerMS,
-      public WebRtcPassThroughVideoDecoder::Client {
+      public blink::WebMediaPlayerMS {
  public:
   // Constructs a WebMediaPlayer implementation using Chromium's media stack.
   // |delegate| may be null. |renderer_factory_selector| must not be null.
@@ -117,9 +116,6 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
                             bool is_opaque) override;
   void OnRotationChanged(media::VideoRotation video_rotation) override;
 
-  // Overridden from parent WebRtcPassThroughVideoDecoder::Client
-  bool HasAvailableResources() override { return platform_decoders_available_; }
-
  private:
   enum class StatusOnSuspended {
     UnknownStatus = 0,
@@ -146,12 +142,13 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
   void OnNaturalVideoSizeChanged(const gfx::Size& natural_video_size);
   void OnResumed();
   void OnSuspended();
-  void OnError(PipelineStatus status);
 
   bool EnsureVideoWindowCreated();
   void ContinuePlayerWithWindowId();
 
   void OnMediaPlatformAPIInitialized(PipelineStatus status);
+  void OnPipelineError(PipelineStatus status);
+
   void EnqueueHoleFrame(const scoped_refptr<media::VideoFrame>& output_frame);
   VideoDecoderConfig GetVideoConfig(
       const scoped_refptr<media::VideoFrame>& video_frame);
@@ -189,15 +186,11 @@ class MEDIA_BLINK_EXPORT WebMediaPlayerWebRtc
   base::Lock frame_lock_;
   std::deque<scoped_refptr<media::VideoFrame>> pending_encoded_frames_;
 
-  uint32_t decoder_id_ = 0;
-
   // Whether or not the pipeline is running.
   bool pipeline_running_ = false;
   bool is_destroying_ = false;
 
   bool handle_encoded_frames_ = false;
-
-  bool platform_decoders_available_ = true;
 
   bool has_activation_permit_ = false;
 
