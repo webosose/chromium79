@@ -193,6 +193,7 @@ bool WebAppWindow::OnKeyReleased(unsigned keycode) {
 }
 
 void WebAppWindow::ActivateAndShow() {
+  VLOG(1) << __func__;
   RecreateIfNeeded();
   Activate();
   Show();

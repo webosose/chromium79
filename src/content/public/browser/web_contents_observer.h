@@ -135,8 +135,13 @@ class CONTENT_EXPORT WebContentsObserver : public IPC::Listener {
   // This method is invoked when the process for the current RenderView created.
   virtual void RenderProcessCreated(base::ProcessHandle) {}
 
-  // Notifes that a CompositorFrame was received from the renderer.
+  // Notifies that a CompositorFrame was received from the renderer so web
+  // contents are activated
   virtual void DidReceiveCompositorFrame() {}
+
+  // Once all the contents are ready to be shown, compositor can start
+  // displaying the application window.
+  virtual void DidPrepareContentsForFirstShow() {}
 #endif
 
   // This method is invoked when the process for the current main
