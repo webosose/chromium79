@@ -84,6 +84,7 @@ struct wl_text_input_manager;
 
 namespace base {
 class MessageLoop;
+class Thread;
 }
 
 namespace IPC {
@@ -287,6 +288,12 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   // Stops polling on display fd.
   void StopProcessingEvents();
 
+  void StartWatchFileDescriptor();
+  void PrepareForReadEvents();
+  void ReadEvents();
+  void EventsDispatch();
+  void EventsDispatchForPreparing();
+
   void Terminate();
   WaylandWindow* GetWidget(unsigned w) const;
   void SetWidgetState(unsigned widget, ui::WidgetState state);
@@ -397,6 +404,10 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   char* m_deviceName;
 #endif
   IPC::Sender* sender_;
+  scoped_refptr<base::SingleThreadTaskRunner> gpu_task_runner_;
+  std::unique_ptr<base::Thread> io_wayland_thread_;
+  bool prepared_ = false;
+  bool read_pending_ = false;
 
   std::list<WaylandScreen*> screen_list_;
   std::list<WaylandSeat*> seat_list_;

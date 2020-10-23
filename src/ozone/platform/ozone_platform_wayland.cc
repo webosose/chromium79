@@ -39,7 +39,7 @@ constexpr OzonePlatform::PlatformProperties kWaylandExternalPlatformProperties =
         /*custom_frame_pref_default=*/false,
         /*use_system_title_bar=*/false,
         /*requires_mojo=*/false,
-        /*message_pump_type_for_gpu=*/base::MessagePumpType::IO};
+        /*message_pump_type_for_gpu=*/base::MessagePumpType::DEFAULT};
 
 // OzonePlatform for Wayland
 //

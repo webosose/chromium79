@@ -31,6 +31,7 @@
 #include "base/message_loop/message_loop_current.h"
 #include "base/native_library.h"
 #include "base/stl_util.h"
+#include "base/threading/thread.h"
 #include "ipc/ipc_sender.h"
 #include "ozone/platform/messages.h"
 #include "ozone/wayland/input/cursor.h"
@@ -370,7 +371,33 @@ void WaylandDisplay::StartProcessingEvents() {
   DCHECK(display_);
   wl_display_flush(display_);
 
+  gpu_task_runner_ = base::ThreadTaskRunnerHandle::Get();
+
+  io_wayland_thread_.reset(new base::Thread("WatchFileDescriptorIOThread"));
+  base::Thread::Options options;
+  options.message_pump_type = base::MessagePumpType::IO;
+  if (!io_wayland_thread_->StartWithOptions(options)) {
+    LOG(ERROR) << "IOThread for watching of Wayland file descriptor is not started";
+    return;
+  }
+
+  io_wayland_thread_->task_runner()->PostTask(
+      FROM_HERE, base::BindOnce(&WaylandDisplay::StartWatchFileDescriptor,
+                                base::Unretained(this)));
+}
+
+void WaylandDisplay::StartWatchFileDescriptor() {
+  if (watching_) {
+    // Stop watching first.
+    watching_ = !controller_.StopWatchingFileDescriptor();
+    DCHECK(!watching_);
+  }
+
   DCHECK(base::MessageLoopCurrentForIO::IsSet());
+  DCHECK(gpu_task_runner_);
+
+  // Prepare for reading events and mark the thread for reading of display fd.
+  PrepareForReadEvents();
 
   watching_ =
       base::MessageLoopCurrentForIO::Get()->WatchFileDescriptor(
@@ -1118,10 +1145,70 @@ IPC::MessageFilter* WaylandDisplay::GetMessageFilter() {
 }
 
 void WaylandDisplay::OnFileCanReadWithoutBlocking(int fd) {
+  // Read events.
+  ReadEvents();
+
+  // Prepare for the next reading or deferred reading.
+  PrepareForReadEvents();
+
   // Automatic Flush.
   wl_display_flush(display_);
-  // Dispatch events.
-  wl_display_dispatch(display_);
+}
+
+void WaylandDisplay::PrepareForReadEvents() {
+  if (prepared_)
+    return;
+
+  if (wl_display_prepare_read(display_) != -1) {
+    prepared_ = true;
+    if (read_pending_) {
+      ReadEvents();
+      PrepareForReadEvents();
+    }
+    return;
+  }
+
+  if (!gpu_task_runner_)
+    return;
+
+  // Dispatch events on GPU thread.
+  gpu_task_runner_->PostTask(
+      FROM_HERE, base::BindOnce(&WaylandDisplay::EventsDispatchForPreparing,
+                                base::Unretained(this)));
+}
+
+void WaylandDisplay::ReadEvents() {
+  if (!prepared_) {
+    read_pending_ = true;
+    return;
+  }
+  // Read events.
+  read_pending_ = false;
+  prepared_ = false;
+  wl_display_read_events(display_);
+
+  if (!gpu_task_runner_)
+    return;
+
+  // Dispatch events on GPU thread.
+  gpu_task_runner_->PostTask(
+      FROM_HERE,
+      base::BindOnce(&WaylandDisplay::EventsDispatch, base::Unretained(this)));
+}
+
+void WaylandDisplay::EventsDispatch() {
+  wl_display_dispatch_pending(display_);
+}
+
+void WaylandDisplay::EventsDispatchForPreparing() {
+  EventsDispatch();
+
+  if (!io_wayland_thread_)
+    return;
+
+  io_wayland_thread_->task_runner()->PostTask(
+      FROM_HERE, base::BindOnce(&WaylandDisplay::PrepareForReadEvents,
+                                base::Unretained(this)));
 }
 
 void WaylandDisplay::OnFileCanWriteWithoutBlocking(int fd) {}
