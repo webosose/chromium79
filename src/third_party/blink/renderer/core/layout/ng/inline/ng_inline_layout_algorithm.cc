@@ -245,8 +245,12 @@ void NGInlineLayoutAlgorithm::CreateLine(
                              line_info->ItemsData(), &item_result,
                              box->text_height);
       }
+      UBiDiLevel container_level = IsLtr(line_info->BaseDirection()) ? 0 : 1;
+      UBiDiLevel bidi_level = item_result.has_only_trailing_spaces
+                                  ? container_level
+                                  : item.BidiLevel();
       line_box_.AddChild(text_builder.ToTextFragment(), box->text_top,
-                         item_result.inline_size, item.BidiLevel());
+                         item_result.inline_size, bidi_level);
       // Text boxes always need full paint invalidations.
       item.GetLayoutObject()->ClearNeedsLayoutWithFullPaintInvalidation();
     } else if (item.Type() == NGInlineItem::kControl) {
