@@ -656,6 +656,13 @@ MediaPlatformAPIWebOSGmp::FeedStatus MediaPlatformAPIWebOSGmp::FeedInternal(
     return kFeedSucceeded;
   }
 
+  // Whenever Video resolution is changed, EOS is received for Video. Now, if
+  // Actual Audio EOS is received even before the end of Video buffers,
+  // MediaPlatformAPI pushes EOS packet to the media pipeline. Reset the
+  // video_eos_received_ flag in case it was set by false EOS buffer.
+  if (video_eos_received_ && type == Video && !buffer->end_of_stream())
+    video_eos_received_ = false;
+
   MEDIA_DATA_CHANNEL_T es_type = MEDIA_DATA_CH_NONE;
   if (type == Video)
     es_type = MEDIA_DATA_CH_A;
